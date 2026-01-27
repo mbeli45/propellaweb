@@ -1,0 +1,9 @@
+.edit-container {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .edit-container {
+    padding: 16px 12px;
+  }
+}

@@ -1,0 +1,159 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: #F9FAFB;
+  color: #111827;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #F9FAFB;
+}
+
+/* Mobile-first responsive design */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Remove default button styles */
+button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Remove default input styles */
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid #0069FF;
+  outline-offset: 2px;
+}
+
+/* ========================================
+   CUSTOM SCROLLBAR STYLING
+   ========================================
+   
+   Global scrollbar styling that applies to all elements.
+   All scrollbars are styled with theme colors and are responsive.
+   
+   Usage:
+   - Default: All elements get styled scrollbars (8px width/height, themed colors)
+   - Hidden scrollbar: Add class "hidden-scrollbar" to hide scrollbar but keep scrolling
+   - Thin scrollbar: Add class "thin-scrollbar" for narrower scrollbars (6px)
+   - Primary scrollbar: Add class "primary-scrollbar" for primary color theme
+   
+   Examples:
+   - <div className="hidden-scrollbar">...</div>
+   - <div className="thin-scrollbar primary-scrollbar">...</div>
+   ======================================== */
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F3F4F6;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #6B7280;
+}
+
+/* Thin scrollbar for smaller elements */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+/* Primary colored scrollbar for special areas */
+.primary-scrollbar::-webkit-scrollbar-thumb {
+  background: #0069FF;
+}
+
+.primary-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #0052CC;
+}
+
+/* Hidden scrollbar but still scrollable */
+.hidden-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.hidden-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Dark mode scrollbar */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-track {
+    background: #1F2937;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #4B5563;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #6B7280;
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: #9CA3AF;
+  }
+}
+
+/* Firefox scrollbar styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #D1D5DB #F3F4F6;
+}
+
+@media (prefers-color-scheme: dark) {
+  * {
+    scrollbar-color: #4B5563 #1F2937;
+  }
+}

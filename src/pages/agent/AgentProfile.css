@@ -1,0 +1,29 @@
+/* Agent Profile - Responsive Styles */
+
+/* Mobile-first base styles */
+.agent-profile-container {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Desktop and larger screens */
+@media (min-width: 769px) {
+  .agent-profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+
+/* Ensure responsive grid for property cards */
+@media (max-width: 768px) {
+  .agent-profile-container {
+    /* Properties grid should be single column on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small devices */
+  .agent-profile-container {
+    font-size: 14px;
+  }
+}

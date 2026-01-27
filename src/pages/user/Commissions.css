@@ -1,0 +1,13 @@
+.commissions-container {
+  width: 100%;
+}
+
+.commissions-list {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .commissions-container {
+    padding: 16px 12px;
+  }
+}

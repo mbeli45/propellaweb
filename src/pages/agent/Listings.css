@@ -1,0 +1,51 @@
+.agent-listings-container {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.agent-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.stats-container {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.stats-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.stats-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.stats-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.stat-card {
+  min-width: 120px;
+}
+
+.properties-list {
+  padding-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .properties-list {
+    grid-template-columns: 1fr !important;
+  }
+
+  .stats-container {
+    gap: 8px;
+  }
+
+  .stat-card {
+    min-width: 100px;
+    padding: 12px;
+  }
+}

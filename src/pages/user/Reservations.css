@@ -1,0 +1,24 @@
+.reservations-container {
+  width: 100%;
+}
+
+.reservations-list {
+  width: 100%;
+  padding-bottom: 20px;
+}
+
+.reservation-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reservation-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+@media (max-width: 768px) {
+  .reservation-card {
+    margin: 0 12px 12px;
+    padding: 16px;
+  }
+}

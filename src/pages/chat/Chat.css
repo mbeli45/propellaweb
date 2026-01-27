@@ -1,0 +1,32 @@
+.chat-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.chat-header {
+  flex-shrink: 0;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  /* Uses global scrollbar styling (thin, themed scrollbar) */
+}
+
+.chat-input {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .chat-header {
+    padding: 10px 12px;
+  }
+
+  .chat-messages {
+    padding: 12px;
+  }
+}

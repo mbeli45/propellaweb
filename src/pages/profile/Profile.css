@@ -1,0 +1,9 @@
+.profile-settings-container {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .profile-settings-container {
+    padding: 16px 12px;
+  }
+}

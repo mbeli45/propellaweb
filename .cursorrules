@@ -1,0 +1,58 @@
+# Cursor Rules for Propella Web
+
+## Supabase Database Schema
+This project uses Supabase as its backend database with the following main tables:
+
+### Tables:
+- **profiles**: User profile information (id, full_name, email, phone, avatar_url, role)
+- **properties**: Real estate listings (id, owner_id, title, location, price, images, status, etc.)
+- **reservations**: Property booking/site visit reservations (id, user_id, property_id, reservation_date, reservation_time, status, amount, payment_status, transaction_id)
+- **messages**: Chat messages between users and agents
+- **transactions**: Payment and wallet transactions
+- **reviews**: Property and agent reviews
+
+### Key Relationships:
+- properties.owner_id → profiles.id (agent/owner)
+- reservations.user_id → profiles.id (client)
+- reservations.property_id → properties.id
+- messages relate to both users and properties
+
+## Payment Infrastructure
+
+### Edge Functions (Supabase):
+- **mesomb-collect**: Processes mobile money collections (MTN/Orange)
+- **mesomb-status**: Checks payment transaction status
+- **mesomb-withdraw**: Handles withdrawal requests
+- **process-refund**: Processes refunds using Fapshi API
+
+### Web Payment Integration:
+- Payment library: `@/lib/capay.ts` (calls edge functions)
+- Compatibility layer: `@/lib/fapshi.ts` (exports from capay)
+- Payment hook: `useFapshiPayment` for React components
+- Reservation hook: `useReservations` (includes refund functionality)
+
+### Payment Flow:
+1. User initiates payment via `initiateDirectPayment(amount, phone, options)`
+2. Edge function `mesomb-collect` processes with MeSomb API
+3. Returns transaction ID
+4. Poll status with `pollPaymentStatus(transId)` 
+5. Update reservation payment_status when SUCCESSFUL
+6. Property status updates to 'reserved' on successful payment
+
+### Refund Flow:
+1. Call `requestRefund(reservationId)` from useReservations hook
+2. Edge function `process-refund` processes via Fapshi API
+3. Updates reservation refund_status to 'completed'
+
+### Access Patterns:
+- Use `useAgentPropertyReservations` hook to get reservations for agent's properties
+- Use `useProperties` hook to fetch agent's property listings
+- Use `useFapshiPayment` hook for payment operations
+- All database operations go through Supabase client from `@/lib/supabase`
+- All payment operations go through edge functions (no direct API calls from web)
+
+### Code Style:
+- TypeScript with React
+- Functional components with hooks
+- Inline styles using Colors from `@/constants/Colors`
+- i18n using `useLanguage` hook from `@/contexts/I18nContext`

@@ -1,0 +1,22 @@
+.wallet-container {
+  width: 100%;
+}
+
+.transactions-list {
+  width: 100%;
+}
+
+.transaction-item {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.transaction-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .wallet-container {
+    padding: 16px 12px;
+  }
+}

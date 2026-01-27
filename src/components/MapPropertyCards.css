@@ -1,0 +1,124 @@
+.map-property-cards-container {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.map-property-cards-scroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 16px;
+  pointer-events: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  
+  /* Hide scrollbar completely */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.map-property-cards-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.map-property-card-wrapper {
+  flex: 0 0 auto;
+  width: 340px;
+  scroll-snap-align: start;
+}
+
+/* Ensure PropertyCard in horizontal mode fits the map */
+.map-property-card-wrapper .property-card {
+  height: 200px;
+  margin-bottom: 0;
+}
+
+.map-property-card-wrapper .property-card-image-container {
+  height: 200px !important;
+  min-height: 200px !important;
+  flex: 0 0 160px !important;
+  width: 160px !important;
+}
+
+.map-property-card-wrapper .property-card-info {
+  padding: 16px !important;
+  gap: 8px;
+}
+
+/* Increase font sizes for better readability */
+.map-property-card-wrapper .property-card h3 {
+  font-size: 16px !important;
+  margin-bottom: 8px !important;
+}
+
+.map-property-card-wrapper .property-card .property-location {
+  font-size: 14px !important;
+  margin-bottom: 10px !important;
+}
+
+.map-property-card-wrapper .property-card .property-features {
+  margin-bottom: 10px !important;
+  gap: 12px !important;
+}
+
+.map-property-card-wrapper .property-card .property-price {
+  font-size: 17px !important;
+  margin-top: auto !important;
+}
+
+/* Tablet adjustments */
+@media (max-width: 1024px) {
+  .map-property-card-wrapper {
+    width: 320px;
+  }
+
+  .map-property-card-wrapper .property-card {
+    height: 190px;
+  }
+
+  .map-property-card-wrapper .property-card-image-container {
+    height: 190px !important;
+    min-height: 190px !important;
+    flex: 0 0 150px !important;
+    width: 150px !important;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+  .map-property-cards-container {
+    bottom: 16px;
+  }
+
+  .map-property-card-wrapper {
+    width: 300px;
+  }
+
+  .map-property-card-wrapper .property-card {
+    height: 180px;
+  }
+
+  .map-property-card-wrapper .property-card-image-container {
+    height: 180px !important;
+    min-height: 180px !important;
+    flex: 0 0 140px !important;
+    width: 140px !important;
+  }
+
+  .map-property-card-wrapper .property-card-info {
+    padding: 14px !important;
+  }
+
+  .map-property-card-wrapper .property-card h3 {
+    font-size: 15px !important;
+  }
+
+  .map-property-card-wrapper .property-card .property-price {
+    font-size: 16px !important;
+  }
+}

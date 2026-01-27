@@ -1,0 +1,58 @@
+.skeleton-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 16px;
+}
+
+.skeleton-card {
+  animation: fadeIn 0.3s ease;
+}
+
+.skeleton-image {
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-line {
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .skeleton-container {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 12px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .skeleton-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1025px) {
+  .skeleton-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

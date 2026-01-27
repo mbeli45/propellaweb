@@ -1,0 +1,187 @@
+.security-container {
+  min-height: 100vh;
+  padding-bottom: 32px;
+}
+
+.security-header {
+  padding: 16px;
+  border-bottom: 1px solid;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.security-header-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.back-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Security Options */
+.security-section {
+  padding: 20px 16px;
+}
+
+.security-card {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-bottom: 24px;
+}
+
+.security-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid;
+  transition: background 0.2s ease;
+}
+
+.security-item:last-child {
+  border-bottom: none;
+}
+
+.security-item:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.security-item-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.security-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.security-item-text {
+  flex: 1;
+}
+
+.security-item-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.security-item-description {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.toggle-switch-slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.toggle-switch.active .toggle-switch-slider {
+  transform: translateX(24px);
+}
+
+/* Change Password Section */
+.change-password-card {
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.change-password-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.change-password-button {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.change-password-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .security-header-title {
+    font-size: 18px;
+  }
+
+  .security-item {
+    padding: 16px;
+  }
+
+  .security-icon-wrapper {
+    width: 42px;
+    height: 42px;
+  }
+
+  .security-item-title {
+    font-size: 15px;
+  }
+
+  .security-item-description {
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 769px) {
+  .security-container {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+}

@@ -1,0 +1,145 @@
+.home-container {
+  width: 100%;
+  padding-bottom: 32px;
+}
+
+.welcome-section {
+  width: 100%;
+}
+
+.location-pills-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.location-pills-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  /* Uses global .hidden-scrollbar class */
+}
+
+.location-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: none;
+}
+
+.location-pill:hover {
+  transform: translateY(-1px);
+}
+
+.top-agents-section {
+  width: 100%;
+}
+
+.top-agents-scroll {
+  display: flex;
+  gap: 12px;
+  padding: 0 16px;
+  overflow-x: auto;
+  /* Uses global .hidden-scrollbar class */
+}
+
+.top-agents-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.top-agents-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.properties-section {
+  padding: 0;
+  margin-top: 20px;
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  margin-bottom: 12px;
+}
+
+.see-all-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  font-family: inherit;
+}
+
+.see-all-button:hover {
+  opacity: 0.8;
+}
+
+.horizontal-properties-scroll {
+  display: flex;
+  gap: 16px;
+  padding: 0 16px;
+  overflow-x: auto;
+  /* Uses global .hidden-scrollbar class */
+}
+
+.horizontal-card-container {
+  flex-shrink: 0;
+  width: 320px;
+}
+
+.property-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 0 16px;
+}
+
+.empty-state {
+  padding: 48px 16px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .property-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .location-pill {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .horizontal-card-container {
+    width: 280px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .property-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1025px) {
+  .property-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
