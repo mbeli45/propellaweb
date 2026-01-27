@@ -199,7 +199,7 @@ export function usePropertyVerification(propertyId?: string, propertyType?: stri
       // Remove from progress on error
       setUploadProgress(prev => prev.filter(p => p.documentType !== documentType));
       
-      alert('Upload Error', err.message || 'Failed to upload document');
+      alert(`Upload Error: ${err.message || 'Failed to upload document'}`);
       return false;
     } finally {
       setUploading(false);
@@ -222,7 +222,7 @@ export function usePropertyVerification(propertyId?: string, propertyType?: stri
     } catch (err: any) {
       console.error('Error deleting document:', err);
       setError(err.message);
-      alert('Delete Error', err.message || 'Failed to delete document');
+      alert(`Delete Error: ${err.message || 'Failed to delete document'}`);
       return false;
     }
   };
@@ -237,10 +237,7 @@ export function usePropertyVerification(propertyId?: string, propertyType?: stri
 
       if (missingDocs.length > 0) {
         const missingDocNames = missingDocs.map(doc => doc.document_type.replace('_', ' ')).join(', ');
-        alert(
-          'Missing Documents',
-          `Please upload the following required documents: ${missingDocNames}`
-        );
+        alert(`Missing Documents: Please upload the following required documents: ${missingDocNames}`);
         return false;
       }
 
@@ -255,16 +252,13 @@ export function usePropertyVerification(propertyId?: string, propertyType?: stri
 
       if (error) throw error;
 
-      alert(
-        'Verification Submitted',
-        'Your property has been submitted for verification. You will be notified once the review is complete.'
-      );
+      alert('Verification Submitted: Your property has been submitted for verification. You will be notified once the review is complete.');
 
       return true;
     } catch (err: any) {
       console.error('Error submitting for verification:', err);
       setError(err.message);
-      alert('Submission Error', err.message || 'Failed to submit for verification');
+      alert(`Submission Error: ${err.message || 'Failed to submit for verification'}`);
       return false;
     }
   };

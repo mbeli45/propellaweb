@@ -174,38 +174,33 @@ export default function Sidebar({ items, userRole = 'user' }: SidebarProps) {
 
       <nav className="sidebar-nav">
         {items.map((item) => {
-          // More precise active state logic
-          // Exact match OR child path (starts with path + '/')
-          // But exclude parent routes (like /user or /agent) from matching child routes
+          // Determine if this is a parent route that should only match exactly
           const isParentRoute = item.path === '/user' || item.path === '/agent'
-          const exactMatch = location.pathname === item.path
-          const isChildPath = location.pathname.startsWith(item.path + '/')
-          
-          // Parent routes (/user, /agent) should only be active on exact match
-          // Child routes can be active on exact match or when pathname is their child
-          const isActive = exactMatch || (isChildPath && !isParentRoute)
           
           return (
             <NavLink
               key={item.path}
               to={item.path}
               end={isParentRoute}
-              isActive={() => isActive}
               className="sidebar-nav-item"
-              style={{
+              style={({ isActive }) => ({
                 color: isActive ? Colors.primary[800] : Colors.neutral[600],
                 backgroundColor: isActive ? Colors.primary[50] : 'transparent',
                 justifyContent: isCollapsed ? 'center' : 'flex-start',
-              }}
+              })}
               title={isCollapsed ? t(item.label) : ''}
             >
-              <div className="sidebar-nav-icon-wrapper">
-                <item.icon size={20} color="currentColor" />
-                {item.badge && item.badge > 0 && (
-                  <Badge count={item.badge} size="small" />
-                )}
-              </div>
-              {!isCollapsed && <span className="sidebar-nav-label">{t(item.label)}</span>}
+              {({ isActive }) => (
+                <>
+                  <div className="sidebar-nav-icon-wrapper">
+                    <item.icon size={20} color="currentColor" />
+                    {item.badge && item.badge > 0 && (
+                      <Badge count={item.badge} size="small" />
+                    )}
+                  </div>
+                  {!isCollapsed && <span className="sidebar-nav-label">{t(item.label)}</span>}
+                </>
+              )}
             </NavLink>
           )
         })}

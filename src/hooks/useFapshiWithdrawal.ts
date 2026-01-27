@@ -148,21 +148,13 @@ export function useFapshiWithdrawal(userId: string) {
             console.error('[useFapshiWithdrawal] Error updating wallet:', walletUpdateError);
           }
           
-          alert(
-            'Withdrawal Successful!',
-            'Your withdrawal has been processed successfully.',
-            [{ text: 'OK' }]
-          );
+          alert('Withdrawal Successful! Your withdrawal has been processed successfully.');
         } else if (immediateStatus.status === 'FAILED' || immediateStatus.status === 'EXPIRED') {
           // Withdrawal failed immediately
           console.log('[useFapshiWithdrawal] Withdrawal failed immediately');
           await updateWithdrawalStatus(transId, withdrawalRequest.id, immediateStatus);
           
-          alert(
-            'Withdrawal Failed',
-            'Your withdrawal could not be processed. Please try again.',
-            [{ text: 'OK' }]
-          );
+          alert('Withdrawal Failed: Your withdrawal could not be processed. Please try again.');
         } else {
           // Status is PENDING/VALIDATING, start monitoring
           console.log('[useFapshiWithdrawal] Withdrawal needs monitoring, status:', immediateStatus.status);
@@ -247,11 +239,7 @@ export function useFapshiWithdrawal(userId: string) {
         }
         
         stopWithdrawalMonitoring();
-        alert(
-          'Withdrawal Status Unknown',
-          'Unable to confirm withdrawal status. The transaction may have been processed successfully. Please check your mobile money account balance and contact support if needed.',
-          [{ text: 'OK' }]
-        );
+        alert('Withdrawal Status Unknown: Unable to confirm withdrawal status. The transaction may have been processed successfully. Please check your mobile money account balance and contact support if needed.');
       }, 60000); // 1 minute
 
       // Set up progress tracking (0-100% over 1 minute)
@@ -314,17 +302,9 @@ export function useFapshiWithdrawal(userId: string) {
             
             if (status.status === 'SUCCESSFUL') {
               setMonitoringProgress(100);
-              alert(
-                'Withdrawal Successful!',
-                'Your withdrawal has been processed successfully.',
-                [{ text: 'OK' }]
-              );
+              alert('Withdrawal Successful! Your withdrawal has been processed successfully.');
             } else {
-              alert(
-                'Withdrawal Failed',
-                `Your withdrawal was ${status.status.toLowerCase()}. Please check your account balance to confirm if the funds were received.`,
-                [{ text: 'OK' }]
-              );
+              alert(`Withdrawal Failed: Your withdrawal was ${status.status.toLowerCase()}. Please check your account balance to confirm if the funds were received.`);
             }
           }
         } catch (pollError: any) {

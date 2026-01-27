@@ -1,4 +1,19 @@
-import { Dimensions, PixelRatio, Platform, ScaledSize } from 'react-native';
+// Web compatibility: react-native modules are not available in web builds
+// Using browser APIs instead
+const Dimensions = {
+  get: (type: 'window' | 'screen') => ({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
+    height: typeof window !== 'undefined' ? window.innerHeight : 768,
+  })
+};
+
+const PixelRatio = {
+  roundToNearestPixel: (value: number) => Math.round(value)
+};
+
+const Platform = {
+  OS: 'web' as const
+};
 
 // Screen dimensions
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');

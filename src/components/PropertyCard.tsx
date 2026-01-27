@@ -46,6 +46,7 @@ interface PropertyCardProps {
   onEdit?: () => void
   onDelete?: () => void
   onShare?: () => void
+  onClick?: () => void
   source?: string
 }
 
@@ -56,6 +57,7 @@ export default function PropertyCard({
   onEdit,
   onDelete,
   onShare,
+  onClick,
 }: PropertyCardProps) {
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
@@ -63,7 +65,11 @@ export default function PropertyCard({
   const navigate = useNavigate()
 
   const handleClick = () => {
-    navigate(`/property/${property.id}`)
+    if (onClick) {
+      onClick()
+    } else {
+      navigate(`/property/${property.id}`)
+    }
   }
 
   const getCategoryColor = useMemo(() => {

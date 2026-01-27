@@ -20,7 +20,7 @@ export default function Card({
     const baseStyle: React.CSSProperties = {
       borderRadius: '8px',
       padding: '16px',
-      marginVertical: '8px',
+      margin: '8px 0',
     }
 
     if (variant === 'elevated') {

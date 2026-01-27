@@ -208,7 +208,7 @@ export function useAgentVerification(agentId?: string) {
     } catch (err: any) {
       console.error('Error initializing verification:', err);
       setError(err.message);
-      alert('Error', err.message || 'Failed to initialize verification');
+      alert(`Error: ${err.message || 'Failed to initialize verification'}`);
       return false;
     } finally {
       setLoading(false);
@@ -256,7 +256,7 @@ export function useAgentVerification(agentId?: string) {
     } catch (err: any) {
       console.error('Error uploading document:', err);
       setError(err.message);
-      alert('Upload Error', err.message || 'Failed to upload document');
+      alert(`Upload Error: ${err.message || 'Failed to upload document'}`);
       return false;
     } finally {
       setUploading(false);
@@ -276,10 +276,7 @@ export function useAgentVerification(agentId?: string) {
 
       if (error) throw error;
 
-      alert(
-        'Verification Submitted',
-        'Your documents have been submitted for review. You will be notified once the review is complete.'
-      );
+      alert('Verification Submitted: Your documents have been submitted for review. You will be notified once the review is complete.');
 
       // Refresh verification data
       if (agentId) {
@@ -290,7 +287,7 @@ export function useAgentVerification(agentId?: string) {
     } catch (err: any) {
       console.error('Error submitting for review:', err);
       setError(err.message);
-      alert('Submission Error', err.message || 'Failed to submit for review');
+      alert(`Submission Error: ${err.message || 'Failed to submit for review'}`);
       return false;
     }
   };
@@ -332,7 +329,7 @@ export function useAgentVerification(agentId?: string) {
     } catch (err: any) {
       console.error('Error adding rating:', err);
       setError(err.message);
-      alert('Rating Error', err.message || 'Failed to add rating');
+      alert(`Rating Error: ${err.message || 'Failed to add rating'}`);
       return false;
     }
   };

@@ -6,7 +6,7 @@ import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { useAgentPropertyReservations } from '@/hooks/useReservations'
 import { supabase } from '@/lib/supabase'
-import { Clock, MapPin, CreditCard, CheckCircle2, MessageCircle } from 'lucide-react'
+import { Clock, MapPin, CreditCard, CheckCircle2, MessageCircle, Calendar } from 'lucide-react'
 import { formatPrice } from '@/utils/shareUtils'
 import '../user/Reservations.css'
 

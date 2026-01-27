@@ -128,20 +128,12 @@ export function useCommissionPayment() {
           await updateCommissionPaymentStatus(commissionPaymentId, 'paid', status);
           clearInterval(pollInterval);
           
-          alert(
-            'Commission Payment Successful!',
-            'Your commission payment has been processed and is being held securely. The agent will receive payment after the visit is confirmed and 48 hours have passed.',
-            [{ text: 'OK' }]
-          );
+          alert('Commission Payment Successful! Your commission payment has been processed and is being held securely. The agent will receive payment after the visit is confirmed and 48 hours have passed.');
         } else if (status.status === 'FAILED' || status.status === 'EXPIRED') {
           await updateCommissionPaymentStatus(commissionPaymentId, 'cancelled', status);
           clearInterval(pollInterval);
           
-          alert(
-            'Commission Payment Failed',
-            `Your payment was ${status.status.toLowerCase()}. Please try again.`,
-            [{ text: 'OK' }]
-          );
+          alert(`Commission Payment Failed: Your payment was ${status.status.toLowerCase()}. Please try again.`);
         }
       } catch (pollError: any) {
         console.error('[useCommissionPayment] Polling error:', pollError);
@@ -260,16 +252,12 @@ export function useCommissionPayment() {
         
       if (error) throw error;
       
-      alert(
-        'Dispute Submitted',
-        'Your dispute has been submitted and will be reviewed by our team within 24 hours.',
-        [{ text: 'OK' }]
-      );
+      alert('Dispute Submitted: Your dispute has been submitted and will be reviewed by our team within 24 hours.');
       
       return data;
     } catch (err: any) {
       setError(err.message);
-      alert('Error', 'Failed to submit dispute. Please try again.');
+      alert('Error: Failed to submit dispute. Please try again.');
       throw err;
     } finally {
       setLoading(false);

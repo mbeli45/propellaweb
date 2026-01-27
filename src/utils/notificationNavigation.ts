@@ -1,5 +1,22 @@
-import { router } from 'expo-router';
-import * as Notifications from 'expo-notifications';
+// Web compatibility: expo-router and expo-notifications are not available in web builds
+// These are stubs for the web version
+const router = {
+  push: (path: string) => {
+    if (typeof window !== 'undefined') {
+      window.location.href = path;
+    }
+  },
+  navigate: (path: string) => {
+    if (typeof window !== 'undefined') {
+      window.location.href = path;
+    }
+  }
+};
+
+const Notifications = {
+  getPermissionsAsync: async () => ({ status: 'granted' }),
+  requestPermissionsAsync: async () => ({ status: 'granted' }),
+};
 
 // Track last navigation to prevent duplicate navigations
 let lastNavigationTime = 0;

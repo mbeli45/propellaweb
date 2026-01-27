@@ -46,9 +46,8 @@ export const usePropertyViews = (config: Partial<ViewTrackingConfig> = {}) => {
 
   // Get platform
   const getPlatform = useCallback((): 'ios' | 'android' | 'web' => {
-    if (true) return 'web';
-    if (Platform.OS === 'ios') return 'ios';
-    return 'android';
+    // Always return 'web' for web builds
+    return 'web';
   }, []);
 
   // Track a property view
