@@ -16,12 +16,8 @@ const LANGUAGE_DETECTOR = {
         return callback(savedLanguage);
       }
       
-      // Fall back to browser locale
-      const deviceLanguage = navigator.language.split('-')[0] || 'en';
-      const supportedLanguages = ['en', 'fr'];
-      const language = supportedLanguages.includes(deviceLanguage) ? deviceLanguage : 'en';
-      
-      callback(language);
+      // Default to English (do not use browser locale)
+      callback('en');
     } catch (error) {
       console.error('Error detecting language:', error);
       callback('en');
@@ -49,6 +45,7 @@ i18n
         translation: fr
       }
     },
+    lng: 'en', // Set default language to English
     fallbackLng: 'en',
     debug: import.meta.env.DEV,
     

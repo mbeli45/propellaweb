@@ -14,7 +14,7 @@ import './Listings.css'
 export default function AgentListings() {
   const { user } = useAuth()
   const { colorScheme } = useThemeMode()
-  const { t, currentLanguage } = useLanguage()
+  const { t } = useLanguage()
   const Colors = getColors(colorScheme)
   const navigate = useNavigate()
   const { getAgentTotalViews } = usePropertyViews()
@@ -320,8 +320,8 @@ export default function AgentListings() {
       }}>
         {[
           { key: 'active', label: t('agent.available'), count: properties?.filter(p => p.status === 'available').length || 0 },
-          { key: 'reserved', label: currentLanguage === 'en' ? 'Reserved' : 'Réservé', count: properties?.filter(p => p.status === 'reserved').length || 0 },
-          { key: 'sold', label: currentLanguage === 'en' ? 'Sold' : 'Vendu', count: properties?.filter(p => p.status === 'sold').length || 0 },
+          { key: 'reserved', label: t('property.reserved'), count: properties?.filter(p => p.status === 'reserved').length || 0 },
+          { key: 'sold', label: t('property.sold'), count: properties?.filter(p => p.status === 'sold').length || 0 },
         ].map((tab) => (
           <button
             key={tab.key}
