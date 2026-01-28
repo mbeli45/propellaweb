@@ -428,6 +428,32 @@ export default function PropertyDetail() {
           </span>
         </div>
 
+        {/* Description */}
+        {property.description && (
+          <div style={{ 
+            backgroundColor: Colors.white,
+            padding: '20px',
+            borderRadius: '12px',
+            marginBottom: '20px'
+          }}>
+            <h3 style={{ 
+              fontSize: '18px', 
+              fontWeight: '600', 
+              color: Colors.neutral[900],
+              marginBottom: '12px'
+            }}>
+              {t('property.description')}
+            </h3>
+            <p style={{ 
+              fontSize: '14px', 
+              color: Colors.neutral[700],
+              lineHeight: '1.6'
+            }}>
+              {property.description}
+            </p>
+          </div>
+        )}
+
         {/* Features */}
         <div className="property-features" style={{ 
           display: 'grid',
@@ -465,32 +491,6 @@ export default function PropertyDetail() {
             </div>
           )}
         </div>
-
-        {/* Description */}
-        {property.description && (
-          <div style={{ 
-            backgroundColor: Colors.white,
-            padding: '20px',
-            borderRadius: '12px',
-            marginBottom: '20px'
-          }}>
-            <h3 style={{ 
-              fontSize: '18px', 
-              fontWeight: '600', 
-              color: Colors.neutral[900],
-              marginBottom: '12px'
-            }}>
-              {t('property.description')}
-            </h3>
-            <p style={{ 
-              fontSize: '14px', 
-              color: Colors.neutral[700],
-              lineHeight: '1.6'
-            }}>
-              {property.description}
-            </p>
-          </div>
-        )}
 
         {/* Agent Information */}
         {property.owner && (

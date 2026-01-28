@@ -190,11 +190,26 @@
   font-size: 15px;
   outline: none;
   transition: all 0.2s ease;
+  background-color: white;
+  color: #111827;
+}
+
+[data-theme="dark"] .reservation-input,
+.dark .reservation-input {
+  background-color: #27272A;
+  border-color: #3F3F46;
+  color: #FAFAFA;
 }
 
 .reservation-input:focus {
   border-width: 2px;
   box-shadow: 0 0 0 3px rgba(0, 105, 255, 0.1);
+}
+
+[data-theme="dark"] .reservation-input:focus,
+.dark .reservation-input:focus {
+  background-color: #3F3F46;
+  box-shadow: 0 0 0 3px rgba(0, 105, 255, 0.2);
 }
 
 .reservation-input-hint {

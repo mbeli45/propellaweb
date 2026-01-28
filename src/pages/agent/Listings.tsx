@@ -336,7 +336,7 @@ export default function AgentListings() {
               borderRadius: '8px',
               border: `1px solid ${Colors.neutral[200]}`,
               backgroundColor: activeTab === tab.key ? Colors.primary[600] : Colors.neutral[50],
-              color: activeTab === tab.key ? Colors.white : Colors.neutral[600],
+              color: activeTab === tab.key ? '#FFFFFF' : Colors.neutral[600],
               fontSize: '14px',
               fontWeight: '500',
               cursor: 'pointer',
@@ -348,7 +348,7 @@ export default function AgentListings() {
               padding: '2px 8px',
               borderRadius: '10px',
               backgroundColor: activeTab === tab.key ? 'rgba(255, 255, 255, 0.2)' : Colors.neutral[200],
-              color: activeTab === tab.key ? Colors.white : Colors.neutral[600],
+              color: activeTab === tab.key ? '#FFFFFF' : Colors.neutral[600],
               fontSize: '12px',
               fontWeight: '600',
               minWidth: '20px',
@@ -395,7 +395,7 @@ export default function AgentListings() {
                 gap: '8px',
                 padding: '12px 24px',
                 backgroundColor: Colors.primary[600],
-                color: Colors.white,
+                color: '#FFFFFF',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '16px',
@@ -418,22 +418,7 @@ export default function AgentListings() {
           gap: '16px'
         }}>
           {filteredProperties.map((property) => (
-            <div key={property.id} style={{ position: 'relative' }}>
-              <PropertyCard property={property} isOwner />
-              <div style={{
-                position: 'absolute',
-                top: '12px',
-                left: '12px',
-                padding: '4px 8px',
-                borderRadius: '12px',
-                backgroundColor: getStatusColor(property.status || 'available'),
-                color: 'white',
-                fontSize: '12px',
-                fontWeight: '600'
-              }}>
-                {property.status ? property.status.charAt(0).toUpperCase() + property.status.slice(1) : t('agent.available')}
-              </div>
-            </div>
+            <PropertyCard key={property.id} property={property} isOwner />
           ))}
         </div>
       )}

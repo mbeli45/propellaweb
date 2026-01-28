@@ -872,6 +872,7 @@
     "propertyPhotos": "Photos et vidéos de propriété",
     "addPhotosVideos": "Ajoutez des photos et vidéos de haute qualité pour présenter votre propriété ({{count}}/10)",
     "addMediaButton": "Ajouter des photos et vidéos",
+    "supportedFormats": "Formats pris en charge : Images (JPG, PNG) et Vidéos (MP4, MOV)",
     "basicInformation": "Informations de base",
     "location": "Emplacement",
     "propertyType": "Type de propriété",

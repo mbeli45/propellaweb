@@ -46,7 +46,7 @@ export default function Login() {
 
     try {
       await signIn(email, password)
-      navigate('/user')
+      // Navigation is handled by signIn based on user role
     } catch (err: any) {
       setError(err.message || t('auth.loginFailed'))
     } finally {
@@ -227,13 +227,13 @@ export default function Login() {
             }}
           >
             {loading ? (
-              <span style={{ color: Colors.white, fontWeight: '600' }}>
+              <span style={{ color: '#FFFFFF', fontWeight: '600' }}>
                 {t('auth.signingIn')}
               </span>
             ) : (
               <>
-                <LogIn size={20} color={Colors.white} style={{ marginRight: '8px' }} />
-                <span style={{ color: Colors.white, fontWeight: '600' }}>
+                <LogIn size={20} color="#FFFFFF" style={{ marginRight: '8px' }} />
+                <span style={{ color: '#FFFFFF', fontWeight: '600' }}>
                   {t('auth.signIn')}
                 </span>
               </>

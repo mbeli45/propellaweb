@@ -153,7 +153,7 @@ export default function ReservationModal({
               style={{
                 borderColor: Colors.neutral[300],
                 color: Colors.neutral[900],
-                backgroundColor: Colors.white
+                backgroundColor: colorScheme === 'dark' ? Colors.neutral[200] : Colors.white
               }}
             />
             <p className="reservation-input-hint" style={{ color: Colors.neutral[500] }}>

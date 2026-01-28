@@ -35,7 +35,7 @@
 }
 
 .search-bar-input::placeholder {
-  color: #9CA3AF;
+  color: var(--color-neutral-400, #9CA3AF);
 }
 
 .search-bar-clear {
@@ -58,11 +58,16 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background: white;
+  background: var(--color-white, white);
   flex-shrink: 0;
   transition: all 0.2s ease;
 }
 
 .search-bar-filter:hover {
   background-color: rgba(0, 105, 255, 0.05);
+}
+
+[data-theme="dark"] .search-bar-filter:hover,
+.dark .search-bar-filter:hover {
+  background-color: rgba(0, 105, 255, 0.15);
 }

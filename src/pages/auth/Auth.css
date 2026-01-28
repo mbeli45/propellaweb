@@ -173,9 +173,19 @@
   background-color: #F9FAFB !important;
 }
 
+[data-theme="dark"] .auth-input-container,
+.dark .auth-input-container {
+  background-color: #27272A !important;
+}
+
 /* Additional fix for when input is focused and autofilled */
 .auth-input-container:has(.auth-text-input:-webkit-autofill) {
   background-color: #F9FAFB !important;
+}
+
+[data-theme="dark"] .auth-input-container:has(.auth-text-input:-webkit-autofill),
+.dark .auth-input-container:has(.auth-text-input:-webkit-autofill) {
+  background-color: #27272A !important;
 }
 
 /* Force remove any browser-applied background colors */

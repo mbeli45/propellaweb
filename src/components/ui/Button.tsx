@@ -45,7 +45,7 @@ export default function Button({
 
     if (variant === 'primary') {
       baseStyle.backgroundColor = disabled || loading ? Colors.neutral[400] : Colors.primary[600]
-      baseStyle.color = Colors.white
+      baseStyle.color = '#FFFFFF'
     } else if (variant === 'secondary') {
       baseStyle.backgroundColor = disabled || loading ? Colors.neutral[200] : Colors.neutral[100]
       baseStyle.color = Colors.neutral[900]
@@ -101,7 +101,7 @@ export default function Button({
     >
       {loading ? (
         <>
-          <Loader variant="button" size="small" color={variant === 'outline' ? Colors.primary[600] : Colors.white} />
+          <Loader variant="button" size="small" color={variant === 'outline' ? Colors.primary[600] : '#FFFFFF'} />
           <span style={getTextStyle()}>{title}</span>
         </>
       ) : (

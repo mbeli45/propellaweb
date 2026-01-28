@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { MapPin, X, Loader } from 'lucide-react'
 import { useLocationSearch } from '@/hooks/useLocationSearch'
+import { useThemeMode } from '@/contexts/ThemeContext'
+import { getColors } from '@/constants/Colors'
 import './LocationSearchInput.css'
 
 interface LocationSuggestion {
@@ -32,6 +34,8 @@ export default function LocationSearchInput({
   style
 }: LocationSearchInputProps) {
   const { suggestions, loading, handleSearchQueryChange, clearSuggestions } = useLocationSearch()
+  const { colorScheme } = useThemeMode()
+  const Colors = getColors(colorScheme)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -85,6 +89,20 @@ export default function LocationSearchInput({
           required={required}
           disabled={disabled}
           className="location-search-input"
+          style={{
+            borderColor: Colors.neutral[300],
+            backgroundColor: Colors.neutral[50],
+            color: Colors.neutral[900],
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = Colors.primary[600]
+            e.target.style.backgroundColor = colorScheme === 'dark' ? Colors.neutral[200] : Colors.white
+            if (value) setShowSuggestions(true)
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = Colors.neutral[300]
+            e.target.style.backgroundColor = Colors.neutral[50]
+          }}
         />
         {loading && (
           <Loader className="location-search-loader" size={16} />
@@ -102,19 +120,39 @@ export default function LocationSearchInput({
       </div>
 
       {showSuggestions && suggestions.length > 0 && (
-        <div className="location-search-suggestions">
+        <div 
+          className="location-search-suggestions"
+          style={{
+            backgroundColor: Colors.white,
+            borderColor: Colors.neutral[200],
+            boxShadow: colorScheme === 'dark' 
+              ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+              : '0 4px 12px rgba(0, 0, 0, 0.1)',
+          }}
+        >
           {suggestions.map((suggestion) => (
             <button
               key={suggestion.id}
               type="button"
               onClick={() => handleSelectSuggestion(suggestion)}
               className="location-search-suggestion-item"
+              style={{
+                borderBottomColor: Colors.neutral[200],
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = Colors.neutral[50]
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
             >
-              <MapPin size={16} className="suggestion-icon" />
+              <MapPin size={16} className="suggestion-icon" color={Colors.primary[600]} />
               <div className="suggestion-content">
-                <div className="suggestion-name">{suggestion.place_name}</div>
+                <div className="suggestion-name" style={{ color: Colors.neutral[900] }}>
+                  {suggestion.place_name}
+                </div>
                 {suggestion.context && suggestion.context.length > 0 && (
-                  <div className="suggestion-context">
+                  <div className="suggestion-context" style={{ color: Colors.neutral[600] }}>
                     {suggestion.context.slice(0, 2).join(', ')}
                   </div>
                 )}

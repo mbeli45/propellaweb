@@ -73,9 +73,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
-        fetchProfile(session.user.id, true)
+        // Only fetch if profile is not already cached (prevents race conditions during signIn)
+        // Check cache to avoid unnecessary refetch when signIn has already set the user
+        const cached = profileCache.get(session.user.id)
+        if (!cached || Date.now() - cached.timestamp > 1000) {
+          fetchProfile(session.user.id, true)
+        } else {
+          // Use cached data if available and recent
+          setUser(cached.data)
+        }
       } else {
         setUser(null)
         profileCache.clear()
@@ -112,10 +120,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profileCache.set(data.user.id, { data: profileData, timestamp: Date.now() })
         setUser(profileData)
 
-        // Navigate based on role
+        // Navigate based on role - use queueMicrotask to ensure state update is processed
         const targetRoute = (profileData.role === 'agent' || profileData.role === 'landlord') ? '/agent' : '/user'
         console.log('🔐 [signIn] Navigating to:', targetRoute, '| User role:', profileData.role)
-        navigate(targetRoute)
+        
+        // Use queueMicrotask to allow React to process the state update before navigation
+        queueMicrotask(() => {
+          navigate(targetRoute)
+        })
       }
     } catch (err: any) {
       setError(err.message)

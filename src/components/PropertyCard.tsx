@@ -5,6 +5,7 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { calculateRentPrices, formatPrice as formatPriceUtil } from '@/utils/shareUtils'
+import { useShare } from '@/hooks/useShare'
 import './PropertyCard.css'
 
 export interface PropertyData {
@@ -63,12 +64,22 @@ export default function PropertyCard({
   const { t } = useLanguage()
   const Colors = getColors(colorScheme)
   const navigate = useNavigate()
+  const { shareProperty } = useShare()
 
   const handleClick = () => {
     if (onClick) {
       onClick()
     } else {
       navigate(`/property/${property.id}`)
+    }
+  }
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onShare) {
+      onShare()
+    } else {
+      await shareProperty(property)
     }
   }
 
@@ -96,16 +107,22 @@ export default function PropertyCard({
         borderRadius: '16px',
         overflow: 'hidden',
         cursor: 'pointer',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+        boxShadow: colorScheme === 'dark' 
+          ? '0 2px 8px rgba(0, 0, 0, 0.3)' 
+          : '0 2px 8px rgba(0, 0, 0, 0.08)',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-2px)'
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.12)'
+        e.currentTarget.style.boxShadow = colorScheme === 'dark'
+          ? '0 4px 12px rgba(0, 0, 0, 0.4)'
+          : '0 4px 12px rgba(0, 0, 0, 0.12)'
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'translateY(0)'
-        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)'
+        e.currentTarget.style.boxShadow = colorScheme === 'dark'
+          ? '0 2px 8px rgba(0, 0, 0, 0.3)'
+          : '0 2px 8px rgba(0, 0, 0, 0.08)'
       }}
     >
       <div
@@ -135,20 +152,45 @@ export default function PropertyCard({
             top: '12px',
             left: '12px',
             display: 'flex',
+            flexWrap: 'wrap',
             gap: '6px',
+            maxWidth: 'calc(100% - 100px)',
             zIndex: 3,
           }}
         >
+          {/* Status Badge (if available) */}
+          {property.status && property.status !== 'available' && (
+            <span
+              style={{
+                backgroundColor: property.status === 'reserved' 
+                  ? Colors.warning[600] 
+                  : property.status === 'sold' 
+                  ? Colors.error[600] 
+                  : Colors.success[600],
+                color: '#FFFFFF',
+                fontSize: horizontal ? '10px' : '11px',
+                fontWeight: '600',
+                padding: horizontal ? '3px 8px' : '4px 10px',
+                borderRadius: '20px',
+                textTransform: 'capitalize',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
+            </span>
+          )}
+          
           {/* Category Badge */}
           <span
             style={{
               backgroundColor: getCategoryColor,
-              color: Colors.white,
+              color: '#FFFFFF',
               fontSize: horizontal ? '10px' : '11px',
               fontWeight: '600',
               padding: horizontal ? '3px 8px' : '4px 10px',
               borderRadius: '20px',
               textTransform: 'capitalize',
+              whiteSpace: 'nowrap',
             }}
           >
             {(property.category || 'standard').charAt(0).toUpperCase() + (property.category || 'standard').slice(1)}
@@ -158,11 +200,12 @@ export default function PropertyCard({
           <span
             style={{
               backgroundColor: Colors.primary[700],
-              color: Colors.white,
+              color: '#FFFFFF',
               fontSize: horizontal ? '10px' : '11px',
               fontWeight: '600',
               padding: horizontal ? '3px 8px' : '4px 10px',
               borderRadius: '20px',
+              whiteSpace: 'nowrap',
             }}
           >
             {property.type === 'rent' ? t('property.forRent') : t('property.forSale')}
@@ -212,14 +255,11 @@ export default function PropertyCard({
           }}
         >
           <button
-            onClick={(e) => {
-              e.stopPropagation()
-              if (onShare) {
-                onShare()
-              }
-            }}
+            onClick={handleShare}
             style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              backgroundColor: colorScheme === 'dark' 
+                ? 'rgba(24, 24, 27, 0.9)' 
+                : 'rgba(255, 255, 255, 0.9)',
               border: 'none',
               borderRadius: '20px',
               padding: '6px',
@@ -227,10 +267,12 @@ export default function PropertyCard({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+              boxShadow: colorScheme === 'dark'
+                ? '0 1px 2px rgba(0, 0, 0, 0.3)'
+                : '0 1px 2px rgba(0, 0, 0, 0.1)',
             }}
           >
-            <Share2 size={18} color={Colors.primary[700]} />
+            <Share2 size={18} color={Colors.primary[600]} />
           </button>
         </div>
       </div>
@@ -249,7 +291,7 @@ export default function PropertyCard({
                 style={{
                   fontSize: horizontal ? '16px' : '20px',
                   fontWeight: '700',
-                  color: Colors.primary[800],
+                  color: Colors.primary[600],
                   marginBottom: '4px',
                 }}
               >
@@ -259,7 +301,7 @@ export default function PropertyCard({
                 style={{
                   fontSize: horizontal ? '12px' : '14px',
                   fontWeight: '500',
-                  color: Colors.neutral[600],
+                  color: Colors.neutral[500],
                   marginBottom: '6px',
                 }}
               >
@@ -288,7 +330,7 @@ export default function PropertyCard({
             style={{
               fontSize: horizontal ? '16px' : '20px',
               fontWeight: '700',
-              color: Colors.primary[800],
+              color: Colors.primary[600],
               marginBottom: '4px',
             }}
           >

@@ -469,7 +469,9 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
             resize: 'none',
             maxHeight: '100px',
             minHeight: '44px',
-            outline: 'none'
+            outline: 'none',
+            backgroundColor: Colors.neutral[50],
+            color: Colors.neutral[900]
           }}
           rows={1}
         />

@@ -44,7 +44,7 @@ export default function GuestAuth() {
             marginBottom: '32px',
           }}
         >
-          <User size={64} color={Colors.white} />
+          <User size={64} color={Colors.primary[600]} />
         </div>
 
         <h1
@@ -91,7 +91,7 @@ export default function GuestAuth() {
               padding: '0 24px',
               marginBottom: '16px',
               backgroundColor: Colors.primary[600],
-              color: Colors.white,
+              color: '#FFFFFF',
               border: 'none',
               fontSize: '16px',
               fontWeight: '600',
@@ -105,7 +105,7 @@ export default function GuestAuth() {
               e.currentTarget.style.backgroundColor = Colors.primary[600]
             }}
           >
-            <LogIn size={20} color={Colors.white} style={{ marginRight: '8px' }} />
+            <LogIn size={20} color="#FFFFFF" style={{ marginRight: '8px' }} />
             {t('guestAuth.signIn')}
           </button>
 

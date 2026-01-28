@@ -442,11 +442,11 @@ export default function Signup() {
             }}
           >
             {loading ? (
-              <span style={{ color: Colors.white, fontWeight: '600' }}>
+              <span style={{ color: '#FFFFFF', fontWeight: '600' }}>
                 {t('signup.creatingAccount')}
               </span>
             ) : (
-              <span style={{ color: Colors.white, fontWeight: '600' }}>
+              <span style={{ color: '#FFFFFF', fontWeight: '600' }}>
                 {t('signup.createAccountButton')}
               </span>
             )}

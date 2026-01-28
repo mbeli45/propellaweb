@@ -4,7 +4,8 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { useWallet } from '@/hooks/useWallet'
-import { Wallet, ArrowDown, ArrowUp, CreditCard, TrendingUp } from 'lucide-react'
+import { useFapshiWithdrawal } from '@/hooks/useFapshiWithdrawal'
+import { Wallet, ArrowDown, ArrowUp, CreditCard, TrendingUp, X, AlertCircle } from 'lucide-react'
 import { formatPrice } from '@/utils/shareUtils'
 import './Wallet.css'
 
@@ -22,15 +23,54 @@ export default function AgentWallet() {
     refreshWallet
   } = useWallet(user?.id || '')
 
+  const { processFapshiWithdrawal, loading: withdrawalLoading, error: withdrawalError } = useFapshiWithdrawal(user?.id || '')
+
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false)
+  const [withdrawAmount, setWithdrawAmount] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'mtn' | 'orange' | null>(null)
+  const [withdrawalMessage, setWithdrawalMessage] = useState<string | null>(null)
+
   const balance = wallet?.balance || 0
 
-  // No need for this useEffect - the hook already fetches on mount via useWallet(user?.id)
-  // The hook's useEffect (line 14-44) handles fetching wallet and transactions when userId changes
-  // useEffect(() => {
-  //   if (user?.id) {
-  //     refreshWallet()
-  //   }
-  // }, [user?.id, refreshWallet])
+  const handleWithdraw = async () => {
+    if (!withdrawAmount || !phoneNumber || !selectedPaymentMethod) {
+      setWithdrawalMessage(t('wallet.fillAllFields') || 'Please fill all fields')
+      return
+    }
+
+    const amount = parseFloat(withdrawAmount)
+    if (isNaN(amount) || amount <= 0) {
+      setWithdrawalMessage(t('wallet.invalidAmount') || 'Please enter a valid amount')
+      return
+    }
+
+    if (amount > balance) {
+      setWithdrawalMessage(t('wallet.insufficientBalance') || 'Insufficient balance')
+      return
+    }
+
+    try {
+      setWithdrawalMessage(null)
+      await processFapshiWithdrawal(amount, phoneNumber, selectedPaymentMethod)
+      setShowWithdrawModal(false)
+      setWithdrawAmount('')
+      setPhoneNumber('')
+      setSelectedPaymentMethod(null)
+      setWithdrawalMessage(null)
+      refreshWallet()
+    } catch (error: any) {
+      setWithdrawalMessage(error.message || t('wallet.withdrawalFailed') || 'Withdrawal failed')
+    }
+  }
+
+  const closeModal = () => {
+    setShowWithdrawModal(false)
+    setWithdrawAmount('')
+    setPhoneNumber('')
+    setSelectedPaymentMethod(null)
+    setWithdrawalMessage(null)
+  }
 
   return (
     <div className="wallet-container" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh' }}>
@@ -49,7 +89,7 @@ export default function AgentWallet() {
           backgroundColor: Colors.primary[600],
           borderRadius: '16px',
           padding: '24px',
-          color: Colors.white,
+          color: '#FFFFFF',
           marginBottom: '24px',
           boxShadow: '0 4px 12px rgba(0, 105, 255, 0.2)'
         }}>
@@ -91,6 +131,7 @@ export default function AgentWallet() {
           marginBottom: '24px'
         }}>
           <button
+            onClick={() => setShowWithdrawModal(true)}
             style={{
               padding: '16px',
               backgroundColor: Colors.white,
@@ -250,6 +291,221 @@ export default function AgentWallet() {
           )}
         </div>
       </div>
+
+      {/* Withdrawal Modal */}
+      {showWithdrawModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={closeModal}
+        >
+          <div
+            style={{
+              backgroundColor: Colors.white,
+              borderRadius: '16px',
+              padding: '24px',
+              maxWidth: '500px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '700', color: Colors.neutral[900] }}>
+                {t('wallet.withdraw')}
+              </h2>
+              <button
+                onClick={closeModal}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <X size={24} color={Colors.neutral[600]} />
+              </button>
+            </div>
+
+            {/* Amount */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: Colors.neutral[900], marginBottom: '8px' }}>
+                {t('wallet.amount') || 'Amount (FCFA)'}
+              </label>
+              <input
+                type="number"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+                placeholder="0"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: `1px solid ${Colors.neutral[300]}`,
+                  fontSize: '16px',
+                  color: Colors.neutral[900],
+                  backgroundColor: colorScheme === 'dark' ? Colors.neutral[200] : Colors.white
+                }}
+              />
+              <p style={{ fontSize: '12px', color: Colors.neutral[500], marginTop: '4px' }}>
+                {t('wallet.availableBalance') || 'Available'}: {formatPrice(balance)} FCFA
+              </p>
+            </div>
+
+            {/* Payment Method */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: Colors.neutral[900], marginBottom: '8px' }}>
+                {t('wallet.paymentMethod') || 'Payment Method'}
+              </label>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={() => setSelectedPaymentMethod('mtn')}
+                  style={{
+                    flex: 1,
+                    padding: '16px',
+                    borderRadius: '8px',
+                    border: `2px solid ${selectedPaymentMethod === 'mtn' ? Colors.primary[600] : Colors.neutral[300]}`,
+                    backgroundColor: selectedPaymentMethod === 'mtn' ? Colors.primary[50] : Colors.white,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <img src="/mtn-logo.svg" alt="MTN" style={{ width: '40px', height: '40px' }} />
+                  <span style={{
+                    color: selectedPaymentMethod === 'mtn' ? Colors.primary[700] : Colors.neutral[900],
+                    fontWeight: selectedPaymentMethod === 'mtn' ? '600' : '500'
+                  }}>
+                    MTN
+                  </span>
+                </button>
+                <button
+                  onClick={() => setSelectedPaymentMethod('orange')}
+                  style={{
+                    flex: 1,
+                    padding: '16px',
+                    borderRadius: '8px',
+                    border: `2px solid ${selectedPaymentMethod === 'orange' ? Colors.primary[600] : Colors.neutral[300]}`,
+                    backgroundColor: selectedPaymentMethod === 'orange' ? Colors.primary[50] : Colors.white,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <img src="/orange-logo.svg" alt="Orange" style={{ width: '40px', height: '40px' }} />
+                  <span style={{
+                    color: selectedPaymentMethod === 'orange' ? Colors.primary[700] : Colors.neutral[900],
+                    fontWeight: selectedPaymentMethod === 'orange' ? '600' : '500'
+                  }}>
+                    Orange
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Phone Number */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: Colors.neutral[900], marginBottom: '8px' }}>
+                {t('wallet.phoneNumber') || 'Phone Number'}
+              </label>
+              <input
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="6XX XXX XXX"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: `1px solid ${Colors.neutral[300]}`,
+                  fontSize: '16px',
+                  color: Colors.neutral[900],
+                  backgroundColor: colorScheme === 'dark' ? Colors.neutral[200] : Colors.white
+                }}
+              />
+            </div>
+
+            {/* Error Message */}
+            {withdrawalMessage && (
+              <div style={{
+                padding: '12px',
+                borderRadius: '8px',
+                backgroundColor: Colors.error[50],
+                color: Colors.error[700],
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '20px'
+              }}>
+                <AlertCircle size={16} />
+                <span style={{ fontSize: '14px' }}>{withdrawalMessage}</span>
+              </div>
+            )}
+
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={closeModal}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: `1px solid ${Colors.neutral[300]}`,
+                  backgroundColor: Colors.white,
+                  color: Colors.neutral[700],
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+                disabled={withdrawalLoading}
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={handleWithdraw}
+                disabled={withdrawalLoading || !withdrawAmount || !phoneNumber || !selectedPaymentMethod}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: withdrawalLoading || !withdrawAmount || !phoneNumber || !selectedPaymentMethod
+                    ? Colors.neutral[400]
+                    : Colors.primary[600],
+                  color: '#FFFFFF',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: withdrawalLoading || !withdrawAmount || !phoneNumber || !selectedPaymentMethod
+                    ? 'not-allowed'
+                    : 'pointer'
+                }}
+              >
+                {withdrawalLoading ? (t('common.processing') || 'Processing...') : (t('wallet.withdraw') || 'Withdraw')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

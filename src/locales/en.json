@@ -1063,7 +1063,8 @@
     "previewCounter": "{{current}}/{{total}}",
     "propertyPhotos": "Property Photos & Videos",
     "addPhotosVideos": "Add high-quality photos and videos to showcase your property ({{count}}/10)",
-    "addMediaButton": "Add Photos & Videos"
+    "addMediaButton": "Add Photos & Videos",
+    "supportedFormats": "Supported: Images (JPG, PNG) and Videos (MP4, MOV)"
   },
   "help": {
     "contactUs": "Contact Us",

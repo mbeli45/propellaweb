@@ -12,7 +12,7 @@
 
 .location-search-icon {
   position: absolute;
-  left: 14px;
+  left: 12px;
   color: #6B7280;
   pointer-events: none;
   z-index: 1;
@@ -20,13 +20,14 @@
 
 .location-search-input {
   width: 100%;
-  padding: 12px 40px 12px 42px;
+  padding: 12px 40px 12px 46px;
   border: 1px solid #D1D5DB;
   border-radius: 10px;
   font-size: 15px;
   background-color: #F9FAFB;
   color: #111827;
   transition: all 0.2s;
+  box-sizing: border-box;
 }
 
 .location-search-input:focus {
@@ -40,6 +41,26 @@
   background-color: #F3F4F6;
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+/* Dark mode support */
+[data-theme="dark"] .location-search-input,
+.dark .location-search-input {
+  border-color: #3F3F46;
+  background-color: #27272A;
+  color: #FAFAFA;
+}
+
+[data-theme="dark"] .location-search-input:focus,
+.dark .location-search-input:focus {
+  border-color: #0069FF;
+  background-color: #3F3F46;
+  box-shadow: 0 0 0 3px rgba(0, 105, 255, 0.2);
+}
+
+[data-theme="dark"] .location-search-input:disabled,
+.dark .location-search-input:disabled {
+  background-color: #18181B;
 }
 
 .location-search-loader {
@@ -92,6 +113,13 @@
   z-index: 1000;
 }
 
+[data-theme="dark"] .location-search-suggestions,
+.dark .location-search-suggestions {
+  background: #27272A;
+  border-color: #3F3F46;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 .location-search-suggestion-item {
   width: 100%;
   display: flex;
@@ -116,6 +144,21 @@
 
 .location-search-suggestion-item:active {
   background-color: #F3F4F6;
+}
+
+[data-theme="dark"] .location-search-suggestion-item,
+.dark .location-search-suggestion-item {
+  border-bottom-color: #3F3F46;
+}
+
+[data-theme="dark"] .location-search-suggestion-item:hover,
+.dark .location-search-suggestion-item:hover {
+  background-color: #3F3F46;
+}
+
+[data-theme="dark"] .location-search-suggestion-item:active,
+.dark .location-search-suggestion-item:active {
+  background-color: #52525B;
 }
 
 .suggestion-icon {
@@ -145,4 +188,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+[data-theme="dark"] .suggestion-name,
+.dark .suggestion-name {
+  color: #FAFAFA;
+}
+
+[data-theme="dark"] .suggestion-context,
+.dark .suggestion-context {
+  color: #A1A1AA;
 }

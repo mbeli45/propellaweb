@@ -6,7 +6,7 @@ import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { supabase } from '@/lib/supabase'
 import { useStorage } from '@/hooks/useStorage'
-import { ArrowLeft, Plus, X } from 'lucide-react'
+import { ArrowLeft, Plus, X, Star, DollarSign, Square, Home, MapPin } from 'lucide-react'
 import LocationSearchInput from '@/components/LocationSearchInput'
 import './PropertyForm.css'
 
@@ -248,11 +248,23 @@ export default function AddProperty() {
           </div>
         )}
 
-        {/* Basic Information */}
+        {/* Basic Information Section */}
         <div className="form-section" style={{ backgroundColor: Colors.white }}>
-          <h2 style={{ color: Colors.neutral[900] }}>
-            {t('propertyForm.basicInformation')}
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div style={{
+              backgroundColor: Colors.primary[50],
+              padding: '8px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Home size={20} color={Colors.primary[600]} />
+            </div>
+            <h2 style={{ color: Colors.neutral[900], margin: 0, fontSize: '16px', fontWeight: '600' }}>
+              {t('propertyForm.basicInformation') || 'Basic Information'}
+            </h2>
+          </div>
           
           <div className="form-group">
             <label>{t('property.title')} *</label>
@@ -266,61 +278,34 @@ export default function AddProperty() {
           </div>
 
           <div className="form-group">
-            <label>{t('property.description')}</label>
+            <label>{t('property.description')} *</label>
             <textarea
               value={form.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               rows={4}
-              placeholder={t('form.describeProperty') || 'Describe your property...'}
+              required
+              placeholder={t('form.describeProperty') || 'Describe your property\'s features, amenities, and what makes it special...'}
             />
           </div>
+        </div>
 
-          <div className="form-group">
-            <label style={{ color: Colors.neutral[700] }}>{t('property.price')} (FCFA) *</label>
-            <input
-              type="number"
-              value={form.price}
-              onChange={(e) => handleInputChange('price', e.target.value)}
-              required
-              min="0"
-              placeholder="0"
-              style={{
-                borderColor: Colors.neutral[300],
-                backgroundColor: Colors.neutral[50],
-                color: Colors.neutral[900]
-              }}
-            />
-          </div>
-
-          <div className="form-group">
-            <label style={{ color: Colors.neutral[700] }}>{t('property.type')} *</label>
-            <select
-              value={form.type}
-              onChange={(e) => handleInputChange('type', e.target.value)}
-              required
-              style={{
-                borderColor: Colors.neutral[300],
-                backgroundColor: Colors.neutral[50],
-                color: Colors.neutral[900]
-              }}
-            >
-              <option value="rent">{t('property.rent')}</option>
-              <option value="sale">{t('property.sale')}</option>
-            </select>
-          </div>
-
-          {form.type === 'rent' && (
-            <div className="form-group">
-              <label>{t('property.rentPeriod')}</label>
-              <select
-                value={form.rentPeriod}
-                onChange={(e) => handleInputChange('rentPeriod', e.target.value)}
-              >
-                <option value="monthly">{t('propertyForm.monthly')}</option>
-                <option value="yearly">{t('propertyForm.yearly')}</option>
-              </select>
+        {/* Location Section */}
+        <div className="form-section" style={{ backgroundColor: Colors.white }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div style={{
+              backgroundColor: Colors.primary[50],
+              padding: '8px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <MapPin size={20} color={Colors.primary[600]} />
             </div>
-          )}
+            <h2 style={{ color: Colors.neutral[900], margin: 0, fontSize: '16px', fontWeight: '600' }}>
+              {t('propertyForm.location') || 'Location'}
+            </h2>
+          </div>
 
           <div className="form-group">
             <label style={{ color: Colors.neutral[700] }}>{t('property.location')} *</label>
@@ -337,14 +322,70 @@ export default function AddProperty() {
           </div>
         </div>
 
-        {/* Property Details */}
+        {/* Property Type Section */}
         <div className="form-section" style={{ backgroundColor: Colors.white }}>
-          <h2 style={{ color: Colors.neutral[900] }}>
-            {t('propertyForm.propertyDetails')}
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div style={{
+              backgroundColor: Colors.primary[50],
+              padding: '8px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Star size={20} color={Colors.primary[600]} />
+            </div>
+            <h2 style={{ color: Colors.neutral[900], margin: 0, fontSize: '16px', fontWeight: '600' }}>
+              {t('propertyForm.propertyType') || 'Property Type'}
+            </h2>
+          </div>
 
           <div className="form-group">
-            <label style={{ color: Colors.neutral[700] }}>{t('property.propertyType')}</label>
+            <label style={{ color: Colors.neutral[700], marginBottom: '12px', display: 'block' }}>
+              {t('propertyForm.listingType') || 'Listing Type'}
+            </label>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                type="button"
+                onClick={() => handleInputChange('type', 'rent')}
+                style={{
+                  flex: 1,
+                  padding: '12px 20px',
+                  borderRadius: '24px',
+                  border: `2px solid ${form.type === 'rent' ? Colors.primary[600] : Colors.neutral[300]}`,
+                  backgroundColor: form.type === 'rent' ? Colors.primary[600] : (colorScheme === 'dark' ? Colors.neutral[200] : Colors.white),
+                  color: form.type === 'rent' ? '#FFFFFF' : Colors.neutral[700],
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {t('property.rent') || 'For Rent'}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleInputChange('type', 'sale')}
+                style={{
+                  flex: 1,
+                  padding: '12px 20px',
+                  borderRadius: '24px',
+                  border: `2px solid ${form.type === 'sale' ? Colors.primary[600] : Colors.neutral[300]}`,
+                  backgroundColor: form.type === 'sale' ? Colors.primary[600] : (colorScheme === 'dark' ? Colors.neutral[200] : Colors.white),
+                  color: form.type === 'sale' ? '#FFFFFF' : Colors.neutral[700],
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {t('property.sale') || 'For Sale'}
+              </button>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label style={{ color: Colors.neutral[700] }}>{t('property.propertyType') || 'Property Type'}</label>
             <select
               value={form.propertyType}
               onChange={(e) => handleInputChange('propertyType', e.target.value)}
@@ -354,45 +395,284 @@ export default function AddProperty() {
                 color: Colors.neutral[900]
               }}
             >
-              <option value="apartment">{t('property.apartment')}</option>
-              <option value="house">{t('property.house')}</option>
-              <option value="studio">{t('property.studio')}</option>
-              <option value="single_room">{t('property.singleRoom')}</option>
-              <option value="shop">{t('property.shop')}</option>
-              <option value="land">{t('property.land')}</option>
+              <option value="apartment">{t('property.apartment') || 'Apartment'}</option>
+              <option value="house">{t('property.house') || 'House'}</option>
+              <option value="studio">{t('property.studio') || 'Studio'}</option>
+              <option value="single_room">{t('property.singleRoom') || 'Single Room'}</option>
+              <option value="shop">{t('property.shop') || 'Shop'}</option>
+              <option value="land">{t('property.land') || 'Land'}</option>
             </select>
           </div>
+        </div>
 
-          <div className="form-group">
-            <label style={{ color: Colors.neutral[700] }}>{t('property.bedrooms')}</label>
-            <input
-              type="number"
-              value={form.bedrooms}
-              onChange={(e) => handleInputChange('bedrooms', e.target.value)}
-              min="0"
-              placeholder="0"
-              style={{
-                borderColor: Colors.neutral[300],
-                backgroundColor: Colors.neutral[50],
-                color: Colors.neutral[900]
-              }}
-            />
+        {/* Pricing Section */}
+        {form.type === 'rent' && (
+          <div className="form-section" style={{ backgroundColor: Colors.white }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+              <div style={{
+                backgroundColor: Colors.primary[50],
+                padding: '8px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <DollarSign size={20} color={Colors.primary[600]} />
+              </div>
+              <h2 style={{ color: Colors.neutral[900], margin: 0, fontSize: '16px', fontWeight: '600' }}>
+                {t('propertyForm.pricing') || 'Pricing'}
+              </h2>
+            </div>
+
+            <div className="form-group">
+              <label style={{ color: Colors.neutral[700], marginBottom: '12px', display: 'block' }}>
+                {t('propertyForm.howEnterRent') || 'How would you like to enter the rent?'}
+              </label>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => handleInputChange('rentPeriod', 'monthly')}
+                  style={{
+                    flex: 1,
+                    padding: '12px 20px',
+                    borderRadius: '24px',
+                    border: `2px solid ${form.rentPeriod === 'monthly' ? Colors.primary[600] : Colors.neutral[300]}`,
+                    backgroundColor: form.rentPeriod === 'monthly' ? Colors.primary[50] : (colorScheme === 'dark' ? Colors.neutral[200] : Colors.white),
+                  color: form.rentPeriod === 'monthly' ? Colors.primary[600] : Colors.neutral[700],
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {t('propertyForm.monthly') || 'Monthly'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleInputChange('rentPeriod', 'yearly')}
+                  style={{
+                    flex: 1,
+                    padding: '12px 20px',
+                    borderRadius: '24px',
+                    border: `2px solid ${form.rentPeriod === 'yearly' ? Colors.primary[600] : Colors.neutral[300]}`,
+                    backgroundColor: form.rentPeriod === 'yearly' ? Colors.primary[50] : (colorScheme === 'dark' ? Colors.neutral[200] : Colors.white),
+                  color: form.rentPeriod === 'yearly' ? Colors.primary[600] : Colors.neutral[700],
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {t('propertyForm.yearly') || 'Yearly'}
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label style={{ color: Colors.neutral[700] }}>
+                  {form.rentPeriod === 'monthly' ? t('propertyForm.monthlyRentFCFA') || 'Monthly Rent (FCFA)' : t('propertyForm.yearlyRentFCFA') || 'Yearly Rent (FCFA)'} *
+                </label>
+                <input
+                  type="number"
+                  value={form.price}
+                  onChange={(e) => handleInputChange('price', e.target.value)}
+                  required
+                  min="0"
+                  placeholder="0"
+                  style={{
+                    borderColor: Colors.neutral[300],
+                    backgroundColor: Colors.neutral[50],
+                    color: Colors.neutral[900]
+                  }}
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label style={{ color: Colors.neutral[700] }}>
+                  {t('propertyForm.reservationFeeFCFA') || 'Reservation Fee (FCFA)'} *
+                </label>
+                <div style={{
+                  padding: '12px 14px',
+                  border: `1px solid ${Colors.neutral[300]}`,
+                  borderRadius: '10px',
+                  backgroundColor: Colors.neutral[100],
+                  color: Colors.neutral[700],
+                  fontSize: '15px',
+                  fontWeight: '500'
+                }}>
+                  {form.reservationFee || '0'} FCFA
+                </div>
+                <p style={{
+                  fontSize: '11px',
+                  color: Colors.neutral[600],
+                  marginTop: '4px',
+                  fontStyle: 'italic'
+                }}>
+                  {t('propertyForm.autoSetReservationFee') || 'Auto-set based on listing type (Read-only)'}
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label style={{ color: Colors.neutral[700] }}>
+                  {t('propertyForm.minAdvanceMonths') || 'Min Advance (months)'}
+                </label>
+                <input
+                  type="number"
+                  value={form.advance_months_min || ''}
+                  onChange={(e) => handleInputChange('advance_months_min', e.target.value)}
+                  min="0"
+                  placeholder="6"
+                  style={{
+                    borderColor: Colors.neutral[300],
+                    backgroundColor: Colors.neutral[50],
+                    color: Colors.neutral[900]
+                  }}
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label style={{ color: Colors.neutral[700] }}>
+                  {t('propertyForm.maxAdvanceMonths') || 'Max Advance (months)'}
+                </label>
+                <input
+                  type="number"
+                  value={form.advance_months_max || ''}
+                  onChange={(e) => handleInputChange('advance_months_max', e.target.value)}
+                  min="0"
+                  placeholder="12"
+                  style={{
+                    borderColor: Colors.neutral[300],
+                    backgroundColor: Colors.neutral[50],
+                    color: Colors.neutral[900]
+                  }}
+                />
+              </div>
+            </div>
+            <p style={{
+              fontSize: '12px',
+              color: Colors.neutral[600],
+              marginTop: '8px',
+              marginBottom: 0
+            }}>
+              {t('propertyForm.advancePaymentNote') || 'Advance payment is typically 6-12 months of rent paid upfront'}
+            </p>
+          </div>
+        )}
+
+        {form.type === 'sale' && (
+          <div className="form-section" style={{ backgroundColor: Colors.white }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+              <div style={{
+                backgroundColor: Colors.primary[50],
+                padding: '8px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <DollarSign size={20} color={Colors.primary[600]} />
+              </div>
+              <h2 style={{ color: Colors.neutral[900], margin: 0, fontSize: '16px', fontWeight: '600' }}>
+                {t('propertyForm.pricing') || 'Pricing'}
+              </h2>
+            </div>
+
+            <div className="form-group">
+              <label style={{ color: Colors.neutral[700] }}>
+                {t('property.price')} (FCFA) *
+              </label>
+              <input
+                type="number"
+                value={form.price}
+                onChange={(e) => handleInputChange('price', e.target.value)}
+                required
+                min="0"
+                placeholder="0"
+                style={{
+                  borderColor: Colors.neutral[300],
+                  backgroundColor: Colors.neutral[50],
+                  color: Colors.neutral[900]
+                }}
+              />
+            </div>
+
+            <div className="form-group">
+              <label style={{ color: Colors.neutral[700] }}>
+                {t('propertyForm.reservationFeeFCFA') || 'Reservation Fee (FCFA)'} *
+              </label>
+              <div style={{
+                padding: '12px 14px',
+                border: `1px solid ${Colors.neutral[300]}`,
+                borderRadius: '10px',
+                backgroundColor: Colors.neutral[100],
+                color: Colors.neutral[700],
+                fontSize: '15px',
+                fontWeight: '500'
+              }}>
+                {form.reservationFee || '0'} FCFA
+              </div>
+              <p style={{
+                fontSize: '11px',
+                color: Colors.neutral[600],
+                marginTop: '4px',
+                fontStyle: 'italic'
+              }}>
+                {t('propertyForm.autoSetReservationFee') || 'Auto-set based on listing type (Read-only)'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Property Details Section */}
+        <div className="form-section" style={{ backgroundColor: Colors.white }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div style={{
+              backgroundColor: Colors.primary[50],
+              padding: '8px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Square size={20} color={Colors.primary[600]} />
+            </div>
+            <h2 style={{ color: Colors.neutral[900], margin: 0, fontSize: '16px', fontWeight: '600' }}>
+              {t('propertyForm.propertyDetails') || 'Property Details'}
+            </h2>
           </div>
 
-          <div className="form-group">
-            <label style={{ color: Colors.neutral[700] }}>{t('property.bathrooms')}</label>
-            <input
-              type="number"
-              value={form.bathrooms}
-              onChange={(e) => handleInputChange('bathrooms', e.target.value)}
-              min="0"
-              placeholder="0"
-              style={{
-                borderColor: Colors.neutral[300],
-                backgroundColor: Colors.neutral[50],
-                color: Colors.neutral[900]
-              }}
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label style={{ color: Colors.neutral[700] }}>{t('property.bedrooms') || 'Bedrooms'}</label>
+              <input
+                type="number"
+                value={form.bedrooms}
+                onChange={(e) => handleInputChange('bedrooms', e.target.value)}
+                min="0"
+                placeholder="0"
+                style={{
+                  borderColor: Colors.neutral[300],
+                  backgroundColor: Colors.neutral[50],
+                  color: Colors.neutral[900]
+                }}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label style={{ color: Colors.neutral[700] }}>{t('property.bathrooms') || 'Bathrooms'}</label>
+              <input
+                type="number"
+                value={form.bathrooms}
+                onChange={(e) => handleInputChange('bathrooms', e.target.value)}
+                min="0"
+                placeholder="0"
+                style={{
+                  borderColor: Colors.neutral[300],
+                  backgroundColor: Colors.neutral[50],
+                  color: Colors.neutral[900]
+                }}
+              />
+            </div>
           </div>
 
           <div className="form-group">
@@ -412,18 +692,37 @@ export default function AddProperty() {
           </div>
         </div>
 
-        {/* Images & Videos */}
+        {/* Property Photos Section */}
         <div className="form-section" style={{ backgroundColor: Colors.white }}>
-          <h2 style={{ color: Colors.neutral[900] }}>
-            {t('propertyForm.propertyPhotos') || t('property.images')}
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div style={{
+              backgroundColor: Colors.primary[50],
+              padding: '8px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Home size={20} color={Colors.primary[600]} />
+            </div>
+            <h2 style={{ color: Colors.neutral[900], margin: 0, fontSize: '16px', fontWeight: '600' }}>
+              {t('propertyForm.propertyPhotos') || 'Property Photos'}
+            </h2>
+          </div>
+          
           <p style={{
             fontSize: '13px',
             color: Colors.neutral[600],
-            marginBottom: '16px',
-            marginTop: '-8px'
+            marginBottom: '8px'
           }}>
-            {t('propertyForm.addPhotosVideos') || `Add high-quality photos and videos to showcase your property (${form.images.length}/10)`}
+            {t('propertyForm.addPhotosVideos', { count: form.images.length }) || `Add high-quality photos and videos to showcase your property (${form.images.length}/10)`}
+          </p>
+          <p style={{
+            fontSize: '12px',
+            color: Colors.neutral[600],
+            marginBottom: '16px'
+          }}>
+            {t('propertyForm.supportedFormats') || 'Supported: Images (JPG, PNG) and Videos (MP4, MOV)'}
           </p>
 
           <div className="image-upload-area">
@@ -445,7 +744,7 @@ export default function AddProperty() {
             >
               <Plus size={32} color={Colors.primary[600]} />
               <span style={{ color: Colors.neutral[700] }}>
-                {t('propertyForm.addMediaButton') || 'Add Photos & Videos'}
+                {t('propertyForm.addPhotoVideo') || 'Add photo or video'}
               </span>
             </label>
           </div>
@@ -471,7 +770,7 @@ export default function AddProperty() {
                           top: '6px',
                           left: '6px',
                           backgroundColor: Colors.error[600],
-                          color: Colors.white,
+                          color: '#FFFFFF',
                           padding: '3px 8px',
                           borderRadius: '4px',
                           fontSize: '10px',
@@ -501,77 +800,6 @@ export default function AddProperty() {
           )}
         </div>
 
-        {/* Additional Information */}
-        <div className="form-section" style={{ backgroundColor: Colors.white }}>
-          <h2 style={{ color: Colors.neutral[900] }}>
-            {t('propertyForm.additionalInformation') || 'Additional Information'}
-          </h2>
-
-          <div className="form-group">
-            <label style={{ color: Colors.neutral[700] }}>
-              {t('propertyForm.reservationFeeFCFA') || t('property.reservationFee')} <span style={{ color: Colors.error[600] }}>*</span>
-            </label>
-            <div style={{
-              padding: '12px 14px',
-              border: `1px solid ${Colors.neutral[300]}`,
-              borderRadius: '10px',
-              backgroundColor: Colors.neutral[100],
-              color: Colors.neutral[700],
-              fontSize: '16px',
-              fontWeight: '600'
-            }}>
-              {form.reservationFee || '0'} FCFA
-            </div>
-            <p style={{
-              fontSize: '11px',
-              color: Colors.neutral[600],
-              marginTop: '4px',
-              fontStyle: 'italic'
-            }}>
-              {form.type === 'rent' 
-                ? t('propertyForm.siteVisitFeeNote') || 'Standard site visit fee for rental properties'
-                : t('propertyForm.siteVisitFeeSaleNote') || 'Standard site visit fee for properties on sale'
-              }
-            </p>
-          </div>
-
-          {form.type === 'rent' && (
-            <>
-              <div className="form-group">
-                <label style={{ color: Colors.neutral[700] }}>{t('propertyForm.minAdvanceMonths')}</label>
-                <input
-                  type="number"
-                  value={form.advance_months_min || ''}
-                  onChange={(e) => handleInputChange('advance_months_min', e.target.value)}
-                  min="0"
-                  placeholder="6"
-                  style={{
-                    borderColor: Colors.neutral[300],
-                    backgroundColor: Colors.neutral[50],
-                    color: Colors.neutral[900]
-                  }}
-                />
-              </div>
-
-              <div className="form-group">
-                <label style={{ color: Colors.neutral[700] }}>{t('propertyForm.maxAdvanceMonths')}</label>
-                <input
-                  type="number"
-                  value={form.advance_months_max || ''}
-                  onChange={(e) => handleInputChange('advance_months_max', e.target.value)}
-                  min="0"
-                  placeholder="12"
-                  style={{
-                    borderColor: Colors.neutral[300],
-                    backgroundColor: Colors.neutral[50],
-                    color: Colors.neutral[900]
-                  }}
-                />
-              </div>
-            </>
-          )}
-        </div>
-
         {/* Submit Button */}
         <div className="form-submit-section" style={{
           backgroundColor: Colors.white,
@@ -583,12 +811,12 @@ export default function AddProperty() {
             className="form-submit-btn"
             style={{
               backgroundColor: submitting || uploading ? Colors.neutral[400] : Colors.primary[600],
-              color: Colors.white
+              color: '#FFFFFF'
             }}
           >
             {submitting || uploading 
               ? (t('buttons.saving') || 'Saving...') 
-              : t('property.addProperty')
+              : (t('buttons.submit') || 'Submit')
             }
           </button>
         </div>
