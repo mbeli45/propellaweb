@@ -158,14 +158,16 @@ export default function PropertyCard({
             zIndex: 3,
           }}
         >
-          {/* Status Badge (if available) */}
-          {property.status && property.status !== 'available' && (
+          {/* Status Badge */}
+          {property.status && (
             <span
               style={{
                 backgroundColor: property.status === 'reserved' 
                   ? Colors.warning[600] 
                   : property.status === 'sold' 
                   ? Colors.error[600] 
+                  : property.status === 'available'
+                  ? Colors.success[600]
                   : Colors.success[600],
                 color: '#FFFFFF',
                 fontSize: horizontal ? '10px' : '11px',

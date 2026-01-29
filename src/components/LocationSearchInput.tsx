@@ -84,7 +84,6 @@ export default function LocationSearchInput({
           type="text"
           value={value}
           onChange={handleInputChange}
-          onFocus={() => value && setShowSuggestions(true)}
           placeholder={placeholder}
           required={required}
           disabled={disabled}

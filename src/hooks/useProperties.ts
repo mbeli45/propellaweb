@@ -85,8 +85,12 @@ export function useProperties(userId: string) {
         amenities: property.amenities || [],
         image: property.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image',
         images: property.images || [],
-        // If there is an active reservation, mark as reserved for owner view
-        status: reservedPropertyIdSet.has(property.id) ? 'reserved' : (property.status || undefined),
+        // Determine status: prioritize database status, but also check for active reservations
+        // If property is already marked as reserved/sold in DB, use that
+        // Otherwise, if there's an active reservation, mark as reserved
+        status: property.status === 'reserved' || property.status === 'sold' 
+          ? property.status 
+          : (reservedPropertyIdSet.has(property.id) ? 'reserved' : (property.status || 'available')),
         reservationFee: property.reservation_fee || undefined,
         rent_period: property.rent_period as 'monthly' | 'yearly' | null | undefined,
         advance_months_min: property.advance_months_min || undefined,
