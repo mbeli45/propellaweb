@@ -12,6 +12,8 @@
 
 .video-controls {
   transition: opacity 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .video-controls.visible {
@@ -22,6 +24,13 @@
 .video-controls.hidden {
   opacity: 0;
   pointer-events: none;
+}
+
+.video-controls button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Fullscreen styles */

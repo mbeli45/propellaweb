@@ -28,6 +28,17 @@ export default function VideoPlayer({
   const [isMuted, setIsMuted] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showControls, setShowControls] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
+  
+  useEffect(() => {
+    // Detect mobile device
+    const checkMobile = () => {
+      setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [showThumbnail, setShowThumbnail] = useState(!!thumbnail && !autoPlay)
@@ -128,7 +139,7 @@ export default function VideoPlayer({
         width: '100%',
         height: '100%',
         backgroundColor: Colors.neutral[900],
-        borderRadius: '12px',
+        borderRadius: '0',
         overflow: 'hidden',
       }}
       onMouseMove={handleMouseMove}
@@ -136,6 +147,18 @@ export default function VideoPlayer({
         if (isPlaying) {
           setShowControls(false)
         }
+      }}
+      onTouchStart={() => {
+        // On mobile, always show controls on touch
+        setShowControls(true)
+        if (controlsTimeoutRef.current) {
+          clearTimeout(controlsTimeoutRef.current)
+        }
+        controlsTimeoutRef.current = setTimeout(() => {
+          if (isPlaying) {
+            setShowControls(false)
+          }
+        }, 3000)
       }}
     >
       <video
@@ -148,6 +171,12 @@ export default function VideoPlayer({
           objectFit: 'contain',
         }}
         playsInline
+        controls={false}
+        onClick={(e) => {
+          // On mobile, clicking video toggles play/pause
+          e.preventDefault()
+          togglePlay()
+        }}
       />
 
       {showThumbnail && thumbnail && (
@@ -196,7 +225,7 @@ export default function VideoPlayer({
 
       {controls && (
         <div
-          className={`video-controls ${showControls || !isPlaying ? 'visible' : 'hidden'}`}
+          className={`video-controls ${showControls || !isPlaying || isMobile ? 'visible' : 'hidden'}`}
           style={{
             position: 'absolute',
             bottom: 0,
@@ -208,27 +237,40 @@ export default function VideoPlayer({
             flexDirection: 'column',
             gap: '8px',
             transition: 'opacity 0.3s',
-            opacity: showControls || !isPlaying ? 1 : 0,
+            opacity: showControls || !isPlaying || isMobile ? 1 : 0,
+            pointerEvents: 'auto',
+            zIndex: 10,
           }}
         >
           {/* Progress Bar */}
           <div
             style={{
               width: '100%',
-              height: '4px',
+              height: '6px',
               backgroundColor: 'rgba(255, 255, 255, 0.3)',
-              borderRadius: '2px',
+              borderRadius: '0',
               cursor: 'pointer',
               position: 'relative',
+              touchAction: 'manipulation',
             }}
             onClick={handleSeek}
+            onTouchStart={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              const touch = e.touches[0]
+              const x = touch.clientX - rect.left
+              const percent = x / rect.width
+              const video = videoRef.current
+              if (video) {
+                video.currentTime = percent * duration
+              }
+            }}
           >
             <div
               style={{
                 width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`,
                 height: '100%',
                 backgroundColor: Colors.primary[600],
-                borderRadius: '2px',
+                borderRadius: '0',
               }}
             />
           </div>
@@ -242,7 +284,16 @@ export default function VideoPlayer({
             }}
           >
             <button
-              onClick={togglePlay}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                togglePlay()
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                togglePlay()
+              }}
               style={{
                 background: 'none',
                 border: 'none',
@@ -252,13 +303,24 @@ export default function VideoPlayer({
                 justifyContent: 'center',
                 padding: '8px',
                 color: '#FFFFFF',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
               }}
             >
               {isPlaying ? <Pause size={20} /> : <Play size={20} fill="#FFFFFF" />}
             </button>
 
             <button
-              onClick={toggleMute}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                toggleMute()
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                toggleMute()
+              }}
               style={{
                 background: 'none',
                 border: 'none',
@@ -268,6 +330,8 @@ export default function VideoPlayer({
                 justifyContent: 'center',
                 padding: '8px',
                 color: '#FFFFFF',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
               }}
             >
               {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
@@ -285,11 +349,17 @@ export default function VideoPlayer({
             </div>
 
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
                 const video = videoRef.current
                 if (video?.requestFullscreen) {
                   video.requestFullscreen().catch(console.error)
                 }
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
               }}
               style={{
                 background: 'none',
@@ -300,6 +370,8 @@ export default function VideoPlayer({
                 justifyContent: 'center',
                 padding: '8px',
                 color: '#FFFFFF',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
               }}
             >
               <Maximize size={20} />
@@ -307,7 +379,15 @@ export default function VideoPlayer({
 
             {onClose && (
               <button
-                onClick={onClose}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  onClose()
+                }}
+                onTouchStart={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -317,6 +397,8 @@ export default function VideoPlayer({
                   justifyContent: 'center',
                   padding: '8px',
                   color: '#FFFFFF',
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'transparent',
                 }}
               >
                 <X size={20} />
