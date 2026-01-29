@@ -3,6 +3,7 @@ import { X, Shield, DollarSign, Clock, AlertTriangle, CreditCard } from 'lucide-
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { useThemeMode } from '@/contexts/ThemeContext'
+import { useDialog } from '@/contexts/DialogContext'
 import { useCommissionPayment } from '@/hooks/useCommissionPayment'
 import './CommissionPaymentModal.css'
 
@@ -28,6 +29,7 @@ export default function CommissionPaymentModal({
   const { colorScheme } = useThemeMode()
   const Colors = getColors(colorScheme)
   const { t } = useLanguage()
+  const { confirm, alert } = useDialog()
   
   const [commissionAmount, setCommissionAmount] = useState('')
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null)
@@ -63,21 +65,27 @@ export default function CommissionPaymentModal({
     setShowPaymentForm(true)
   }
 
-  const handleSkip = () => {
-    if (window.confirm(t('commissionPayment.skipConfirmMessage') || 'Are you sure you want to skip paying through the platform?')) {
+  const handleSkip = async () => {
+    const confirmed = await confirm({
+      title: t('commissionPayment.skipPayment') || 'Skip Payment',
+      message: t('commissionPayment.skipConfirmMessage') || 'Are you sure you want to skip paying through the platform?',
+      variant: 'warning',
+    })
+    
+    if (confirmed) {
       onClose()
     }
   }
 
   const handleConfirmPayment = async () => {
     if (!commissionAmount || !selectedPaymentMethod || !phoneNumber) {
-      alert('Please fill in all required fields')
+      alert('Please fill in all required fields', 'error')
       return
     }
 
     const amount = parseFloat(commissionAmount)
     if (isNaN(amount) || amount <= 0) {
-      alert('Please enter a valid commission amount')
+      alert('Please enter a valid commission amount', 'error')
       return
     }
 
@@ -97,7 +105,7 @@ export default function CommissionPaymentModal({
       }
       onClose()
     } catch (error: any) {
-      alert(error.message || 'Failed to process commission payment')
+      alert(error.message || 'Failed to process commission payment', 'error')
     }
   }
 

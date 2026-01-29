@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
+import { useDialog } from '@/contexts/DialogContext'
 import { getColors } from '@/constants/Colors'
 import { useReservations } from '@/hooks/useReservations'
 import { useFapshiPayment } from '@/hooks/useFapshiPayment'
@@ -16,6 +17,7 @@ export default function UserReservations() {
   const { user } = useAuth()
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
+  const { confirm, alert } = useDialog()
   const Colors = getColors(colorScheme)
   const navigate = useNavigate()
 
@@ -60,25 +62,39 @@ export default function UserReservations() {
   }
 
   const handleCancel = async (reservationId: string) => {
-    if (!confirm(t('reservations.cancelReservationMessage'))) return
+    const confirmed = await confirm({
+      title: t('reservations.cancelReservation') || 'Cancel Reservation',
+      message: t('reservations.cancelReservationMessage') || 'Are you sure you want to cancel this reservation?',
+      variant: 'warning',
+    })
+    
+    if (!confirmed) return
     
     try {
       await cancelReservation(reservationId)
-      alert(t('reservations.reservationCancelledSuccess'))
+      alert(t('reservations.reservationCancelledSuccess') || 'Reservation cancelled successfully', 'success')
       refreshReservations()
     } catch (error: any) {
-      alert(error.message || t('reservations.failedToCancelReservationMessage'))
+      alert(error.message || t('reservations.failedToCancelReservationMessage') || 'Failed to cancel reservation', 'error')
     }
   }
 
   const handleRequestRefund = async (reservationId: string) => {
+    const confirmed = await confirm({
+      title: t('reservations.requestRefund') || 'Request Refund',
+      message: t('reservations.requestRefundConfirmMessage') || t('reservations.requestRefundMessage') || 'Are you sure you want to request a refund for this reservation?',
+      variant: 'warning',
+    })
+    
+    if (!confirmed) return
+    
     setRequestingRefund(reservationId)
     try {
       await requestRefund(reservationId)
-      alert(t('reservations.refundRequestedMessage'))
+      alert(t('reservations.refundRequestedMessage') || 'Refund requested successfully', 'success')
       refreshReservations()
     } catch (error: any) {
-      alert(error.message || t('reservations.failedToRequestRefundMessage'))
+      alert(error.message || t('reservations.failedToRequestRefundMessage') || 'Failed to request refund', 'error')
     } finally {
       setRequestingRefund(null)
     }

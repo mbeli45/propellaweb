@@ -1,0 +1,34 @@
+.video-player-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.video-player {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.video-controls {
+  transition: opacity 0.3s ease;
+}
+
+.video-controls.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.video-controls.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Fullscreen styles */
+.video-player-container:fullscreen {
+  background-color: #000;
+}
+
+.video-player-container:fullscreen .video-player {
+  object-fit: contain;
+}

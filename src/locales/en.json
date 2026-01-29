@@ -90,6 +90,7 @@
     "title": "Property",
     "addProperty": "Add Property",
     "editProperty": "Edit Property",
+    "editPropertyDescription": "Update your property details",
     "propertyDetails": "Property Details",
     "propertyTitle": "Property Title",
     "propertyType": "Property Type",
@@ -818,7 +819,8 @@
     "startVerificationProcess": "Start Verification Process",
     "initializeVerification": "Initialize Verification",
     "saveChanges": "Save Changes",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "submit": "Submit"
   },
   "agentProfile": {
     "verifiedAgent": "Verified Agent",
@@ -1042,6 +1044,7 @@
     "yearlyAmount": "Yearly",
     "monthlyAmount": "Monthly",
     "reservationFeeFCFA": "Site Visit Fee (FCFA)",
+    "autoSetReservationFee": "Auto-set based on listing type (Read-only)",
     "siteVisitFeeNote": "Standard site visit fee for rental properties",
     "siteVisitFeeSaleNote": "Standard site visit fee for properties on sale",
     "minAdvanceMonths": "Min Advance (months)",
@@ -1063,6 +1066,7 @@
     "previewCounter": "{{current}}/{{total}}",
     "propertyPhotos": "Property Photos & Videos",
     "addPhotosVideos": "Add high-quality photos and videos to showcase your property ({{count}}/10)",
+    "addPhotoVideo": "Add photo or video",
     "addMediaButton": "Add Photos & Videos",
     "supportedFormats": "Supported: Images (JPG, PNG) and Videos (MP4, MOV)"
   },

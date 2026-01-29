@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
+import { useDialog } from '@/contexts/DialogContext'
 import { getColors } from '@/constants/Colors'
 import { useStorage } from '@/hooks/useStorage'
 import { ArrowLeft, Camera, User as UserIcon, Save, CheckCircle } from 'lucide-react'
@@ -13,6 +14,7 @@ export default function ProfileSettings() {
   const { user, refreshUser } = useAuth()
   const { colorScheme, setMode } = useThemeMode()
   const { t } = useLanguage()
+  const { alert } = useDialog()
   const Colors = getColors(colorScheme)
   const navigate = useNavigate()
   const { pickImage, uploadImage, uploading } = useStorage()
@@ -50,7 +52,7 @@ export default function ProfileSettings() {
         navigate(-1)
       }, 1500)
     } catch (error: any) {
-      alert(error.message || 'Failed to update profile')
+      alert(error.message || 'Failed to update profile', 'error')
     } finally {
       setIsSaving(false)
     }
@@ -78,7 +80,7 @@ export default function ProfileSettings() {
       }
     } catch (error) {
       console.error('Error updating avatar:', error)
-      alert('Failed to update profile picture')
+      alert('Failed to update profile picture', 'error')
     }
   }
 

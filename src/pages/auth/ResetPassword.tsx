@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
+import { useDialog } from '@/contexts/DialogContext'
 import { getColors } from '@/constants/Colors'
 import { ArrowLeft, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react'
 import Button from '@/components/ui/Button'
@@ -19,6 +20,7 @@ export default function ResetPassword() {
   const { resetPassword } = useAuth()
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
+  const { alert } = useDialog()
   const Colors = getColors(colorScheme)
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -107,7 +109,7 @@ export default function ResetPassword() {
     try {
       const token = searchParams.get('token') || searchParams.get('access_token')
       await resetPassword(password, token || '')
-      alert(t('resetPassword.passwordResetSuccess'))
+      alert(t('resetPassword.passwordResetSuccess') || 'Password reset successfully', 'success')
       navigate('/auth/login')
     } catch (err: any) {
       setError(err.message || t('resetPassword.resetFailed'))

@@ -90,6 +90,7 @@
     "title": "Propriété",
     "addProperty": "Ajouter une propriété",
     "editProperty": "Modifier la propriété",
+    "editPropertyDescription": "Mettre à jour les détails de votre propriété",
     "propertyDetails": "Détails de la propriété",
     "propertyTitle": "Titre de la propriété",
     "propertyType": "Type de propriété",
@@ -820,7 +821,8 @@
     "startVerificationProcess": "Démarrer le processus de vérification",
     "initializeVerification": "Initialiser la vérification",
     "saveChanges": "Enregistrer les modifications",
-    "saving": "Enregistrement..."
+    "saving": "Enregistrement...",
+    "submit": "Soumettre"
   },
   "agentProfile": {
     "verifiedAgent": "Agent vérifié",
@@ -871,6 +873,7 @@
   "propertyForm": {
     "propertyPhotos": "Photos et vidéos de propriété",
     "addPhotosVideos": "Ajoutez des photos et vidéos de haute qualité pour présenter votre propriété ({{count}}/10)",
+    "addPhotoVideo": "Ajouter une photo ou une vidéo",
     "addMediaButton": "Ajouter des photos et vidéos",
     "supportedFormats": "Formats pris en charge : Images (JPG, PNG) et Vidéos (MP4, MOV)",
     "basicInformation": "Informations de base",
@@ -896,6 +899,7 @@
     "listingType": "Type d'annonce",
     "priceFCFA": "Prix (FCFA)",
     "reservationFeeFCFA": "Frais de visite (FCFA)",
+    "autoSetReservationFee": "Défini automatiquement selon le type d'annonce (Lecture seule)",
     "siteVisitFeeNote": "Frais de visite standard pour les propriétés locatives",
     "siteVisitFeeSaleNote": "Frais de visite standard pour les propriétés à vendre",
     "category": "Catégorie",

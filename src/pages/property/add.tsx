@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
+import { useDialog } from '@/contexts/DialogContext'
 import { getColors } from '@/constants/Colors'
 import { supabase } from '@/lib/supabase'
 import { useStorage } from '@/hooks/useStorage'
@@ -32,10 +33,17 @@ interface MediaFile extends File {
   isVideo?: boolean
 }
 
-export default function AddProperty() {
+interface AddPropertyProps {
+  propertyId?: string
+  initialData?: any
+  isEditMode?: boolean
+}
+
+export default function AddProperty({ propertyId, initialData, isEditMode = false }: AddPropertyProps = { propertyId: undefined, initialData: undefined, isEditMode: false }) {
   const { user } = useAuth()
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
+  const { alert } = useDialog()
   const Colors = getColors(colorScheme)
   const navigate = useNavigate()
   const { uploadMultipleImages, uploading } = useStorage()
@@ -46,6 +54,30 @@ export default function AddProperty() {
       navigate('/user')
     }
   }, [user, navigate])
+
+  // Load property data if in edit mode
+  useEffect(() => {
+    if (isEditMode && initialData) {
+      setForm({
+        title: initialData.title || '',
+        description: initialData.description || '',
+        price: initialData.price?.toString() || '',
+        location: initialData.location || '',
+        type: initialData.type || 'rent',
+        category: initialData.category || 'budget',
+        propertyType: initialData.property_type || 'apartment',
+        bedrooms: initialData.bedrooms?.toString() || '',
+        bathrooms: initialData.bathrooms?.toString() || '',
+        area: initialData.area?.toString() || '',
+        images: [],
+        reservationFee: initialData.reservation_fee?.toString() || '10000',
+        rentPeriod: initialData.rent_period || 'yearly',
+        advance_months_min: initialData.advance_months_min?.toString() || '',
+        advance_months_max: initialData.advance_months_max?.toString() || '',
+      })
+      setExistingImages(initialData.images || [])
+    }
+  }, [isEditMode, initialData])
 
   const [form, setForm] = useState<PropertyFormData>({
     title: '',
@@ -64,6 +96,7 @@ export default function AddProperty() {
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [existingImages, setExistingImages] = useState<string[]>([])
 
   // Auto-set site visit fee based on type
   useEffect(() => {
@@ -85,14 +118,15 @@ export default function AddProperty() {
       const maxSize = 10 * 1024 * 1024 // 10MB
       const validFiles = files.filter(file => {
         if (file.size > maxSize) {
-          alert(`${file.name} is too large. Maximum file size is 10MB.`)
+          alert(`${file.name} is too large. Maximum file size is 10MB.`, 'error')
           return false
         }
         return true
       })
 
       if (validFiles.length > 0) {
-        setForm(prev => ({ ...prev, images: [...prev.images, ...validFiles].slice(0, 10) }))
+        const maxNewImages = isEditMode ? Math.max(0, 10 - existingImages.length) : 10
+        setForm(prev => ({ ...prev, images: [...prev.images, ...validFiles].slice(0, maxNewImages) }))
       }
     }
   }
@@ -115,7 +149,7 @@ export default function AddProperty() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user?.id || user.role !== 'agent') {
-      alert(t('auth.mustBeAgentToAdd') || 'Only agents can add properties')
+      alert(t('auth.mustBeAgentToAdd') || 'Only agents can add properties', 'error')
       navigate('/user')
       return
     }
@@ -124,16 +158,21 @@ export default function AddProperty() {
     setError(null)
 
     try {
-      // Upload images first
-      let imageUrls: string[] = []
+      // Upload new images first
+      let newImageUrls: string[] = []
       if (form.images.length > 0) {
         const uploadResults = await uploadMultipleImages(
           form.images,
           'properties',
           'uploads'
         )
-        imageUrls = uploadResults.map(r => r.url).filter(Boolean)
+        newImageUrls = uploadResults.map(r => r.url).filter(Boolean)
       }
+
+      // Combine existing images with new ones
+      const allImageUrls = isEditMode 
+        ? [...existingImages, ...newImageUrls]
+        : newImageUrls
 
       // Determine category based on price if not set
       const priceNum = parseFloat(form.price) || 0
@@ -145,38 +184,61 @@ export default function AddProperty() {
         else category = 'budget'
       }
 
-      // Create property
-      const { data, error: insertError } = await supabase
-        .from('properties')
-        .insert({
-          title: form.title,
-          description: form.description,
-          price: parseFloat(form.price) || 0,
-          location: form.location,
-          type: form.type,
-          category,
-          property_type: form.propertyType,
-          bedrooms: form.bedrooms ? parseInt(form.bedrooms) : null,
-          bathrooms: form.bathrooms ? parseInt(form.bathrooms) : null,
-          area: form.area ? parseFloat(form.area) : null,
-          images: imageUrls,
-          reservation_fee: form.reservationFee ? parseFloat(form.reservationFee) : null,
-          rent_period: form.type === 'rent' ? form.rentPeriod : null,
-          advance_months_min: form.advance_months_min ? parseInt(form.advance_months_min) : null,
-          advance_months_max: form.advance_months_max ? parseInt(form.advance_months_max) : null,
-          owner_id: user.id,
-          status: 'available',
-        })
-        .select()
-        .single()
+      const propertyData = {
+        title: form.title,
+        description: form.description,
+        price: parseFloat(form.price) || 0,
+        location: form.location,
+        type: form.type,
+        category,
+        property_type: form.propertyType,
+        bedrooms: form.bedrooms ? parseInt(form.bedrooms) : null,
+        bathrooms: form.bathrooms ? parseInt(form.bathrooms) : null,
+        area: form.area ? parseFloat(form.area) : null,
+        images: allImageUrls,
+        reservation_fee: form.reservationFee ? parseFloat(form.reservationFee) : null,
+        rent_period: form.type === 'rent' ? form.rentPeriod : null,
+        advance_months_min: form.advance_months_min ? parseInt(form.advance_months_min) : null,
+        advance_months_max: form.advance_months_max ? parseInt(form.advance_months_max) : null,
+        updated_at: new Date().toISOString(),
+      }
 
-      if (insertError) throw insertError
+      if (isEditMode && propertyId) {
+        // Update existing property
+        const { data, error: updateError } = await supabase
+          .from('properties')
+          .update(propertyData)
+          .eq('id', propertyId)
+          .eq('owner_id', user.id)
+          .select()
+          .single()
 
-      alert(t('property.propertyAdded') || 'Property added successfully')
-      navigate(`/property/${data.id}`)
+        if (updateError) throw updateError
+
+        alert(t('property.propertyUpdated') || 'Property updated successfully', 'success')
+        navigate(`/property/${propertyId}`)
+      } else {
+        // Create new property
+        const { data, error: insertError } = await supabase
+          .from('properties')
+          .insert({
+            ...propertyData,
+            owner_id: user.id,
+            status: 'available',
+          })
+          .select()
+          .single()
+
+        if (insertError) throw insertError
+
+        alert(t('property.propertyAdded') || 'Property added successfully', 'success')
+        navigate(`/property/${data.id}`)
+      }
     } catch (err: any) {
-      setError(err.message || t('property.failedToAddProperty') || 'Failed to add property')
-      console.error('Error adding property:', err)
+      const errorMessage = err.message || (isEditMode ? t('property.failedToUpdateProperty') : t('property.failedToAddProperty')) || 'Failed to save property'
+      setError(errorMessage)
+      alert(errorMessage, 'error')
+      console.error('Error saving property:', err)
     } finally {
       setSubmitting(false)
     }
@@ -218,10 +280,10 @@ export default function AddProperty() {
         </button>
         <div style={{ flex: 1, textAlign: 'center' }}>
           <h1 style={{ fontSize: '20px', fontWeight: '600', color: Colors.neutral[900], margin: 0 }}>
-            {t('property.addProperty')}
+            {isEditMode ? (t('property.editProperty') || 'Edit Property') : (t('property.addProperty') || 'Add Property')}
           </h1>
           <p style={{ fontSize: '14px', color: Colors.neutral[600], margin: '2px 0 0 0' }}>
-            {t('property.addNewProperty')}
+            {isEditMode ? (t('property.editPropertyDescription') || 'Update your property details') : (t('property.addNewProperty') || 'Add a new property to your listings')}
           </p>
         </div>
         <div style={{
@@ -715,7 +777,7 @@ export default function AddProperty() {
             color: Colors.neutral[600],
             marginBottom: '8px'
           }}>
-            {t('propertyForm.addPhotosVideos', { count: form.images.length }) || `Add high-quality photos and videos to showcase your property (${form.images.length}/10)`}
+            {t('propertyForm.addPhotosVideos', { count: form.images.length + existingImages.length }) || `Add high-quality photos and videos to showcase your property (${form.images.length + existingImages.length}/10)`}
           </p>
           <p style={{
             fontSize: '12px',
@@ -749,8 +811,38 @@ export default function AddProperty() {
             </label>
           </div>
 
-          {form.images.length > 0 && (
+          {((isEditMode && existingImages.length > 0) || form.images.length > 0) && (
             <div className="image-preview-grid">
+              {/* Show existing images in edit mode */}
+              {isEditMode && existingImages.map((imageUrl, index) => (
+                <div key={`existing-${index}`} className="image-preview-item">
+                  <img src={imageUrl} alt={`Property ${index + 1}`} />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExistingImages(prev => prev.filter((_, i) => i !== index))
+                    }}
+                    className="remove-image-btn"
+                    style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '28px',
+                      height: '28px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <X size={16} color="white" />
+                  </button>
+                </div>
+              ))}
+              {/* Show new images */}
               {form.images.map((file, index) => {
                 const isVideo = isVideoFile(file)
                 return (

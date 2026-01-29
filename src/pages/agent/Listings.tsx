@@ -6,6 +6,7 @@ import { getColors } from '@/constants/Colors'
 import { useProperties } from '@/hooks/useProperties'
 import { useAgentPropertyReservations } from '@/hooks/useReservations'
 import { usePropertyViews } from '@/hooks/usePropertyViews'
+import { useDialog } from '@/contexts/DialogContext'
 import PropertyCard from '@/components/PropertyCard'
 import { Plus, BarChart3, Home, Users, Calendar } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -19,10 +20,12 @@ export default function AgentListings() {
   const navigate = useNavigate()
   const { getAgentTotalViews } = usePropertyViews()
 
-  const { properties, loading, error, refetch } = useProperties(user?.id || '')
+  const { properties, loading, error, refetch, deleteProperty } = useProperties(user?.id || '')
   const { reservations: agentReservations } = useAgentPropertyReservations(user?.id || '')
+  const { confirm, alert } = useDialog()
   const [totalViews, setTotalViews] = useState(0)
   const [activeTab, setActiveTab] = useState<'active' | 'reserved' | 'sold'>('active')
+  const [deletingPropertyId, setDeletingPropertyId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchTotalViews = async () => {
@@ -59,6 +62,41 @@ export default function AgentListings() {
         return '#EF4444'
       default:
         return '#6B7280'
+    }
+  }
+
+  const handleEdit = (propertyId: string) => {
+    navigate(`/property/edit/${propertyId}`)
+  }
+
+  const handleDelete = async (propertyId: string) => {
+    const confirmed = await confirm({
+      title: t('property.deleteProperty') || 'Delete Property',
+      message: t('agent.deletePropertyMessage') || t('property.deletePropertyMessage') || 'Are you sure you want to delete this property? This action cannot be undone.',
+      confirmText: t('common.delete') || 'Delete',
+      cancelText: t('common.cancel') || 'Cancel',
+      variant: 'danger',
+    })
+
+    if (!confirmed) {
+      return
+    }
+
+    setDeletingPropertyId(propertyId)
+    try {
+      const success = await deleteProperty(propertyId)
+      if (success) {
+        // Property will be removed from list automatically via refetch
+        refetch()
+        alert(t('property.propertyDeletedSuccess') || 'Property deleted successfully', 'success')
+      } else {
+        alert(t('agent.failedToDeleteProperty') || t('property.failedToDeleteProperty') || 'Failed to delete property. Please try again.', 'error')
+      }
+    } catch (err: any) {
+      console.error('Delete property error:', err)
+      alert(err.message || t('agent.failedToDeleteProperty') || t('property.failedToDeleteProperty') || 'Failed to delete property.', 'error')
+    } finally {
+      setDeletingPropertyId(null)
     }
   }
 
@@ -418,7 +456,13 @@ export default function AgentListings() {
           gap: '16px'
         }}>
           {filteredProperties.map((property) => (
-            <PropertyCard key={property.id} property={property} isOwner />
+            <PropertyCard 
+              key={property.id} 
+              property={property} 
+              isOwner 
+              onEdit={() => handleEdit(property.id)}
+              onDelete={() => handleDelete(property.id)}
+            />
           ))}
         </div>
       )}

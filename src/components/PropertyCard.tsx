@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, BedDouble, Bath, Share2 } from 'lucide-react'
+import { MapPin, BedDouble, Bath, Share2, Edit, Trash2 } from 'lucide-react'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
@@ -158,8 +158,8 @@ export default function PropertyCard({
             zIndex: 3,
           }}
         >
-          {/* Status Badge */}
-          {property.status && (
+          {/* Status Badge - Only show for owner */}
+          {isOwner && property.status && (
             <span
               style={{
                 backgroundColor: property.status === 'reserved' 
@@ -214,8 +214,8 @@ export default function PropertyCard({
           </span>
         </div>
         
-        {/* Verified Badge */}
-        {property.isVerified && (
+        {/* Verified Badge - Only show for non-owners */}
+        {property.isVerified && !isOwner && (
           <div className="property-card-verified-badge">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M4.5 7L6.5 9L9.5 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -256,6 +256,62 @@ export default function PropertyCard({
             zIndex: 3,
           }}
         >
+          {isOwner && (
+            <>
+              {onEdit && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEdit()
+                  }}
+                  style={{
+                    backgroundColor: colorScheme === 'dark' 
+                      ? 'rgba(24, 24, 27, 0.9)' 
+                      : 'rgba(255, 255, 255, 0.9)',
+                    border: 'none',
+                    borderRadius: '20px',
+                    padding: '6px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: colorScheme === 'dark'
+                      ? '0 1px 2px rgba(0, 0, 0, 0.3)'
+                      : '0 1px 2px rgba(0, 0, 0, 0.1)',
+                  }}
+                  title={t('common.edit') || 'Edit'}
+                >
+                  <Edit size={18} color={Colors.primary[600]} />
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete()
+                  }}
+                  style={{
+                    backgroundColor: colorScheme === 'dark' 
+                      ? 'rgba(24, 24, 27, 0.9)' 
+                      : 'rgba(255, 255, 255, 0.9)',
+                    border: 'none',
+                    borderRadius: '20px',
+                    padding: '6px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: colorScheme === 'dark'
+                      ? '0 1px 2px rgba(0, 0, 0, 0.3)'
+                      : '0 1px 2px rgba(0, 0, 0, 0.1)',
+                  }}
+                  title={t('common.delete') || 'Delete'}
+                >
+                  <Trash2 size={18} color={Colors.error[600]} />
+                </button>
+              )}
+            </>
+          )}
           <button
             onClick={handleShare}
             style={{

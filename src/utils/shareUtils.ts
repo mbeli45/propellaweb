@@ -123,6 +123,24 @@ export const getPropertyImageUrl = (property: PropertyData): string | undefined 
 }
 
 /**
+ * Gets the first available media (image or video) URL from a property for sharing
+ */
+export const getPropertyMediaUrl = (property: PropertyData): string | undefined => {
+  // Check images array first
+  if (property.images && property.images.length > 0) {
+    const firstMedia = property.images[0]
+    return formatImageUrlForSharing(firstMedia)
+  }
+  
+  // Fallback to single image property
+  if (property.image) {
+    return formatImageUrlForSharing(property.image)
+  }
+  
+  return undefined
+}
+
+/**
  * Downloads an image (web version - returns blob URL)
  */
 export const downloadImage = async (imageUrl: string): Promise<string | null> => {
@@ -151,11 +169,40 @@ export const saveImageToLibrary = async (imageUri: string): Promise<boolean> => 
 }
 
 /**
+ * Downloads and converts an image/video URL to a File object for sharing
+ */
+const urlToFile = async (url: string, filename: string): Promise<File | null> => {
+  try {
+    // Handle CORS - try to fetch with credentials if needed
+    const response = await fetch(url, {
+      mode: 'cors',
+      credentials: 'omit',
+    })
+    if (!response.ok) {
+      console.warn('Failed to fetch image for sharing:', response.statusText)
+      return null
+    }
+    
+    const blob = await response.blob()
+    if (blob.size === 0) {
+      console.warn('Empty blob received')
+      return null
+    }
+    
+    const file = new File([blob], filename, { type: blob.type || 'image/jpeg' })
+    return file
+  } catch (error) {
+    console.error('Error converting URL to file:', error)
+    return null
+  }
+}
+
+/**
  * Shares content using Web Share API
  */
 export const shareContent = async (options: ShareOptions): Promise<void> => {
   try {
-    const { title, message, url, imageUrl } = options
+    const { title, message, url, imageUrl, imageUri } = options
 
     if (navigator.share) {
       try {
@@ -166,6 +213,48 @@ export const shareContent = async (options: ShareOptions): Promise<void> => {
         
         if (url) {
           shareData.url = url
+        }
+
+        // Add image/video file if available
+        if (imageUrl || imageUri) {
+          const imageUrlToUse = imageUrl || imageUri
+          if (imageUrlToUse && !imageUrlToUse.includes('placeholder')) {
+            try {
+              // Determine file extension from URL or content type
+              let extension = '.jpg'
+              let mimeType = 'image/jpeg'
+              
+              // Check URL for extension
+              const urlMatch = imageUrlToUse.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)/i)
+              if (urlMatch) {
+                extension = `.${urlMatch[1].toLowerCase()}`
+                const ext = urlMatch[1].toLowerCase()
+                if (['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext)) {
+                  mimeType = ext === 'mov' ? 'video/quicktime' : `video/${ext}`
+                } else {
+                  mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : `image/${ext}`
+                }
+              }
+              
+              const filename = `property${extension}`
+              const file = await urlToFile(imageUrlToUse, filename)
+              
+              if (file) {
+                // Check if Web Share API supports files (Level 2)
+                if ('canShare' in navigator) {
+                  const canShareFiles = (navigator as any).canShare({ files: [file] })
+                  if (canShareFiles) {
+                    shareData.files = [file]
+                  }
+                } else {
+                  // Try to share with files anyway (some browsers support it without canShare)
+                  shareData.files = [file]
+                }
+              }
+            } catch (fileError) {
+              console.log('Could not attach file to share, continuing without file:', fileError)
+            }
+          }
         }
         
         await navigator.share(shareData)
@@ -185,10 +274,12 @@ export const shareContent = async (options: ShareOptions): Promise<void> => {
       ? (alreadyHasUrl ? message : `${message}\n\n${url}`)
       : message
     await navigator.clipboard.writeText(shareText)
-    alert('Copied! Content has been copied to your clipboard')
+    // Note: For share utils, we'll use a simple notification since this is a utility function
+    // The calling component can handle alerts if needed
+    console.log('Copied! Content has been copied to your clipboard')
   } catch (error) {
     console.error('Share error:', error)
-    alert('Could not share content')
+    throw new Error('Could not share content')
   }
 }
 
@@ -247,14 +338,14 @@ export const createOpenGraphMeta = (property: PropertyData): void => {
  */
 export const shareProperty = async (property: PropertyData): Promise<void> => {
   const message = createPropertyShareMessage(property)
-  const imageUrl = getPropertyImageUrl(property)
-  const shareUrl = createWebShareUrl(property)
+  const mediaUrl = getPropertyMediaUrl(property)
+  const shareUrl = createPropertyUrl(property)
 
   await shareContent({
     title: property.title || 'Property on Propella',
     message,
     url: shareUrl,
-    imageUrl,
+    imageUrl: mediaUrl,
   })
 }
 
@@ -263,7 +354,6 @@ export const shareProperty = async (property: PropertyData): Promise<void> => {
  */
 export const sharePropertyUrl = async (property: PropertyData, customMessage?: string): Promise<void> => {
   const propertyUrl = createPropertyUrl(property)
-  const shareUrl = createWebShareUrl(property)
   const message = customMessage 
     ? `${customMessage}\n\n${propertyUrl}`
     : `Check out this property: ${property.title}\n\n${propertyUrl}`
@@ -271,7 +361,7 @@ export const sharePropertyUrl = async (property: PropertyData, customMessage?: s
   await shareContent({
     title: property.title || 'Property on Propella',
     message,
-    url: shareUrl,
+    url: propertyUrl,
   })
 }
 
@@ -287,17 +377,17 @@ export const requestSharingPermissions = async (): Promise<boolean> => {
  */
 export const sharePropertyWithImage = async (property: PropertyData): Promise<void> => {
   const message = createPropertyShareMessage(property)
-  const imageUrl = getPropertyImageUrl(property)
-  const propertyUrl = createWebShareUrl(property)
+  const mediaUrl = getPropertyMediaUrl(property)
+  const propertyUrl = createPropertyUrl(property)
 
   // Create Open Graph meta tags for better sharing previews
   createOpenGraphMeta(property)
   
-  // Share the property URL
+  // Share the property URL with media attachment
   await shareContent({
     title: property.title || 'Property on Propella',
     message,
     url: propertyUrl,
-    imageUrl,
+    imageUrl: mediaUrl,
   })
 }

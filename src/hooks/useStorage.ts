@@ -16,13 +16,13 @@ export const useStorage = () => {
   const [error, setError] = useState<string | null>(null)
 
   /**
-   * Pick an image from file input (web version)
+   * Pick an image or video from file input (web version)
    */
   const pickImage = async (allowMultiple: boolean = false): Promise<File[] | File | null> => {
     return new Promise((resolve) => {
       const input = document.createElement('input')
       input.type = 'file'
-      input.accept = 'image/*'
+      input.accept = 'image/*,video/*'
       input.multiple = allowMultiple
       input.onchange = (e: Event) => {
         const target = e.target as HTMLInputElement
@@ -90,9 +90,29 @@ export const useStorage = () => {
         throw new Error('Invalid file format')
       }
 
-      const fileExt = fileToUpload instanceof File 
-        ? fileToUpload.name.split('.').pop()?.toLowerCase() || 'jpg'
-        : 'jpg'
+      // Determine file extension and content type
+      let fileExt = 'jpg'
+      let contentType = 'image/jpeg'
+      
+      if (fileToUpload instanceof File) {
+        fileExt = fileToUpload.name.split('.').pop()?.toLowerCase() || 'jpg'
+        // Use the file's actual MIME type if available (most reliable)
+        if (fileToUpload.type) {
+          contentType = fileToUpload.type
+        } else {
+          // Fallback: determine from extension
+          if (fileExt === 'mp4') contentType = 'video/mp4'
+          else if (fileExt === 'mov') contentType = 'video/quicktime'
+          else if (fileExt === 'avi') contentType = 'video/x-msvideo'
+          else if (fileExt === 'mkv') contentType = 'video/x-matroska'
+          else if (fileExt === 'webm') contentType = 'video/webm'
+          else if (fileExt === 'png') contentType = 'image/png'
+          else if (fileExt === 'gif') contentType = 'image/gif'
+          else if (fileExt === 'webp') contentType = 'image/webp'
+          else contentType = 'image/jpeg' // Default
+        }
+      }
+      
       const fileName = `${uuidv4()}.${fileExt}`
       const filePath = `${folder}/${fileName}`
 
@@ -101,7 +121,7 @@ export const useStorage = () => {
       const { data, error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(filePath, fileToUpload, {
-          contentType: fileToUpload.type || `image/${fileExt}`,
+          contentType: contentType,
           upsert: true,
         })
 

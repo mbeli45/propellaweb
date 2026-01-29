@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
   ArrowLeft, 
@@ -11,7 +11,8 @@ import {
   CheckCircle2,
   User as UserIcon,
   ChevronRight,
-  Star
+  Star,
+  Play
 } from 'lucide-react'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
@@ -23,8 +24,10 @@ import { useReservations } from '@/hooks/useReservations'
 import { useFapshiPayment } from '@/hooks/useFapshiPayment'
 import { formatPrice, calculateRentPrices } from '@/utils/shareUtils'
 import { getPaymentStatus } from '@/lib/fapshi'
+import { isVideoUrl, separateMedia, generateVideoThumbnail } from '@/utils/videoUtils'
 import PropertyCard from '@/components/PropertyCard'
 import ReservationModal from '@/components/ReservationModal'
+import VideoPlayer from '@/components/VideoPlayer'
 import './PropertyDetail.css'
 
 type PaymentMethod = 'mtn' | 'orange'
@@ -49,21 +52,55 @@ export default function PropertyDetail() {
   )
 
   const [isFavorite, setIsFavorite] = useState(false)
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0)
   const [showReservationModal, setShowReservationModal] = useState(false)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null)
   const [phoneNumber, setPhoneNumber] = useState('')
   const [waitingForPayment, setWaitingForPayment] = useState(false)
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null)
+  const [videoThumbnails, setVideoThumbnails] = useState<Record<string, string>>({})
+  const [playingVideo, setPlayingVideo] = useState<string | null>(null)
 
-  const images = useMemo(() => {
+  const allMedia = useMemo(() => {
     if (!property) return []
-    return property.images && property.images.length > 0 
+    const media = property.images && property.images.length > 0 
       ? property.images 
       : property.image 
         ? [property.image] 
         : []
+    
+    // Separate videos and images, videos first
+    const { videos, images } = separateMedia(media)
+    return [...videos, ...images]
   }, [property])
+
+  const { videos, images } = useMemo(() => {
+    return separateMedia(allMedia)
+  }, [allMedia])
+
+  // Generate thumbnails for videos
+  useEffect(() => {
+    const generateThumbnails = async () => {
+      const thumbnails: Record<string, string> = {}
+      for (const videoUrl of videos) {
+        if (!videoThumbnails[videoUrl]) {
+          try {
+            const thumbnail = await generateVideoThumbnail(videoUrl)
+            thumbnails[videoUrl] = thumbnail
+          } catch (error) {
+            console.error('Failed to generate thumbnail for', videoUrl, error)
+          }
+        }
+      }
+      if (Object.keys(thumbnails).length > 0) {
+        setVideoThumbnails(prev => ({ ...prev, ...thumbnails }))
+      }
+    }
+    
+    if (videos.length > 0) {
+      generateThumbnails()
+    }
+  }, [videos])
 
   const rentPrices = useMemo(() => {
     if (!property || property.type !== 'rent') return null
@@ -278,50 +315,146 @@ export default function PropertyDetail() {
         </button>
       </div>
 
-      {/* Image Gallery */}
-      {images.length > 0 && (
+      {/* Media Gallery (Videos + Images) */}
+      {allMedia.length > 0 && (
         <div className="property-images">
           <div className="main-image-container">
-            <img
-              src={images[currentImageIndex]}
-              alt={property.title}
-              className="main-image"
-            />
-            {images.length > 1 && (
+            {playingVideo === allMedia[currentMediaIndex] ? (
+              <VideoPlayer
+                src={allMedia[currentMediaIndex]}
+                thumbnail={videoThumbnails[allMedia[currentMediaIndex]]}
+                controls
+                onClose={() => setPlayingVideo(null)}
+                className="main-video"
+              />
+            ) : isVideoUrl(allMedia[currentMediaIndex]) ? (
+              <div
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  height: '100%',
+                  cursor: 'pointer',
+                }}
+                onClick={() => setPlayingVideo(allMedia[currentMediaIndex])}
+              >
+                <img
+                  src={videoThumbnails[allMedia[currentMediaIndex]] || allMedia[currentMediaIndex]}
+                  alt={property.title}
+                  className="main-image"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'transform 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.1)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)'
+                  }}
+                >
+                  <Play size={32} color="#FFFFFF" fill="#FFFFFF" />
+                </div>
+              </div>
+            ) : (
+              <img
+                src={allMedia[currentMediaIndex]}
+                alt={property.title}
+                className="main-image"
+              />
+            )}
+            {allMedia.length > 1 && (
               <>
                 <button
                   className="image-nav prev"
-                  onClick={() => setCurrentImageIndex((prev) => 
-                    prev > 0 ? prev - 1 : images.length - 1
-                  )}
+                  onClick={() => {
+                    setCurrentMediaIndex((prev) => 
+                      prev > 0 ? prev - 1 : allMedia.length - 1
+                    )
+                    setPlayingVideo(null)
+                  }}
                 >
                   ←
                 </button>
                 <button
                   className="image-nav next"
-                  onClick={() => setCurrentImageIndex((prev) => 
-                    prev < images.length - 1 ? prev + 1 : 0
-                  )}
+                  onClick={() => {
+                    setCurrentMediaIndex((prev) => 
+                      prev < allMedia.length - 1 ? prev + 1 : 0
+                    )
+                    setPlayingVideo(null)
+                  }}
                 >
                   →
                 </button>
                 <div className="image-indicator">
-                  {currentImageIndex + 1} / {images.length}
+                  {currentMediaIndex + 1} / {allMedia.length}
                 </div>
               </>
             )}
           </div>
-          {images.length > 1 && (
+          {allMedia.length > 1 && (
             <div className="thumbnail-container hidden-scrollbar">
-              {images.slice(0, 5).map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentImageIndex(idx)}
-                  className={`thumbnail ${currentImageIndex === idx ? 'active' : ''}`}
-                >
-                  <img src={img} alt={`${property.title} ${idx + 1}`} />
-                </button>
-              ))}
+              {allMedia.slice(0, 5).map((media, idx) => {
+                const isVideo = isVideoUrl(media)
+                const thumbnail = isVideo ? videoThumbnails[media] : media
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setCurrentMediaIndex(idx)
+                      setPlayingVideo(null)
+                    }}
+                    className={`thumbnail ${currentMediaIndex === idx ? 'active' : ''}`}
+                    style={{ position: 'relative' }}
+                  >
+                    <img 
+                      src={thumbnail || media} 
+                      alt={`${property.title} ${idx + 1}`}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+                    {isVideo && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Play size={12} color="#FFFFFF" fill="#FFFFFF" />
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
