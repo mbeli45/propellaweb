@@ -12,15 +12,24 @@
 
 .location-search-icon {
   position: absolute;
-  left: 12px;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
   color: #6B7280;
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
+  width: 18px;
+  height: 18px;
+}
+
+[data-theme="dark"] .location-search-icon,
+.dark .location-search-icon {
+  color: #A1A1AA;
 }
 
 .location-search-input {
   width: 100%;
-  padding: 12px 40px 12px 46px;
+  padding: 12px 40px 12px 50px !important;
   border: 1px solid #D1D5DB;
   border-radius: 10px;
   font-size: 15px;
@@ -66,8 +75,11 @@
 .location-search-loader {
   position: absolute;
   right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
   color: #0069FF;
   animation: spin 1s linear infinite;
+  z-index: 2;
 }
 
 @keyframes spin {
@@ -82,6 +94,8 @@
 .location-search-clear {
   position: absolute;
   right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
   padding: 4px;
@@ -92,6 +106,7 @@
   justify-content: center;
   border-radius: 4px;
   transition: all 0.2s;
+  z-index: 2;
 }
 
 .location-search-clear:hover {

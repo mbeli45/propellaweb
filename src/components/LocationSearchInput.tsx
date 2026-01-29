@@ -38,23 +38,33 @@ export default function LocationSearchInput({
   const Colors = getColors(colorScheme)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const isSelectingRef = useRef(false)
 
   // Handle input change with debouncing via the hook
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value
     onChange(newValue)
-    handleSearchQueryChange(newValue)
-    setShowSuggestions(true)
+    if (newValue.trim().length >= 2) {
+      handleSearchQueryChange(newValue)
+      setShowSuggestions(true)
+    } else {
+      setShowSuggestions(false)
+    }
   }
 
   // Handle suggestion selection
   const handleSelectSuggestion = (suggestion: LocationSuggestion) => {
+    isSelectingRef.current = true
     onChange(suggestion.place_name)
     if (onLocationSelect) {
       onLocationSelect(suggestion)
     }
     setShowSuggestions(false)
     clearSuggestions()
+    // Reset flag after a short delay
+    setTimeout(() => {
+      isSelectingRef.current = false
+    }, 100)
   }
 
   // Handle clear
@@ -63,6 +73,13 @@ export default function LocationSearchInput({
     clearSuggestions()
     setShowSuggestions(false)
   }
+
+  // Show suggestions when they arrive (if user is still typing)
+  useEffect(() => {
+    if (suggestions.length > 0 && value.trim().length >= 2) {
+      setShowSuggestions(true)
+    }
+  }, [suggestions, value])
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -92,15 +109,31 @@ export default function LocationSearchInput({
             borderColor: Colors.neutral[300],
             backgroundColor: Colors.neutral[50],
             color: Colors.neutral[900],
+            paddingLeft: '50px',
+            paddingRight: '40px',
           }}
           onFocus={(e) => {
             e.target.style.borderColor = Colors.primary[600]
             e.target.style.backgroundColor = colorScheme === 'dark' ? Colors.neutral[200] : Colors.white
-            if (value) setShowSuggestions(true)
+            if (value && value.trim().length >= 2) {
+              handleSearchQueryChange(value)
+              setShowSuggestions(true)
+            } else if (value && value.trim().length > 0) {
+              setShowSuggestions(true)
+            }
           }}
           onBlur={(e) => {
-            e.target.style.borderColor = Colors.neutral[300]
-            e.target.style.backgroundColor = Colors.neutral[50]
+            const input = e.target as HTMLInputElement
+            input.style.borderColor = Colors.neutral[300]
+            input.style.backgroundColor = Colors.neutral[50]
+            // Don't close suggestions if we're selecting one
+            if (!isSelectingRef.current) {
+              setTimeout(() => {
+                if (!containerRef.current?.contains(document.activeElement)) {
+                  setShowSuggestions(false)
+                }
+              }, 150)
+            }
           }}
         />
         {loading && (
@@ -118,7 +151,7 @@ export default function LocationSearchInput({
         )}
       </div>
 
-      {showSuggestions && suggestions.length > 0 && (
+      {showSuggestions && (suggestions.length > 0 || loading) && (
         <div 
           className="location-search-suggestions"
           style={{
@@ -129,11 +162,25 @@ export default function LocationSearchInput({
               : '0 4px 12px rgba(0, 0, 0, 0.1)',
           }}
         >
+          {loading && (
+            <div style={{ padding: '12px 16px', textAlign: 'center', color: Colors.neutral[600] }}>
+              Searching...
+            </div>
+          )}
+          {!loading && suggestions.length === 0 && value.trim().length >= 2 && (
+            <div style={{ padding: '12px 16px', textAlign: 'center', color: Colors.neutral[600] }}>
+              No locations found
+            </div>
+          )}
           {suggestions.map((suggestion) => (
             <button
               key={suggestion.id}
               type="button"
               onClick={() => handleSelectSuggestion(suggestion)}
+              onMouseDown={(e) => {
+                // Prevent input blur when clicking suggestion
+                e.preventDefault()
+              }}
               className="location-search-suggestion-item"
               style={{
                 borderBottomColor: Colors.neutral[200],
