@@ -36,6 +36,7 @@ export default function PropertyFeedView({
   const touchEndX = useRef<number>(0)
   const touchEndY = useRef<number>(0)
   const isTransitioning = useRef<boolean>(false)
+  const isDragging = useRef<boolean>(false)
 
   // Get media for a property (videos first, then images)
   const getPropertyMedia = useCallback((property: PropertyData) => {
@@ -167,8 +168,11 @@ export default function PropertyFeedView({
 
   // Touch handlers for 2D swipe detection
   const handleTouchStart = (e: React.TouchEvent) => {
+    console.log('Touch start:', e.touches[0].clientX, e.touches[0].clientY)
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
+    touchEndX.current = e.touches[0].clientX
+    touchEndY.current = e.touches[0].clientY
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -177,6 +181,37 @@ export default function PropertyFeedView({
   }
 
   const handleTouchEnd = () => {
+    console.log('Touch end - Start:', touchStartX.current, touchStartY.current, 'End:', touchEndX.current, touchEndY.current)
+    handleSwipeEnd()
+  }
+
+  // Mouse handlers for desktop drag support
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isDragging.current = true
+    touchStartX.current = e.clientX
+    touchStartY.current = e.clientY
+    touchEndX.current = e.clientX
+    touchEndY.current = e.clientY
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current) return
+    touchEndX.current = e.clientX
+    touchEndY.current = e.clientY
+  }
+
+  const handleMouseUp = () => {
+    if (!isDragging.current) return
+    isDragging.current = false
+    handleSwipeEnd()
+  }
+
+  const handleMouseLeave = () => {
+    if (!isDragging.current) return
+    isDragging.current = false
+  }
+
+  const handleSwipeEnd = () => {
     if (!containerRef.current) return
 
     const diffX = touchStartX.current - touchEndX.current
@@ -187,27 +222,39 @@ export default function PropertyFeedView({
     const absDiffX = Math.abs(diffX)
     const absDiffY = Math.abs(diffY)
 
+    console.log('Swipe detected - diffX:', diffX, 'diffY:', diffY, 'absDiffX:', absDiffX, 'absDiffY:', absDiffY)
+
     // Check if we have multiple media for current property
     const hasMultipleMedia = currentPropertyMedia.length > 1
+    console.log('Has multiple media:', hasMultipleMedia, 'Count:', currentPropertyMedia.length)
 
-    if (hasMultipleMedia && absDiffX > absDiffY && absDiffX > threshold) {
+    // Prioritize horizontal swipe when there are multiple media
+    if (hasMultipleMedia && absDiffX > threshold && absDiffX > absDiffY) {
+      console.log('Horizontal swipe detected')
       // Horizontal swipe - navigate media within property
       if (diffX > 0) {
+        console.log('Next media')
         // Swipe left (startX > endX) - next media
         goToNextMedia()
       } else {
+        console.log('Previous media')
         // Swipe right (startX < endX) - previous media
         goToPreviousMedia()
       }
-    } else if (absDiffY > threshold) {
+    } else if (absDiffY > threshold && absDiffY > absDiffX) {
+      console.log('Vertical swipe detected')
       // Vertical swipe - navigate between properties
       if (diffY > 0) {
+        console.log('Next property')
         // Swipe up (startY > endY) - next property
         goToNextProperty()
       } else {
+        console.log('Previous property')
         // Swipe down (startY < endY) - previous property
         goToPreviousProperty()
       }
+    } else {
+      console.log('No swipe detected - threshold not met or no clear direction')
     }
   }
 
@@ -315,13 +362,13 @@ export default function PropertyFeedView({
 
   // Reset media index when property changes
   useEffect(() => {
-    if (currentProperty && !currentMediaIndex[currentProperty.id]) {
+    if (currentProperty && currentMediaIndex[currentProperty.id] === undefined) {
       setCurrentMediaIndex(prev => ({
         ...prev,
         [currentProperty.id]: 0
       }))
     }
-  }, [currentPropertyIndex, currentProperty, currentMediaIndex])
+  }, [currentPropertyIndex, currentProperty])
 
   if (properties.length === 0 && !loading) {
     return (
@@ -338,6 +385,10 @@ export default function PropertyFeedView({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
       style={{ backgroundColor: Colors.neutral[900] }}
     >
       {/* Vertical Swiping Container - Properties */}
