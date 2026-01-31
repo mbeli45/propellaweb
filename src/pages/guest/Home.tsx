@@ -121,41 +121,39 @@ export default function GuestHome() {
   // Render feed view
   if (viewMode === 'feed') {
     return (
-      <div style={{ height: '100vh', overflow: 'hidden', position: 'relative' }}>
-        {/* View Toggle Overlay - Only show when feed is active */}
-        <div style={{
-          position: 'absolute',
-          top: '16px',
-          right: '16px',
-          zIndex: 100,
-          display: 'flex',
-          gap: '4px',
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          borderRadius: '8px',
-          padding: '4px',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <button
-            onClick={() => handleViewModeChange('grid')}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              color: Colors.white,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontSize: '14px',
-              fontWeight: '500',
-              transition: 'all 0.2s'
-            }}
-          >
-            <Grid3x3 size={16} />
-            <span style={{ display: window.innerWidth > 480 ? 'inline' : 'none' }}>Grid</span>
-          </button>
-        </div>
+      <div style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: '100dvh',
+        overflow: 'hidden'
+      }}>
+        {/* View Toggle Button - Only show when feed is active */}
+        <button
+          onClick={() => handleViewModeChange('grid')}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            zIndex: 100,
+            padding: '10px',
+            borderRadius: '8px',
+            border: 'none',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            color: Colors.white,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backdropFilter: 'blur(10px)',
+            transition: 'all 0.2s'
+          }}
+          title="Switch to Grid View"
+        >
+          <Grid3x3 size={20} />
+        </button>
         <PropertyFeedView 
           properties={allPropertiesForFeed}
           loading={isLoading}
@@ -180,56 +178,24 @@ export default function GuestHome() {
             placeholder={t('home.searchPlaceholder')}
           />
         </div>
-        <div style={{
-          display: 'flex',
-          gap: '4px',
-          backgroundColor: Colors.neutral[100],
-          borderRadius: '8px',
-          padding: '4px'
-        }}>
-          <button
-            onClick={() => handleViewModeChange('grid')}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: viewMode === 'grid' ? Colors.white : 'transparent',
-              color: viewMode === 'grid' ? Colors.primary[600] : Colors.neutral[600],
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontSize: '14px',
-              fontWeight: '500',
-              boxShadow: viewMode === 'grid' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
-              transition: 'all 0.2s'
-            }}
-          >
-            <Grid3x3 size={16} />
-            <span style={{ display: window.innerWidth > 480 ? 'inline' : 'none' }}>Grid</span>
-          </button>
-          <button
-            onClick={() => handleViewModeChange('feed')}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: viewMode === 'feed' ? Colors.white : 'transparent',
-              color: viewMode === 'feed' ? Colors.primary[600] : Colors.neutral[600],
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontSize: '14px',
-              fontWeight: '500',
-              boxShadow: viewMode === 'feed' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
-              transition: 'all 0.2s'
-            }}
-          >
-            <LayoutGrid size={16} />
-            <span style={{ display: window.innerWidth > 480 ? 'inline' : 'none' }}>Feed</span>
-          </button>
-        </div>
+        <button
+          onClick={() => handleViewModeChange(viewMode === 'grid' ? 'feed' : 'grid')}
+          style={{
+            padding: '10px',
+            borderRadius: '8px',
+            border: 'none',
+            backgroundColor: Colors.neutral[100],
+            color: Colors.neutral[700],
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s'
+          }}
+          title={viewMode === 'grid' ? 'Switch to Feed View' : 'Switch to Grid View'}
+        >
+          {viewMode === 'grid' ? <LayoutGrid size={20} /> : <Grid3x3 size={20} />}
+        </button>
       </div>
 
       {/* Location Pills */}
