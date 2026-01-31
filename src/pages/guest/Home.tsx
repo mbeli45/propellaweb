@@ -47,7 +47,7 @@ export default function GuestHome() {
   })
   const [viewMode, setViewMode] = useState<'grid' | 'feed'>(() => {
     const saved = localStorage.getItem('homeViewMode')
-    return (saved === 'feed' || saved === 'grid') ? saved : 'grid'
+    return (saved === 'feed' || saved === 'grid') ? saved : 'feed'
   })
 
   const popularLocations = useMemo(() => [
