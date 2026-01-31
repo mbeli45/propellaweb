@@ -94,6 +94,8 @@ export default function GuestHome() {
   const handleViewModeChange = useCallback((mode: 'grid' | 'feed') => {
     setViewMode(mode)
     localStorage.setItem('homeViewMode', mode)
+    // Trigger a custom event to notify BottomNavigation
+    window.dispatchEvent(new Event('viewModeChange'))
   }, [])
 
   // Combine all properties for feed view
