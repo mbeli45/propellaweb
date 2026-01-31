@@ -45,10 +45,7 @@ export default function GuestHome() {
     bathrooms: null,
     category: [],
   })
-  const [viewMode, setViewMode] = useState<'grid' | 'feed'>(() => {
-    const saved = localStorage.getItem('homeViewMode')
-    return (saved === 'feed' || saved === 'grid') ? saved : 'feed'
-  })
+  const [viewMode, setViewMode] = useState<'grid' | 'feed'>('feed')
 
   const popularLocations = useMemo(() => [
     'Yaoundé',

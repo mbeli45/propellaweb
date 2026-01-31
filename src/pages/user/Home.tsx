@@ -52,10 +52,7 @@ export default function UserHome() {
     bathrooms: null,
     category: [],
   })
-  const [viewMode, setViewMode] = useState<'grid' | 'feed'>(() => {
-    const saved = localStorage.getItem('homeViewMode')
-    return (saved === 'feed' || saved === 'grid') ? saved : 'feed'
-  })
+  const [viewMode, setViewMode] = useState<'grid' | 'feed'>('feed')
 
   const popularLocations = useMemo(() => [
     'Douala',
