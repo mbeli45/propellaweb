@@ -90,6 +90,7 @@
     "title": "Propriété",
     "addProperty": "Ajouter une propriété",
     "editProperty": "Modifier la propriété",
+    "deleteProperty": "Supprimer la propriété",
     "editPropertyDescription": "Mettre à jour les détails de votre propriété",
     "propertyDetails": "Détails de la propriété",
     "propertyTitle": "Titre de la propriété",

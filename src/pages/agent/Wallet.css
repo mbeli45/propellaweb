@@ -15,8 +15,123 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Withdrawal Modal Styles */
+.withdrawal-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.withdrawal-modal-overlay.mobile {
+  align-items: flex-end;
+  padding: 0;
+}
+
+.withdrawal-modal-content {
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: withdrawalModalSlideIn 0.3s ease;
+}
+
+.withdrawal-modal-content.bottom-sheet {
+  max-width: 100%;
+  max-height: 85vh;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  animation: withdrawalBottomSheetSlideUp 0.3s ease;
+}
+
+@keyframes withdrawalModalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes withdrawalBottomSheetSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.withdrawal-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid;
+  flex-shrink: 0;
+}
+
+.withdrawal-modal-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  flex: 1;
+}
+
+.withdrawal-close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.withdrawal-close-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.withdrawal-modal-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
 @media (max-width: 768px) {
   .wallet-container {
     padding: 16px 12px;
+  }
+
+  .withdrawal-modal-overlay {
+    padding: 0;
+  }
+
+  .withdrawal-modal-content {
+    max-height: 85vh;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .withdrawal-modal-header {
+    padding: 16px 20px;
+  }
+
+  .withdrawal-modal-scroll {
+    padding: 20px;
   }
 }

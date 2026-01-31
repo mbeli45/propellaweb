@@ -90,6 +90,7 @@
     "title": "Property",
     "addProperty": "Add Property",
     "editProperty": "Edit Property",
+    "deleteProperty": "Delete Property",
     "editPropertyDescription": "Update your property details",
     "propertyDetails": "Property Details",
     "propertyTitle": "Property Title",

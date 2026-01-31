@@ -30,8 +30,29 @@ export default function AgentWallet() {
   const [phoneNumber, setPhoneNumber] = useState('')
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'mtn' | 'orange' | null>(null)
   const [withdrawalMessage, setWithdrawalMessage] = useState<string | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
 
   const balance = wallet?.balance || 0
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  useEffect(() => {
+    if (showWithdrawModal) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [showWithdrawModal])
 
   const handleWithdraw = async () => {
     if (!withdrawAmount || !phoneNumber || !selectedPaymentMethod) {
@@ -295,53 +316,27 @@ export default function AgentWallet() {
       {/* Withdrawal Modal */}
       {showWithdrawModal && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px'
-          }}
+          className={`withdrawal-modal-overlay ${isMobile ? 'mobile' : ''}`}
           onClick={closeModal}
         >
           <div
-            style={{
-              backgroundColor: Colors.white,
-              borderRadius: '16px',
-              padding: '24px',
-              maxWidth: '500px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflow: 'auto',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
-            }}
+            className={`withdrawal-modal-content ${isMobile ? 'bottom-sheet' : ''}`}
+            style={{ backgroundColor: Colors.white }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: '700', color: Colors.neutral[900] }}>
+            <div className="withdrawal-modal-header" style={{ borderBottomColor: Colors.neutral[200] }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '700', color: Colors.neutral[900], margin: 0 }}>
                 {t('wallet.withdraw')}
               </h2>
               <button
                 onClick={closeModal}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
+                className="withdrawal-close-button"
               >
                 <X size={24} color={Colors.neutral[600]} />
               </button>
             </div>
+
+            <div className="withdrawal-modal-scroll">
 
             {/* Amount */}
             <div style={{ marginBottom: '20px' }}>
@@ -502,6 +497,7 @@ export default function AgentWallet() {
               >
                 {withdrawalLoading ? (t('common.processing') || 'Processing...') : (t('wallet.withdraw') || 'Withdraw')}
               </button>
+            </div>
             </div>
           </div>
         </div>
