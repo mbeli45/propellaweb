@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { X, Shield, DollarSign, Clock, AlertTriangle, CreditCard } from 'lucide-react'
 import { useLanguage } from '@/contexts/I18nContext'
+import { useBottomSheet } from '@/contexts/BottomSheetContext'
 import { getColors } from '@/constants/Colors'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useDialog } from '@/contexts/DialogContext'
@@ -30,6 +31,7 @@ export default function CommissionPaymentModal({
   const Colors = getColors(colorScheme)
   const { t } = useLanguage()
   const { confirm, alert } = useDialog()
+  const { setBottomSheetOpen } = useBottomSheet()
   
   const [commissionAmount, setCommissionAmount] = useState('')
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null)
@@ -51,13 +53,16 @@ export default function CommissionPaymentModal({
   useEffect(() => {
     if (visible) {
       document.body.style.overflow = 'hidden'
+      setBottomSheetOpen(isMobile) // Only hide nav on mobile when bottom sheet
     } else {
       document.body.style.overflow = 'unset'
+      setBottomSheetOpen(false)
     }
     return () => {
       document.body.style.overflow = 'unset'
+      setBottomSheetOpen(false)
     }
-  }, [visible])
+  }, [visible, isMobile, setBottomSheetOpen])
 
   if (!visible) return null
 

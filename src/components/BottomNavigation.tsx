@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { Home, Map, User, MessageCircle, CalendarDays, Wallet, List } from 'lucide-react'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
+import { useBottomSheet } from '@/contexts/BottomSheetContext'
 import { getColors } from '@/constants/Colors'
 import Badge from './Badge'
 import './BottomNavigation.css'
@@ -21,7 +22,13 @@ interface BottomNavigationProps {
 export default function BottomNavigation({ items }: BottomNavigationProps) {
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
+  const { isBottomSheetOpen } = useBottomSheet()
   const Colors = getColors(colorScheme)
+
+  // Hide bottom navigation when bottom sheet is open
+  if (isBottomSheetOpen) {
+    return null
+  }
 
   return (
     <nav

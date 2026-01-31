@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
+import { useBottomSheet } from '@/contexts/BottomSheetContext'
 import { getColors } from '@/constants/Colors'
 import { useWallet } from '@/hooks/useWallet'
 import { useFapshiWithdrawal } from '@/hooks/useFapshiWithdrawal'
@@ -13,6 +14,7 @@ export default function AgentWallet() {
   const { user } = useAuth()
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
+  const { setBottomSheetOpen } = useBottomSheet()
   const Colors = getColors(colorScheme)
 
   const {
@@ -46,13 +48,16 @@ export default function AgentWallet() {
   useEffect(() => {
     if (showWithdrawModal) {
       document.body.style.overflow = 'hidden'
+      setBottomSheetOpen(isMobile) // Only hide nav on mobile when bottom sheet
     } else {
       document.body.style.overflow = 'unset'
+      setBottomSheetOpen(false)
     }
     return () => {
       document.body.style.overflow = 'unset'
+      setBottomSheetOpen(false)
     }
-  }, [showWithdrawModal])
+  }, [showWithdrawModal, isMobile, setBottomSheetOpen])
 
   const handleWithdraw = async () => {
     if (!withdrawAmount || !phoneNumber || !selectedPaymentMethod) {

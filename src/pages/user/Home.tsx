@@ -11,7 +11,8 @@ import SearchBar from '@/components/SearchBar'
 import FilterModal, { FilterOptions } from '@/components/FilterModal'
 import PropertyCard from '@/components/PropertyCard'
 import PropertyListSkeleton from '@/components/PropertyListSkeleton'
-import { MapPin, ArrowRight, Star, User as UserIcon } from 'lucide-react'
+import PropertyFeedView from '@/components/PropertyFeedView'
+import { MapPin, ArrowRight, Star, User as UserIcon, Grid3x3, LayoutGrid } from 'lucide-react'
 import './Home.css'
 
 export default function UserHome() {
@@ -50,6 +51,10 @@ export default function UserHome() {
     bedrooms: null,
     bathrooms: null,
     category: [],
+  })
+  const [viewMode, setViewMode] = useState<'grid' | 'feed'>(() => {
+    const saved = localStorage.getItem('homeViewMode')
+    return (saved === 'feed' || saved === 'grid') ? saved : 'grid'
   })
 
   const popularLocations = useMemo(() => [
@@ -129,10 +134,84 @@ export default function UserHome() {
     setFilterVisible(false)
   }, [updateFilters])
 
+  const handleViewModeChange = useCallback((mode: 'grid' | 'feed') => {
+    setViewMode(mode)
+    localStorage.setItem('homeViewMode', mode)
+  }, [])
+
+  // Combine all properties for feed view
+  const allPropertiesForFeed = useMemo(() => {
+    if (searchTerm) {
+      return searchResults
+    }
+    // Combine featured and recent, removing duplicates
+    const combined = [...featuredProperties]
+    recentProperties.forEach(prop => {
+      if (!combined.find(p => p.id === prop.id)) {
+        combined.push(prop)
+      }
+    })
+    return combined
+  }, [searchTerm, searchResults, featuredProperties, recentProperties])
+
   const displayProperties = searchTerm ? searchResults : (selectedLocation ? searchResults : featuredProperties)
   const isLoading = searchTerm ? searchLoading : homeLoading
   const hasError = searchTerm ? searchError : homeError
   const hasTopAgents = topAgents.length > 0
+
+  // Render feed view
+  if (viewMode === 'feed') {
+    return (
+      <div style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: '100dvh',
+        overflow: 'hidden'
+      }}>
+        {/* View Toggle Overlay - Only show when feed is active */}
+        <div style={{
+          position: 'absolute',
+          top: '16px',
+          right: '16px',
+          zIndex: 100,
+          display: 'flex',
+          gap: '4px',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          borderRadius: '8px',
+          padding: '4px',
+          backdropFilter: 'blur(10px)'
+        }}>
+          <button
+            onClick={() => handleViewModeChange('grid')}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '6px',
+              border: 'none',
+              backgroundColor: 'rgba(255,255,255,0.2)',
+              color: Colors.white,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'all 0.2s'
+            }}
+          >
+            <Grid3x3 size={16} />
+            <span style={{ display: window.innerWidth > 480 ? 'inline' : 'none' }}>Grid</span>
+          </button>
+        </div>
+        <PropertyFeedView 
+          properties={allPropertiesForFeed}
+          loading={isLoading}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="home-container" style={{ backgroundColor: Colors.neutral[100] }}>
@@ -163,13 +242,71 @@ export default function UserHome() {
         </p>
       </div>
 
-      {/* Search Bar */}
-      <div style={{ padding: '0 16px', marginBottom: '12px' }}>
-        <SearchBar 
-          onSearch={handleSearch}
-          onFilter={handleFilterOpen}
-          placeholder={t('home.searchPlaceholder')}
-        />
+      {/* Search Bar and View Toggle */}
+      <div style={{ 
+        padding: '0 16px', 
+        marginBottom: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+      }}>
+        <div style={{ flex: 1 }}>
+          <SearchBar 
+            onSearch={handleSearch}
+            onFilter={handleFilterOpen}
+            placeholder={t('home.searchPlaceholder')}
+          />
+        </div>
+        <div style={{
+          display: 'flex',
+          gap: '4px',
+          backgroundColor: Colors.neutral[100],
+          borderRadius: '8px',
+          padding: '4px'
+        }}>
+          <button
+            onClick={() => handleViewModeChange('grid')}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '6px',
+              border: 'none',
+              backgroundColor: viewMode === 'grid' ? Colors.white : 'transparent',
+              color: viewMode === 'grid' ? Colors.primary[600] : Colors.neutral[600],
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: '14px',
+              fontWeight: '500',
+              boxShadow: viewMode === 'grid' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.2s'
+            }}
+          >
+            <Grid3x3 size={16} />
+            <span style={{ display: window.innerWidth > 480 ? 'inline' : 'none' }}>Grid</span>
+          </button>
+          <button
+            onClick={() => handleViewModeChange('feed')}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '6px',
+              border: 'none',
+              backgroundColor: viewMode === 'feed' ? Colors.white : 'transparent',
+              color: viewMode === 'feed' ? Colors.primary[600] : Colors.neutral[600],
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: '14px',
+              fontWeight: '500',
+              boxShadow: viewMode === 'feed' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.2s'
+            }}
+          >
+            <LayoutGrid size={16} />
+            <span style={{ display: window.innerWidth > 480 ? 'inline' : 'none' }}>Feed</span>
+          </button>
+        </div>
       </div>
 
       {/* Location Pills */}

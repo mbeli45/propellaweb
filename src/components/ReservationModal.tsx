@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { X, CreditCard, Shield, AlertCircle } from 'lucide-react'
 import { useLanguage } from '@/contexts/I18nContext'
+import { useBottomSheet } from '@/contexts/BottomSheetContext'
 import { getColors } from '@/constants/Colors'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { formatPrice } from '@/utils/shareUtils'
@@ -36,6 +37,7 @@ export default function ReservationModal({
   const { colorScheme } = useThemeMode()
   const Colors = getColors(colorScheme)
   const { t } = useLanguage()
+  const { setBottomSheetOpen } = useBottomSheet()
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -50,13 +52,16 @@ export default function ReservationModal({
   useEffect(() => {
     if (visible) {
       document.body.style.overflow = 'hidden'
+      setBottomSheetOpen(isMobile) // Only hide nav on mobile when bottom sheet
     } else {
       document.body.style.overflow = 'unset'
+      setBottomSheetOpen(false)
     }
     return () => {
       document.body.style.overflow = 'unset'
+      setBottomSheetOpen(false)
     }
-  }, [visible])
+  }, [visible, isMobile, setBottomSheetOpen])
 
   if (!visible) return null
 
