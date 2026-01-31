@@ -10,6 +10,8 @@ import FilterModal, { FilterOptions } from '@/components/FilterModal'
 import PropertyCard from '@/components/PropertyCard'
 import PropertyListSkeleton from '@/components/PropertyListSkeleton'
 import PropertyFeedView from '@/components/PropertyFeedView'
+import SEO from '@/components/SEO'
+import { generateHomepageStructuredData } from '@/utils/seoUtils'
 import { MapPin, ArrowRight, Grid3x3, LayoutGrid } from 'lucide-react'
 import './Home.css'
 
@@ -117,10 +119,17 @@ export default function GuestHome() {
   const isLoading = searchTerm ? searchLoading : homeLoading
   const hasError = searchTerm ? searchError : homeError
 
+  // Generate structured data for homepage
+  const structuredData = useMemo(() => generateHomepageStructuredData(), [])
+
   // Render feed view
   if (viewMode === 'feed') {
     return (
-      <div style={{ 
+      <>
+        <SEO
+          structuredData={structuredData}
+        />
+        <div style={{ 
         position: 'fixed',
         top: 0,
         left: 0,
@@ -157,12 +166,17 @@ export default function GuestHome() {
           properties={allPropertiesForFeed}
           loading={isLoading}
         />
-      </div>
+        </div>
+      </>
     )
   }
 
   return (
-    <div className="home-container" style={{ backgroundColor: Colors.neutral[100] }}>
+    <>
+      <SEO
+        structuredData={structuredData}
+      />
+      <div className="home-container" style={{ backgroundColor: Colors.neutral[100] }}>
       {/* Search Bar and View Toggle */}
       <div style={{ 
         padding: '16px',
@@ -400,6 +414,7 @@ export default function GuestHome() {
         onApply={handleFilterApply}
         initialFilters={filters}
       />
-    </div>
+      </div>
+    </>
   )
 }

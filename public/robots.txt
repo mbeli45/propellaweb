@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /user/
+Disallow: /agent/
+Disallow: /chat/
+
+# Admin panel is hosted on admin.propellacam.com
+# Main site admin route redirects to subdomain
+
+# Sitemap
+Sitemap: https://propellacam.com/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1

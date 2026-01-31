@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
@@ -7,6 +7,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useAgentProfile } from '@/hooks/useAgentProfile'
 import { supabase } from '@/lib/supabase'
 import PropertyCard from '@/components/PropertyCard'
+import SEO from '@/components/SEO'
+import { generateAgentStructuredData, getCanonicalBaseUrl } from '@/utils/seoUtils'
 import { Star, User as UserIcon, Mail, Phone, ArrowRight, CheckCircle2, ArrowLeft, X } from 'lucide-react'
 import './AgentProfile.css'
 
@@ -127,8 +129,56 @@ export default function AgentProfile() {
     }
   }
 
+  // Generate structured data for SEO
+  const structuredData = useMemo(() => {
+    if (!agent) return undefined
+    return generateAgentStructuredData(agent, properties.length, reviews.length, averageRating)
+  }, [agent, properties.length, reviews.length, averageRating])
+
+  // Get current language from i18n
+  const currentLang = typeof window !== 'undefined' 
+    ? localStorage.getItem('user-language') || 'en'
+    : 'en'
+  
+  // Language-aware SEO content
+  const seoTitle = agent 
+    ? currentLang === 'fr'
+      ? `${agent.full_name || 'Agent'} - Agent Immobilier au Cameroun | Propella`
+      : `${agent.full_name || 'Agent'} - Real Estate Agent in Cameroon | Propella`
+    : currentLang === 'fr'
+      ? 'Agent Immobilier | Propella'
+      : 'Real Estate Agent | Propella'
+  
+  const seoDescription = agent
+    ? currentLang === 'fr'
+      ? `${agent.full_name || 'Agent'} est un agent immobilier professionnel au Cameroun. ${agent.bio || `Découvrez ${properties.length} propriété${properties.length > 1 ? 's' : ''} listée${properties.length > 1 ? 's' : ''} par cet agent.`}`
+      : `${agent.full_name || 'Agent'} is a professional real estate agent in Cameroon. ${agent.bio || `Discover ${properties.length} propert${properties.length === 1 ? 'y' : 'ies'} listed by this agent.`}`
+    : currentLang === 'fr'
+      ? 'Découvrez cet agent immobilier sur Propella'
+      : 'Discover this real estate agent on Propella'
+  
+  const seoKeywords = agent
+    ? currentLang === 'fr'
+      ? `${agent.full_name}, agent immobilier Cameroun, agence immobilière ${agent.location || 'Cameroun'}, Propella`
+      : `${agent.full_name}, real estate agent Cameroon, real estate agency ${agent.location || 'Cameroon'}, Propella`
+    : undefined
+  
+  const baseUrl = getCanonicalBaseUrl()
+  const seoImage = agent?.avatar_url || '/app-icon.png'
+  const seoUrl = `${baseUrl}/agents/${agentId}`
+
   return (
-    <div style={{ 
+    <>
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        keywords={seoKeywords}
+        image={seoImage}
+        url={seoUrl}
+        type="profile"
+        structuredData={structuredData}
+      />
+      <div style={{ 
       backgroundColor: Colors.neutral[50], 
       minHeight: '100vh',
       paddingBottom: '24px'
@@ -668,6 +718,7 @@ export default function AgentProfile() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   )
 }

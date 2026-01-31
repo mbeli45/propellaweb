@@ -22,12 +22,14 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useShare } from '@/hooks/useShare'
 import { useReservations } from '@/hooks/useReservations'
 import { useFapshiPayment } from '@/hooks/useFapshiPayment'
-import { formatPrice, calculateRentPrices } from '@/utils/shareUtils'
+import { formatPrice, calculateRentPrices, createPropertyUrl } from '@/utils/shareUtils'
+import { generatePropertyStructuredData, getCanonicalBaseUrl } from '@/utils/seoUtils'
 import { getPaymentStatus } from '@/lib/fapshi'
 import { isVideoUrl, separateMedia, generateVideoThumbnail } from '@/utils/videoUtils'
 import PropertyCard from '@/components/PropertyCard'
 import ReservationModal from '@/components/ReservationModal'
 import VideoPlayer from '@/components/VideoPlayer'
+import SEO from '@/components/SEO'
 import './PropertyDetail.css'
 
 type PaymentMethod = 'mtn' | 'orange'
@@ -251,8 +253,56 @@ export default function PropertyDetail() {
 
   const isOwner = user?.id === property.owner_id
 
+  // Generate structured data for SEO
+  const structuredData = useMemo(() => {
+    if (!property) return undefined
+    return generatePropertyStructuredData(property, rentPrices || undefined)
+  }, [property, rentPrices])
+
+  // Get current language from i18n
+  const currentLang = typeof window !== 'undefined' 
+    ? localStorage.getItem('user-language') || 'en'
+    : 'en'
+  
+  // Language-aware SEO content
+  const seoTitle = property 
+    ? `${property.title} - ${formatPrice(property.type === 'rent' && rentPrices ? rentPrices.monthlyPrice : property.price)} | Propella`
+    : currentLang === 'fr' ? 'Propriété | Propella' : 'Property | Propella'
+  
+  const seoDescription = property 
+    ? currentLang === 'fr'
+      ? `${property.title} à ${property.location}, Cameroun. ${property.type === 'rent' ? 'Location' : 'Vente'} - ${formatPrice(property.type === 'rent' && rentPrices ? rentPrices.monthlyPrice : property.price)}. ${property.description ? property.description.substring(0, 120) : ''}`
+      : `${property.title} in ${property.location}, Cameroon. ${property.type === 'rent' ? 'For Rent' : 'For Sale'} - ${formatPrice(property.type === 'rent' && rentPrices ? rentPrices.monthlyPrice : property.price)}. ${property.description ? property.description.substring(0, 120) : ''}`
+    : currentLang === 'fr' 
+      ? 'Découvrez cette propriété sur Propella'
+      : 'Discover this property on Propella'
+  
+  const seoKeywords = property
+    ? currentLang === 'fr'
+      ? `${property.title}, ${property.location}, immobilier Cameroun, ${property.type === 'rent' ? 'location' : 'vente'} ${property.category}, Propella`
+      : `${property.title}, ${property.location}, real estate Cameroon, ${property.type === 'rent' ? 'rent' : 'sale'} ${property.category}, Propella`
+    : undefined
+  
+  const baseUrl = getCanonicalBaseUrl()
+  const seoImage = property && (property.images?.[0] || property.image) 
+    ? (property.images?.[0] || property.image).startsWith('http') 
+      ? (property.images?.[0] || property.image)
+      : `${baseUrl}${property.images?.[0] || property.image}`
+    : '/app-icon.png'
+  const seoUrl = property ? createPropertyUrl(property) : undefined
+
   return (
-    <div className="property-detail" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh', paddingBottom: '100px' }}>
+    <>
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        keywords={seoKeywords}
+        image={seoImage}
+        url={seoUrl}
+        type="article"
+        structuredData={structuredData}
+      />
+      <div className="property-detail" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh', paddingBottom: '100px' }}>
       {/* Header with Back Button */}
       <div className="property-header" style={{ 
         position: 'sticky',
@@ -950,6 +1000,7 @@ export default function PropertyDetail() {
         loading={waitingForPayment}
         message={paymentMessage}
       />
-    </div>
+      </div>
+    </>
   )
 }

@@ -13,6 +13,7 @@ import AgentProfilePage from '@/pages/agent/[id]'
 import Terms from '@/pages/profile/help/Terms'
 import Privacy from '@/pages/profile/help/Privacy'
 import FAQ from '@/pages/profile/help/FAQ'
+import Admin from '@/pages/admin/Admin'
 
 function AppRoutes() {
   const { user, loading } = useAuth()
@@ -33,6 +34,9 @@ function AppRoutes() {
 
   return (
     <Routes>
+      {/* Admin routes - Public, react-admin handles its own auth */}
+      <Route path="/admin/*" element={<Admin />} />
+
       {/* Auth routes */}
       <Route path="/auth/*" element={<AuthLayout />} />
 

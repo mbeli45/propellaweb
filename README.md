@@ -39,7 +39,14 @@ npm install
 ```env
 VITE_PUBLIC_SUPABASE_URL=your_supabase_url
 VITE_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_ADMIN_EMAILS=admin1@example.com,admin2@example.com,admin3@example.com
 ```
+
+**Admin Access:**
+- `VITE_ADMIN_EMAILS` (or `VITE_ADMIN_EMAIL` for single admin) - Comma-separated list of emails with admin access regardless of role
+- Users with `admin`, `agent`, or `landlord` roles can also access the admin panel
+- Login uses your Supabase account credentials (email/password)
+- Access the admin panel at `/admin`
 
 3. Start the development server:
 ```bash
