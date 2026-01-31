@@ -645,29 +645,70 @@ export default function PropertyFeedView({
                     left: 0,
                     right: 0,
                     zIndex: 10,
-                    padding: '24px',
-                    paddingBottom: '80px',
+                    padding: '16px',
+                    paddingBottom: '70px',
                     pointerEvents: 'auto',
                     transform: 'none',
                     willChange: 'auto'
                   }}
                 >
+                  {/* Scroll Down Indicator - Only show on first property */}
+                  {propIndex === 0 && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '-60px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '8px',
+                      animation: 'pulse 2s ease-in-out infinite'
+                    }}>
+                      <span style={{
+                        fontSize: '12px',
+                        color: Colors.white,
+                        fontWeight: '600',
+                        textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px'
+                      }}>
+                        Swipe Up
+                      </span>
+                      <svg 
+                        width="24" 
+                        height="24" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="white" 
+                        strokeWidth="3" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                        style={{
+                          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
+                        }}
+                      >
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </div>
+                  )}
                   {/* Property Info */}
                   <div style={{ marginBottom: '16px' }}>
                     <h2 style={{
-                      fontSize: '24px',
-                      fontWeight: '700',
+                      fontSize: '18px',
+                      fontWeight: '600',
                       color: Colors.white,
-                      marginBottom: '8px',
-                      textShadow: '0 2px 8px rgba(0,0,0,0.5)'
+                      marginBottom: '6px',
+                      textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+                      lineHeight: '1.3'
                     }}>
                       {property.title || t('property.untitledProperty')}
                     </h2>
                     
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                      <MapPin size={16} color={Colors.white} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                      <MapPin size={14} color={Colors.white} />
                       <span style={{
-                        fontSize: '14px',
+                        fontSize: '13px',
                         color: Colors.white,
                         textShadow: '0 1px 4px rgba(0,0,0,0.5)'
                       }}>
@@ -675,25 +716,25 @@ export default function PropertyFeedView({
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                       {property.bedrooms && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <BedDouble size={16} color={Colors.white} />
-                          <span style={{ fontSize: '14px', color: Colors.white, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+                          <BedDouble size={14} color={Colors.white} />
+                          <span style={{ fontSize: '13px', color: Colors.white, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
                             {property.bedrooms}
                           </span>
                         </div>
                       )}
                       {property.bathrooms && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <Bath size={16} color={Colors.white} />
-                          <span style={{ fontSize: '14px', color: Colors.white, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+                          <Bath size={14} color={Colors.white} />
+                          <span style={{ fontSize: '13px', color: Colors.white, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
                             {property.bathrooms}
                           </span>
                         </div>
                       )}
                       {property.area && (
-                        <span style={{ fontSize: '14px', color: Colors.white, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+                        <span style={{ fontSize: '13px', color: Colors.white, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
                           {property.area} m²
                         </span>
                       )}
@@ -704,16 +745,16 @@ export default function PropertyFeedView({
                       return (
                         <>
                           <div style={{
-                            fontSize: '28px',
+                            fontSize: '20px',
                             fontWeight: '700',
                             color: Colors.primary[400],
                             textShadow: '0 2px 8px rgba(0,0,0,0.5)',
-                            marginBottom: '4px'
+                            marginBottom: '2px'
                           }}>
                             {formatPrice(monthlyPrice)} / {t('propertyCard.month')}
                           </div>
                           <div style={{
-                            fontSize: '14px',
+                            fontSize: '12px',
                             fontWeight: '500',
                             color: 'rgba(255,255,255,0.8)',
                             textShadow: '0 1px 4px rgba(0,0,0,0.5)'
@@ -724,7 +765,7 @@ export default function PropertyFeedView({
                       )
                     })() : (
                       <div style={{
-                        fontSize: '28px',
+                        fontSize: '20px',
                         fontWeight: '700',
                         color: Colors.primary[400],
                         textShadow: '0 2px 8px rgba(0,0,0,0.5)'
@@ -737,8 +778,8 @@ export default function PropertyFeedView({
                   {/* Action Buttons */}
                   <div style={{
                     display: 'flex',
-                    gap: '12px',
-                    marginTop: '16px'
+                    gap: '8px',
+                    marginTop: '12px'
                   }}>
                     <button
                       onClick={(e) => {
@@ -747,12 +788,12 @@ export default function PropertyFeedView({
                       }}
                       style={{
                         flex: 1,
-                        padding: '12px 24px',
+                        padding: '10px 20px',
                         backgroundColor: Colors.primary[600],
                         color: Colors.white,
                         border: 'none',
-                        borderRadius: '12px',
-                        fontSize: '16px',
+                        borderRadius: '10px',
+                        fontSize: '14px',
                         fontWeight: '600',
                         cursor: 'pointer',
                         boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
@@ -766,11 +807,11 @@ export default function PropertyFeedView({
                         // Share functionality
                       }}
                       style={{
-                        padding: '12px',
+                        padding: '10px',
                         backgroundColor: 'rgba(255,255,255,0.2)',
                         color: Colors.white,
                         border: 'none',
-                        borderRadius: '12px',
+                        borderRadius: '10px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -778,7 +819,7 @@ export default function PropertyFeedView({
                         backdropFilter: 'blur(10px)'
                       }}
                     >
-                      <Share2 size={20} />
+                      <Share2 size={18} />
                     </button>
                   </div>
                 </div>
@@ -790,19 +831,22 @@ export default function PropertyFeedView({
 
       {/* Media Counter - Shows current media position within property (only if multiple media) */}
       {currentProperty && currentPropertyMedia.length > 1 && (
-        <div style={{
-          position: 'absolute',
-          top: '20px',
-          right: '20px',
-          zIndex: 15,
-          padding: '6px 12px',
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          borderRadius: '16px',
-          color: Colors.white,
-          fontSize: '12px',
-          fontWeight: '600',
-          backdropFilter: 'blur(10px)'
-        }}>
+        <div 
+          className="feed-media-counter"
+          style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            zIndex: 15,
+            padding: '6px 12px',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            borderRadius: '16px',
+            color: Colors.white,
+            fontSize: '12px',
+            fontWeight: '600',
+            backdropFilter: 'blur(10px)'
+          }}
+        >
           {currentMediaIdx + 1} / {currentPropertyMedia.length}
         </div>
       )}

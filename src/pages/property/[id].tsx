@@ -760,7 +760,7 @@ export default function PropertyDetail() {
 
         {/* Similar Properties */}
         {similarProperties.length > 0 && (
-          <div style={{ marginTop: '40px' }}>
+          <div style={{ marginTop: '40px', position: 'relative' }}>
             <h3 style={{ 
               fontSize: '20px', 
               fontWeight: '600', 
@@ -769,11 +769,94 @@ export default function PropertyDetail() {
             }}>
               {t('property.similarProperties')}
             </h3>
-            <div className="property-grid">
+
+            {/* Scroll Left Button - Desktop Only */}
+            <button
+              onClick={() => {
+                const container = document.getElementById('similar-properties-scroll-container')
+                if (container) {
+                  container.scrollBy({ left: -340, behavior: 'smooth' })
+                }
+              }}
+              className="horizontal-scroll-arrow left"
+              style={{
+                position: 'absolute',
+                left: '0',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 10,
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                backgroundColor: Colors.white,
+                border: `1px solid ${Colors.neutral[200]}`,
+                display: 'none',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = Colors.neutral[50]
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = Colors.white
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={Colors.neutral[700]} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+
+            <div id="similar-properties-scroll-container" className="property-grid horizontal-scroll">
               {similarProperties.map((prop) => (
                 <PropertyCard key={prop.id} property={prop} />
               ))}
             </div>
+
+            {/* Scroll Right Button - Desktop Only */}
+            <button
+              onClick={() => {
+                const container = document.getElementById('similar-properties-scroll-container')
+                if (container) {
+                  container.scrollBy({ left: 340, behavior: 'smooth' })
+                }
+              }}
+              className="horizontal-scroll-arrow right"
+              style={{
+                position: 'absolute',
+                right: '0',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 10,
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                backgroundColor: Colors.white,
+                border: `1px solid ${Colors.neutral[200]}`,
+                display: 'none',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = Colors.neutral[50]
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = Colors.white
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={Colors.neutral[700]} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
           </div>
         )}
       </div>

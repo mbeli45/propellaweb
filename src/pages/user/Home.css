@@ -96,12 +96,45 @@
   gap: 16px;
   padding: 0 16px;
   overflow-x: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scroll-snap-type: x mandatory; /* Snap to cards */
   /* Uses global .hidden-scrollbar class */
 }
 
 .horizontal-card-container {
   flex-shrink: 0;
   width: 320px;
+  scroll-snap-align: start; /* Snap alignment */
+}
+
+/* Keep horizontal scroll on all screen sizes */
+@media (max-width: 768px) {
+  .horizontal-card-container {
+    width: 280px;
+  }
+
+  /* Hide scroll arrows on mobile */
+  .horizontal-scroll-arrow {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .horizontal-card-container {
+    width: 340px;
+  }
+
+  /* Show scroll arrows on desktop */
+  .horizontal-scroll-arrow {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .horizontal-card-container {
+    width: 360px;
+  }
 }
 
 .property-grid {

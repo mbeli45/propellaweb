@@ -249,7 +249,7 @@ export default function GuestHome() {
 
       {/* Featured Properties Section */}
       {!searchTerm && featuredProperties.length > 0 && (
-        <div className="properties-section">
+        <div className="properties-section" style={{ position: 'relative' }}>
           <div className="section-header">
             <h2 style={{ fontSize: '18px', fontWeight: '600', color: Colors.neutral[800] }}>
               {t('home.featuredProperties')}
@@ -263,11 +263,96 @@ export default function GuestHome() {
               <ArrowRight size={16} />
             </button>
           </div>
-          <div className="property-grid">
-            {featuredProperties.slice(0, 6).map((property) => (
-              <PropertyCard key={property.id} property={property} />
+
+          {/* Scroll Left Button - Desktop Only */}
+          <button
+            onClick={() => {
+              const container = document.getElementById('guest-featured-scroll-container')
+              if (container) {
+                container.scrollBy({ left: -340, behavior: 'smooth' })
+              }
+            }}
+            className="horizontal-scroll-arrow left"
+            style={{
+              position: 'absolute',
+              left: '0',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 10,
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              backgroundColor: Colors.white,
+              border: `1px solid ${Colors.neutral[200]}`,
+              display: 'none',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = Colors.neutral[50]
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = Colors.white
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={Colors.neutral[700]} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+
+          <div id="guest-featured-scroll-container" className="horizontal-properties-scroll hidden-scrollbar">
+            {featuredProperties.map((property) => (
+              <div key={property.id} className="horizontal-card-container">
+                <PropertyCard property={property} />
+              </div>
             ))}
           </div>
+
+          {/* Scroll Right Button - Desktop Only */}
+          <button
+            onClick={() => {
+              const container = document.getElementById('guest-featured-scroll-container')
+              if (container) {
+                container.scrollBy({ left: 340, behavior: 'smooth' })
+              }
+            }}
+            className="horizontal-scroll-arrow right"
+            style={{
+              position: 'absolute',
+              right: '0',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 10,
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              backgroundColor: Colors.white,
+              border: `1px solid ${Colors.neutral[200]}`,
+              display: 'none',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = Colors.neutral[50]
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = Colors.white
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={Colors.neutral[700]} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
         </div>
       )}
 
