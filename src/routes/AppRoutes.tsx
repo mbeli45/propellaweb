@@ -32,8 +32,8 @@ function AppRoutes() {
 
   // Determine which layout to use based on user role
   const getDefaultRoute = () => {
-    // If on admin subdomain, always go to /admin
-    if (isAdminSubdomain) return '/admin'
+    // If on admin subdomain, go to root (which maps to admin)
+    if (isAdminSubdomain) return '/'
     
     if (!user) return '/guest'
     if (user.role === 'agent' || user.role === 'landlord') return '/agent'
@@ -43,7 +43,12 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Admin routes - Public, react-admin handles its own auth */}
-      <Route path="/admin/*" element={<Admin />} />
+      {/* Support both /admin/* and root /* when on admin subdomain */}
+      {isAdminSubdomain ? (
+        <Route path="/*" element={<Admin />} />
+      ) : (
+        <Route path="/admin/*" element={<Admin />} />
+      )}
 
       {/* Auth routes */}
       <Route path="/auth/*" element={<AuthLayout />} />

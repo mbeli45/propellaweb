@@ -20,6 +20,21 @@
   force = true
   conditions = {Host = ["propellacam.com", "www.propellacam.com", "propella.cm"]}
 
+# Admin subdomain - strip /admin prefix if present and redirect to root
+[[redirects]]
+  from = "/admin/*"
+  to = "/:splat"
+  status = 301
+  force = true
+  conditions = {Host = ["admin.propellacam.com", "admin.propella.cm"]}
+
+[[redirects]]
+  from = "/admin"
+  to = "/"
+  status = 301
+  force = true
+  conditions = {Host = ["admin.propellacam.com", "admin.propella.cm"]}
+
 # Redirect rules for SPA
 [[redirects]]
   from = "/*"
