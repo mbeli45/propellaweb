@@ -1,11 +1,4 @@
-# 1️⃣ MAIN DOMAIN → send /admin to admin subdomain
-/admin/*  https://admin.propellacam.com/:splat  301!
-/admin    https://admin.propellacam.com/        301!
-
-# 2️⃣ ADMIN SUBDOMAIN → internally serve /admin
-https://admin.propellacam.com/*  /admin/:splat  200
-
-# 3️⃣ SPA fallback for main site
+# SPA fallback - serve index.html for all routes
 /*  /index.html  200
 
 # 4️⃣ Sitemap and robots

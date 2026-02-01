@@ -8,25 +8,17 @@
 # Only apply on main domain, not admin subdomain
 [[redirects]]
   from = "/admin/*"
-  to = "https://admin.propellacam.com/admin/:splat"
+  to = "https://admin.propellacam.com/:splat"
   status = 301
   force = true
   conditions = {Host = ["propellacam.com", "www.propellacam.com", "propella.cm"]}
 
 [[redirects]]
   from = "/admin"
-  to = "https://admin.propellacam.com/admin"
+  to = "https://admin.propellacam.com/"
   status = 301
   force = true
   conditions = {Host = ["propellacam.com", "www.propellacam.com", "propella.cm"]}
-
-# Redirect admin subdomain root to /admin
-[[redirects]]
-  from = "/"
-  to = "/admin"
-  status = 301
-  force = true
-  conditions = {Host = ["admin.propellacam.com", "admin.propella.cm"]}
 
 # Redirect rules for SPA
 [[redirects]]
