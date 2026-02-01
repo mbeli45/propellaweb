@@ -1,14 +1,13 @@
-# Redirect /admin to admin subdomain (from main domain)
-/admin/*    https://admin.propellacam.com/admin/:splat    301!
-/admin    https://admin.propellacam.com/admin    301!
+# 1️⃣ MAIN DOMAIN → send /admin to admin subdomain
+/admin/*  https://admin.propellacam.com/:splat  301!
+/admin    https://admin.propellacam.com/        301!
 
-# Redirect admin subdomain root to /admin
-# Note: This only works if the request comes from admin.propellacam.com
-# We'll handle this in the app code, but this is a fallback
+# 2️⃣ ADMIN SUBDOMAIN → internally serve /admin
+https://admin.propellacam.com/*  /admin/:splat  200
 
-# SPA redirect - all other routes
-/*    /index.html   200
+# 3️⃣ SPA fallback for main site
+/*  /index.html  200
 
-# Sitemap and robots
-/sitemap.xml    /sitemap.xml   200
-/robots.txt     /robots.txt    200
+# 4️⃣ Sitemap and robots
+/sitemap.xml  /sitemap.xml  200
+/robots.txt   /robots.txt   200
