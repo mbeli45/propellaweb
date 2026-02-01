@@ -13,12 +13,12 @@ const Admin = () => {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
       const isMainDomain = hostname === 'propellacam.com' || hostname === 'www.propellacam.com' || hostname === 'propella.cm';
-      const isAdminSubdomain = hostname === 'admin.propellacam.com' || hostname === 'admin.propella.cm';
+      const isAdminSubdomain = hostname === 'admin.propellacam.com' || hostname === 'admin.propella.cm' || hostname === 'admin.propella.com';
       
       // If on main domain and trying to access /admin, redirect to admin subdomain
       if (isMainDomain && !isAdminSubdomain) {
         const protocol = window.location.protocol;
-        const adminUrl = `${protocol}//admin.propellacam.com${location.pathname}${location.search}${location.hash}`;
+        const adminUrl = `${protocol}//admin.propella.com${location.pathname}${location.search}${location.hash}`;
         window.location.href = adminUrl;
         return;
       }

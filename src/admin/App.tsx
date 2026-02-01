@@ -38,7 +38,8 @@ const AdminApp = () => {
   // Determine basename based on hostname
   const isAdminSubdomain = typeof window !== 'undefined' && 
     (window.location.hostname === 'admin.propellacam.com' || 
-     window.location.hostname === 'admin.propella.cm');
+     window.location.hostname === 'admin.propella.cm' ||
+     window.location.hostname === 'admin.propella.com');
   
   // Use root basename on admin subdomain, /admin on main domain
   const basename = isAdminSubdomain ? '/' : '/admin';

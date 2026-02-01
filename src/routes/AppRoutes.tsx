@@ -28,7 +28,8 @@ function AppRoutes() {
   // Check if we're on the admin subdomain
   const isAdminSubdomain = typeof window !== 'undefined' && 
     (window.location.hostname === 'admin.propellacam.com' || 
-     window.location.hostname === 'admin.propella.cm')
+     window.location.hostname === 'admin.propella.cm' ||
+     window.location.hostname === 'admin.propella.com')
 
   // Determine which layout to use based on user role
   const getDefaultRoute = () => {
