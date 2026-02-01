@@ -35,9 +35,17 @@ const NotificationIcon = () => <Icon icon="lucide:bell" width={24} />;
 const AnalyticsIcon = () => <Icon icon="lucide:bar-chart-3" width={24} />;
 
 const AdminApp = () => {
+  // Determine basename based on hostname
+  const isAdminSubdomain = typeof window !== 'undefined' && 
+    (window.location.hostname === 'admin.propellacam.com' || 
+     window.location.hostname === 'admin.propella.cm');
+  
+  // Use root basename on admin subdomain, /admin on main domain
+  const basename = isAdminSubdomain ? '/' : '/admin';
+  
   return (
     <Admin
-      basename="/admin"
+      basename={basename}
       dataProvider={dataProvider}
       authProvider={authProvider}
       theme={adminTheme}

@@ -4,8 +4,7 @@
   # Directory to deploy
   publish = "dist"
 
-# Redirect /admin to admin subdomain (must come before SPA redirect)
-# Only apply on main domain, not admin subdomain
+# Main domain: Redirect /admin to admin subdomain
 [[redirects]]
   from = "/admin/*"
   to = "https://admin.propellacam.com/:splat"
@@ -20,22 +19,7 @@
   force = true
   conditions = {Host = ["propellacam.com", "www.propellacam.com", "propella.cm"]}
 
-# Admin subdomain - strip /admin prefix if present and redirect to root
-[[redirects]]
-  from = "/admin/*"
-  to = "/:splat"
-  status = 301
-  force = true
-  conditions = {Host = ["admin.propellacam.com", "admin.propella.cm"]}
-
-[[redirects]]
-  from = "/admin"
-  to = "/"
-  status = 301
-  force = true
-  conditions = {Host = ["admin.propellacam.com", "admin.propella.cm"]}
-
-# Redirect rules for SPA
+# SPA fallback for ALL domains (including admin subdomain)
 [[redirects]]
   from = "/*"
   to = "/index.html"
