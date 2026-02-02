@@ -227,6 +227,14 @@ export default function PropertyDetail() {
     }
   }
 
+  // Generate structured data for SEO - MUST be before early returns
+  const structuredData = useMemo(() => {
+    if (!property) return undefined
+    return generatePropertyStructuredData(property, rentPrices || undefined)
+  }, [property, rentPrices])
+
+  const isOwner = user?.id === property?.owner_id
+
   if (loading) {
     return (
       <div style={{ 
@@ -250,14 +258,6 @@ export default function PropertyDetail() {
       </div>
     )
   }
-
-  const isOwner = user?.id === property.owner_id
-
-  // Generate structured data for SEO
-  const structuredData = useMemo(() => {
-    if (!property) return undefined
-    return generatePropertyStructuredData(property, rentPrices || undefined)
-  }, [property, rentPrices])
 
   // Get current language from i18n
   const currentLang = typeof window !== 'undefined' 
