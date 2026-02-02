@@ -1,6 +1,5 @@
 import { supabaseDataProvider } from 'ra-supabase';
-import { createClient } from '@supabase/supabase-js';
-import { Database } from '@/types/supabase';
+import { supabase } from '@/lib/supabase';
 
 // Get Supabase configuration from environment
 const supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL;
@@ -14,22 +13,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-// Create a dedicated Supabase client for react-admin
-// This ensures ra-supabase can properly access the URL
-const adminSupabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    flowType: 'pkce',
-    autoRefreshToken: true,
-    persistSession: true,
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined
-  },
-  db: {
-    schema: 'public'
-  }
-});
-
+// Reuse the shared Supabase client instance to avoid multiple GoTrueClient instances
+// This ensures both the admin panel and main app share the same session
 export const dataProvider = supabaseDataProvider({
   instanceUrl: supabaseUrl,
   apiKey: supabaseAnonKey,
-  supabaseClient: adminSupabaseClient,
+  supabaseClient: supabase,
 });
