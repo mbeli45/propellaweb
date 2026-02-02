@@ -18,34 +18,18 @@ import Admin from '@/pages/admin/Admin'
 function AppRoutes() {
   const { user, loading } = useAuth()
 
-  // Check if we're on the admin subdomain
-  const isAdminSubdomain = typeof window !== 'undefined' && 
-    (window.location.hostname === 'admin.propellacam.com' || 
-     window.location.hostname === 'admin.propella.cm' ||
-     window.location.hostname === 'admin.propella.com')
+  // Debug logging
+  console.log('🔐 [AppRoutes] User:', user?.email, '| Role:', user?.role, '| Loading:', loading)
 
-  // Debug logging (only for main app, not admin subdomain)
-  if (!isAdminSubdomain) {
-    console.log('🔐 [AppRoutes] User:', user?.email, '| Role:', user?.role, '| Loading:', loading)
-  }
-
-  if (loading && !isAdminSubdomain) {
+  if (loading) {
     return <LoadingScreen />
   }
 
   // Determine which layout to use based on user role
   const getDefaultRoute = () => {
-    // If on admin subdomain, go to root (which maps to admin)
-    if (isAdminSubdomain) return '/'
-    
     if (!user) return '/guest'
     if (user.role === 'agent' || user.role === 'landlord') return '/agent'
     return '/user'
-  }
-
-  // On admin subdomain, render Admin for all routes (react-admin handles routing internally)
-  if (isAdminSubdomain) {
-    return <Admin />;
   }
 
   return (
