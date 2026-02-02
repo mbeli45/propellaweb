@@ -6,6 +6,9 @@ import { useLanguage } from '@/contexts/I18nContext'
 import { useDialog } from '@/contexts/DialogContext'
 import { getColors } from '@/constants/Colors'
 import { ArrowLeft, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react'
+import { Input } from '@/components/ui/Input'
+import { IconButton } from '@mui/material'
+import { Icon } from '@iconify/react'
 import Button from '@/components/ui/Button'
 import './Auth.css'
 
@@ -211,44 +214,37 @@ export default function ResetPassword() {
           )}
 
           {/* New Password Input */}
-          <div className="auth-input-group">
-            <label className="auth-input-label" style={{ color: Colors.neutral[900] }}>
-              {t('resetPassword.newPassword')}
-            </label>
-            <div
-              className="auth-input-container"
-              style={{
-                borderColor: Colors.neutral[200],
-                backgroundColor: Colors.neutral[50],
-              }}
-            >
-              <Lock size={20} color={Colors.neutral[400]} className="auth-input-icon" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={t('resetPassword.enterNewPassword')}
-                className="auth-text-input"
-                style={{
-                  color: Colors.neutral[900],
-                }}
-                autoComplete="new-password"
-              />
-              <button
-                type="button"
+          <Input
+            label={t('resetPassword.newPassword')}
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            icon={Lock}
+            autoComplete="new-password"
+            disabled={loading}
+            rightIcon={
+              <IconButton
                 onClick={togglePasswordVisibility}
-                className="auth-eye-button"
+                edge="end"
+                disabled={loading}
+                sx={{ 
+                  color: Colors.neutral[400],
+                  '&:hover': {
+                    color: Colors.primary[600],
+                    backgroundColor: Colors.primary[50],
+                  },
+                }}
               >
-                {showPassword ? (
-                  <EyeOff size={20} color={Colors.neutral[400]} />
-                ) : (
-                  <Eye size={20} color={Colors.neutral[400]} />
-                )}
-              </button>
-            </div>
+                <Icon 
+                  icon={showPassword ? "lucide:eye-off" : "lucide:eye"} 
+                  width={20} 
+                />
+              </IconButton>
+            }
+          />
 
-            {/* Password Strength Indicator */}
-            {password.length > 0 && (
+          {/* Password Strength Indicator */}
+          {password.length > 0 && (
               <div
                 className="auth-password-strength-container"
                 style={{
@@ -312,50 +308,37 @@ export default function ResetPassword() {
                 </div>
               </div>
             )}
-          </div>
 
           {/* Confirm Password Input */}
-          <div className="auth-input-group">
-            <label className="auth-input-label" style={{ color: Colors.neutral[900] }}>
-              {t('resetPassword.confirmPassword')}
-            </label>
-            <div
-              className="auth-input-container"
-              style={{
-                borderColor: confirmPassword && !passwordsMatch ? Colors.error[300] : Colors.neutral[200],
-                backgroundColor: Colors.neutral[50],
-              }}
-            >
-              <Lock size={20} color={Colors.neutral[400]} className="auth-input-icon" />
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder={t('resetPassword.confirmNewPassword')}
-                className="auth-text-input"
-                style={{
-                  color: Colors.neutral[900],
-                }}
-                autoComplete="new-password"
-              />
-              <button
-                type="button"
+          <Input
+            label={t('resetPassword.confirmPassword')}
+            type={showConfirmPassword ? 'text' : 'password'}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            icon={Lock}
+            autoComplete="new-password"
+            disabled={loading}
+            error={confirmPassword && !passwordsMatch ? t('resetPassword.passwordsDoNotMatch') : undefined}
+            rightIcon={
+              <IconButton
                 onClick={toggleConfirmPasswordVisibility}
-                className="auth-eye-button"
+                edge="end"
+                disabled={loading}
+                sx={{ 
+                  color: Colors.neutral[400],
+                  '&:hover': {
+                    color: Colors.primary[600],
+                    backgroundColor: Colors.primary[50],
+                  },
+                }}
               >
-                {showConfirmPassword ? (
-                  <EyeOff size={20} color={Colors.neutral[400]} />
-                ) : (
-                  <Eye size={20} color={Colors.neutral[400]} />
-                )}
-              </button>
-            </div>
-            {confirmPassword && !passwordsMatch && (
-              <p className="auth-error-hint" style={{ color: Colors.error[600] }}>
-                {t('resetPassword.passwordsDoNotMatch')}
-              </p>
-            )}
-          </div>
+                <Icon 
+                  icon={showConfirmPassword ? "lucide:eye-off" : "lucide:eye"} 
+                  width={20} 
+                />
+              </IconButton>
+            }
+          />
         </form>
       </div>
 

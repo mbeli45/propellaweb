@@ -1,0 +1,155 @@
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-container {
+  display: flex !important;
+  align-items: center !important;
+  border-width: 1.5px;
+  border-style: solid;
+  border-radius: 8px;
+  padding: 16px 14px !important;
+  min-height: 56px;
+  transition: all 0.2s ease;
+  position: relative !important;
+  background-color: #F9FAFB !important;
+}
+
+.input-container:hover {
+  border-color: inherit;
+}
+
+.input-container.input-error {
+  border-color: inherit;
+}
+
+.input-icon {
+  margin-right: 12px !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: color 0.2s ease;
+}
+
+.input-icon svg {
+  display: block !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.text-input {
+  flex: 1 !important;
+  font-size: 16px;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  padding: 0 !important;
+  -webkit-appearance: none;
+  appearance: none;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.text-input::placeholder {
+  color: #9CA3AF;
+}
+
+.input-label {
+  position: absolute;
+  left: 48px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  font-weight: 400;
+  color: inherit;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  background-color: transparent;
+  padding: 0 4px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.input-label.has-value,
+.input-label.is-focused {
+  top: -8px;
+  left: 44px;
+  transform: translateY(0);
+  font-size: 12px;
+  font-weight: 500;
+  background-color: white;
+  padding: 0 4px;
+}
+
+.input-right-icon {
+  margin-left: 8px !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.input-error-text {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 6px;
+  margin-left: 4px;
+}
+
+/* Override browser autofill styles */
+.text-input:-webkit-autofill,
+.text-input:-webkit-autofill:hover,
+.text-input:-webkit-autofill:focus,
+.text-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #F9FAFB inset !important;
+  -webkit-text-fill-color: #111827 !important;
+  box-shadow: 0 0 0 1000px #F9FAFB inset !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+  caret-color: #111827 !important;
+  border: none !important;
+}
+
+.text-input:-webkit-autofill::first-line {
+  color: #111827 !important;
+  font-size: 16px !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+/* Dark mode support */
+[data-theme="dark"] .input-container,
+.dark .input-container {
+  background-color: #18181B !important;
+}
+
+[data-theme="dark"] .input-label.has-value,
+[data-theme="dark"] .input-label.is-focused,
+.dark .input-label.has-value,
+.dark .input-label.is-focused {
+  background-color: #18181B;
+}
+
+[data-theme="dark"] .text-input:-webkit-autofill,
+.dark .text-input:-webkit-autofill,
+[data-theme="dark"] .text-input:-webkit-autofill:hover,
+.dark .text-input:-webkit-autofill:hover,
+[data-theme="dark"] .text-input:-webkit-autofill:focus,
+.dark .text-input:-webkit-autofill:focus,
+[data-theme="dark"] .text-input:-webkit-autofill:active,
+.dark .text-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #18181B inset !important;
+  -webkit-text-fill-color: #F9FAFB !important;
+  box-shadow: 0 0 0 1000px #18181B inset !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .input-container {
+    min-height: 52px;
+  }
+  
+  .text-input {
+    font-size: 15px;
+  }
+}

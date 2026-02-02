@@ -5,6 +5,7 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { ArrowLeft, Lock, Mail } from 'lucide-react'
+import { Input } from '@/components/ui/Input'
 import Loader from '@/components/ui/Loader'
 import './Auth.css'
 
@@ -127,32 +128,16 @@ export default function ForgotPassword() {
 
           {/* Email Input */}
           <form onSubmit={handleSendReset}>
-            <div className="auth-input-group">
-              <label className="auth-input-label" style={{ color: Colors.neutral[900] }}>
-                {t('forgotPassword.emailAddress')}
-              </label>
-              <div
-                className="auth-input-container"
-                style={{
-                  borderColor: Colors.neutral[200],
-                  backgroundColor: Colors.neutral[50],
-                }}
-              >
-                <Mail size={20} color={Colors.neutral[400]} className="auth-input-icon" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t('forgotPassword.enterYourEmail')}
-                  className="auth-text-input"
-                  style={{
-                    color: Colors.neutral[900],
-                  }}
-                  autoCapitalize="none"
-                  autoComplete="email"
-                />
-              </div>
-            </div>
+            <Input
+              label={t('forgotPassword.emailAddress')}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t('forgotPassword.enterYourEmail')}
+              icon={Mail}
+              autoCapitalize="none"
+              autoComplete="email"
+            />
 
             {/* Help Text */}
             <div className="auth-help-section">

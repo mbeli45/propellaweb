@@ -4,7 +4,10 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
-import { ArrowLeft, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, CheckCircle, XCircle, User, Mail, Lock } from 'lucide-react'
+import { Input } from '@/components/ui/Input'
+import { IconButton } from '@mui/material'
+import { Icon } from '@iconify/react'
 import './Auth.css'
 
 type UserType = 'normal' | 'agent' | 'landlord'
@@ -15,7 +18,6 @@ export default function Signup() {
   const [password, setPassword] = useState('')
   const [hidePassword, setHidePassword] = useState(true)
   const [userType, setUserType] = useState<UserType>('normal')
-  const [focusedField, setFocusedField] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { signUp } = useAuth()
@@ -133,7 +135,11 @@ export default function Signup() {
                 backgroundColor: Colors.primary[600],
               }}
             >
-              <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: Colors.white }} />
+              <img 
+                src="/app-icon.png" 
+                alt="Propella" 
+                style={{ width: '40px', height: '40px', borderRadius: '8px' }}
+              />
             </div>
             <h1 className="auth-welcome-title" style={{ color: Colors.neutral[900] }}>
               {t('signup.createAccount')}
@@ -269,99 +275,57 @@ export default function Signup() {
           </div>
 
           {/* Full Name Input */}
-          <div className="auth-input-group">
-            <label className="auth-input-label" style={{ color: Colors.neutral[900] }}>
-              {t('signup.fullName')}
-            </label>
-            <div
-              className="auth-input-container"
-              style={{
-                borderColor: focusedField === 'name' ? Colors.primary[600] : Colors.neutral[200],
-                backgroundColor: Colors.neutral[50],
-              }}
-            >
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onFocus={() => setFocusedField('name')}
-                onBlur={() => setFocusedField(null)}
-                placeholder={t('signup.enterYourFullName')}
-                className="auth-text-input"
-                style={{
-                  color: Colors.neutral[900],
-                }}
-                autoComplete="name"
-              />
-            </div>
-          </div>
+          <Input
+            label={t('signup.fullName')}
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            icon={User}
+            autoComplete="name"
+            disabled={loading}
+          />
 
           {/* Email Input */}
-          <div className="auth-input-group">
-            <label className="auth-input-label" style={{ color: Colors.neutral[900] }}>
-              {t('signup.emailAddress')}
-            </label>
-            <div
-              className="auth-input-container"
-              style={{
-                borderColor: focusedField === 'email' ? Colors.primary[600] : Colors.neutral[200],
-                backgroundColor: Colors.neutral[50],
-              }}
-            >
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onFocus={() => setFocusedField('email')}
-                onBlur={() => setFocusedField(null)}
-                placeholder={t('signup.enterYourEmail')}
-                className="auth-text-input"
-                style={{
-                  color: Colors.neutral[900],
-                }}
-                autoComplete="email"
-                autoCapitalize="none"
-              />
-            </div>
-          </div>
+          <Input
+            label={t('signup.emailAddress')}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            icon={Mail}
+            autoComplete="email"
+            disabled={loading}
+          />
 
           {/* Password Input */}
           <div className="auth-input-group">
-            <label className="auth-input-label" style={{ color: Colors.neutral[900] }}>
-              {t('signup.password')}
-            </label>
-            <div
-              className="auth-input-container"
-              style={{
-                borderColor: focusedField === 'password' ? Colors.primary[600] : Colors.neutral[200],
-                backgroundColor: Colors.neutral[50],
-              }}
-            >
-              <input
-                type={hidePassword ? 'password' : 'text'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onFocus={() => setFocusedField('password')}
-                onBlur={() => setFocusedField(null)}
-                placeholder={t('signup.createStrongPassword')}
-                className="auth-text-input"
-                style={{
-                  color: Colors.neutral[900],
-                }}
-                autoComplete="new-password"
-              />
-              <button
-                type="button"
-                onClick={togglePasswordVisibility}
-                className="auth-eye-button"
-              >
-                {hidePassword ? (
-                  <EyeOff size={20} color={Colors.neutral[400]} />
-                ) : (
-                  <Eye size={20} color={Colors.neutral[400]} />
-                )}
-              </button>
-            </div>
+            <Input
+              label={t('signup.password')}
+              type={hidePassword ? 'password' : 'text'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              icon={Lock}
+              autoComplete="new-password"
+              disabled={loading}
+              rightIcon={
+                <IconButton
+                  onClick={togglePasswordVisibility}
+                  edge="end"
+                  disabled={loading}
+                  sx={{ 
+                    color: Colors.neutral[400],
+                    '&:hover': {
+                      color: Colors.primary[600],
+                      backgroundColor: Colors.primary[50],
+                    },
+                  }}
+                >
+                  <Icon 
+                    icon={hidePassword ? "lucide:eye-off" : "lucide:eye"} 
+                    width={20} 
+                  />
+                </IconButton>
+              }
+            />
 
             {/* Password Strength Indicator */}
             {password.length > 0 && (
