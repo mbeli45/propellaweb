@@ -43,15 +43,15 @@ function AppRoutes() {
     return '/user'
   }
 
+  // On admin subdomain, render Admin for all routes (react-admin handles routing internally)
+  if (isAdminSubdomain) {
+    return <Admin />;
+  }
+
   return (
     <Routes>
       {/* Admin routes - Public, react-admin handles its own auth */}
-      {/* Support both /admin/* and root /* when on admin subdomain */}
-      {isAdminSubdomain ? (
-        <Route path="/*" element={<Admin />} />
-      ) : (
-        <Route path="/admin/*" element={<Admin />} />
-      )}
+      <Route path="/admin/*" element={<Admin />} />
 
       {/* Auth routes */}
       <Route path="/auth/*" element={<AuthLayout />} />

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import AdminApp from '@/admin/App';
 
 // Let react-admin handle all authentication
@@ -7,9 +7,9 @@ import AdminApp from '@/admin/App';
 // This route is public - no app-level auth check needed
 const Admin = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if we're on the main domain (not admin subdomain)
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
       const isMainDomain = hostname === 'propellacam.com' || hostname === 'www.propellacam.com' || hostname === 'propella.cm';
@@ -22,13 +22,21 @@ const Admin = () => {
         window.location.href = adminUrl;
         return;
       }
+
+      // If on admin subdomain and path is /admin, redirect to root (react-admin handles routing)
+      if (isAdminSubdomain && location.pathname === '/admin') {
+        navigate('/', { replace: true });
+        return;
+      }
     }
-  }, [location]);
+  }, [location, navigate]);
 
   // If we're on the admin subdomain or localhost, render the admin app
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    const isAdminSubdomain = hostname === 'admin.propellacam.com' || hostname === 'admin.propella.cm';
+    const isAdminSubdomain = hostname === 'admin.propellacam.com' || 
+                             hostname === 'admin.propella.cm' || 
+                             hostname === 'admin.propella.com';
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
     
     // Only render if on admin subdomain or localhost (for development)
@@ -49,6 +57,7 @@ const Admin = () => {
     }
   }
 
+  // Always render AdminApp - react-admin will handle auth and routing
   return <AdminApp />;
 };
 
