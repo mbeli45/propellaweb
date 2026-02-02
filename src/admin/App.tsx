@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Admin, Resource } from 'react-admin';
 import { dataProvider } from './dataProvider';
 import { authProvider } from './authProvider';
@@ -44,28 +43,6 @@ const AdminApp = () => {
   
   // Use root basename on admin subdomain, /admin on main domain
   const basename = isAdminSubdomain ? '/' : '/admin';
-
-  // Redirect /admin to / on admin subdomain (before react-admin router initializes)
-  useEffect(() => {
-    if (isAdminSubdomain && typeof window !== 'undefined' && window.location.pathname === '/admin') {
-      // Redirect to root path - react-admin expects basename to be /
-      window.location.replace('/');
-    }
-  }, [isAdminSubdomain]);
-
-  // Show loading while redirecting
-  if (isAdminSubdomain && typeof window !== 'undefined' && window.location.pathname === '/admin') {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh' 
-      }}>
-        <div>Redirecting...</div>
-      </div>
-    );
-  }
   
   return (
     <Admin
