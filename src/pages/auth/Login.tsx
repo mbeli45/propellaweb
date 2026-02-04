@@ -8,6 +8,7 @@ import { ArrowLeft, Eye, EyeOff, Mail, Lock, LogIn, UserPlus, CheckCircle, XCirc
 import { Input } from '@/components/ui/Input'
 import { IconButton } from '@mui/material'
 import { Icon } from '@iconify/react'
+import { signInWithGoogle } from '@/lib/googleAuth'
 import './Auth.css'
 
 export default function Login() {
@@ -68,6 +69,22 @@ export default function Login() {
   const togglePasswordVisibility = useCallback(() => {
     setHidePassword(!hidePassword)
   }, [hidePassword])
+
+  const handleGoogleSignIn = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const { error: googleError } = await signInWithGoogle()
+      
+      if (googleError) {
+        setError(googleError)
+      }
+      // Browser will redirect to Google OAuth page
+    } catch (err: any) {
+      setError(err.message || 'Google Sign-In failed')
+      setLoading(false)
+    }
+  }, [])
 
   return (
     <div className="auth-container" style={{ backgroundColor: Colors.white }}>
@@ -207,6 +224,36 @@ export default function Login() {
                 </span>
               </>
             )}
+          </button>
+
+          {/* Divider */}
+          <div className="auth-divider">
+            <div className="auth-divider-line" style={{ backgroundColor: Colors.neutral[200] }} />
+            <span className="auth-divider-text" style={{ color: Colors.neutral[500] }}>
+              {t('auth.or')}
+            </span>
+            <div className="auth-divider-line" style={{ backgroundColor: Colors.neutral[200] }} />
+          </div>
+
+          {/* Google Sign-In Button */}
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            className="auth-google-button"
+            style={{
+              backgroundColor: Colors.white,
+              borderColor: Colors.neutral[200],
+            }}
+          >
+            <img 
+              src="https://www.google.com/favicon.ico" 
+              alt="Google"
+              style={{ width: '20px', height: '20px', marginRight: '12px' }}
+            />
+            <span style={{ color: Colors.neutral[700], fontWeight: '600' }}>
+              {t('auth.continueWithGoogle')}
+            </span>
           </button>
 
           {/* Divider */}

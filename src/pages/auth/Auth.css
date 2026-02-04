@@ -616,3 +616,29 @@
     max-width: 520px;
   }
 }
+
+/* Google Sign-In Button */
+.auth-google-button {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid;
+  border-radius: 16px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 8px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.auth-google-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.auth-google-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

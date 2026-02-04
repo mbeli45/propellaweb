@@ -72,7 +72,8 @@
     "backToLogin": "Back to Login",
     "welcomeBack": "Welcome back",
     "signInToAccount": "Sign in to your Propella account",
-    "loginFailed": "Login failed"
+    "loginFailed": "Login failed",
+    "continueWithGoogle": "Continue with Google"
   },
   "navigation": {
     "home": "Home",

@@ -12,26 +12,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase configuration. Please check your environment variables.')
 }
 
-// Helper to detect session in URL (for OAuth callbacks)
-const detectSessionInUrl = () => {
-  if (typeof window === 'undefined') return false
-  
-  const hashParams = new URLSearchParams(window.location.hash.substring(1))
-  const searchParams = new URLSearchParams(window.location.search)
-  
-  return hashParams.has('access_token') || 
-         hashParams.has('refresh_token') ||
-         searchParams.has('access_token') ||
-         searchParams.has('refresh_token')
-}
-
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     flowType: 'pkce',
     debug: import.meta.env.DEV,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: detectSessionInUrl(),
+    detectSessionInUrl: true,
     storage: typeof window !== 'undefined' ? window.localStorage : undefined
   },
   db: {
