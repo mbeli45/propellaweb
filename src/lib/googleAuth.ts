@@ -16,7 +16,12 @@ export async function signInWithGoogle(options?: GoogleSignInOptions) {
       localStorage.setItem('pendingGoogleRole', options.role)
     }
 
-    const redirectUrl = `${window.location.origin}/auth/callback`
+    // Use environment variable for production, fallback to current origin
+    const redirectUrl = import.meta.env.VITE_PUBLIC_SITE_URL 
+      ? `${import.meta.env.VITE_PUBLIC_SITE_URL}/auth/callback`
+      : `${window.location.origin}/auth/callback`
+
+    console.log('🔐 Google Sign-In redirect URL:', redirectUrl)
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
