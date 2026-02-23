@@ -172,11 +172,19 @@
   .feed-nav-arrow {
     display: flex !important;
   }
+  
+  .feed-property-nav-arrow {
+    display: flex !important;
+  }
 }
 
 /* Hide arrows on mobile/tablet */
 @media (max-width: 768px) {
   .feed-nav-arrow {
+    display: none !important;
+  }
+  
+  .feed-property-nav-arrow {
     display: none !important;
   }
 }

@@ -75,6 +75,22 @@
     "loginFailed": "Login failed",
     "continueWithGoogle": "Continue with Google"
   },
+  "signup": {
+    "continueWithGoogle": "Continue with Google",
+    "atLeast8Characters": "At least 8 characters",
+    "atLeastOneUppercase": "At least one uppercase letter",
+    "atLeastOneLowercase": "At least one lowercase letter",
+    "atLeastOneNumber": "At least one number",
+    "atLeastOneSpecial": "At least one special character",
+    "termsOfService": "Terms of Service",
+    "and": "and",
+    "privacyPolicy": "Privacy Policy",
+    "creatingAccount": "Creating Account...",
+    "createAccountButton": "Create Account",
+    "or": "or",
+    "alreadyHaveAccount": "Already have an account?",
+    "signIn": "Sign In"
+  },
   "navigation": {
     "home": "Home",
     "profile": "Profile",

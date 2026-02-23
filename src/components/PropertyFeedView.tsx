@@ -6,7 +6,7 @@ import { getColors } from '@/constants/Colors'
 import { PropertyData } from './PropertyCard'
 import { formatPrice, calculateRentPrices } from '@/utils/shareUtils'
 import { isVideoUrl, separateMedia } from '@/utils/videoUtils'
-import { MapPin, BedDouble, Bath, Share2 } from 'lucide-react'
+import { MapPin, BedDouble, Bath, Share2, ChevronUp, ChevronDown } from 'lucide-react'
 import './PropertyFeedView.css'
 
 interface PropertyFeedViewProps {
@@ -37,6 +37,7 @@ export default function PropertyFeedView({
   const touchEndY = useRef<number>(0)
   const isTransitioning = useRef<boolean>(false)
   const isDragging = useRef<boolean>(false)
+  const wheelTimeout = useRef<NodeJS.Timeout | null>(null)
 
   // Get media for a property (videos first, then images)
   const getPropertyMedia = useCallback((property: PropertyData) => {
@@ -281,6 +282,64 @@ export default function PropertyFeedView({
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [goToNextMedia, goToPreviousMedia, goToNextProperty, goToPreviousProperty, currentPropertyMedia.length])
+
+  // Mouse wheel scroll support (YouTube-style)
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (!containerRef.current) return
+      
+      const container = containerRef.current
+      
+      // Check if mouse is over the container
+      const rect = container.getBoundingClientRect()
+      const isOverContainer = (
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom
+      )
+      
+      if (!isOverContainer) return
+      
+      // Only handle vertical scrolling with sufficient delta
+      const absDeltaY = Math.abs(e.deltaY)
+      const absDeltaX = Math.abs(e.deltaX)
+      
+      if (absDeltaY > absDeltaX && absDeltaY > 10) {
+        e.preventDefault()
+        e.stopPropagation()
+        
+        // Prevent rapid scrolling
+        if (isTransitioning.current) return
+        
+        // Clear any pending wheel action
+        if (wheelTimeout.current) {
+          clearTimeout(wheelTimeout.current)
+        }
+        
+        // Debounce wheel events to prevent rapid scrolling
+        wheelTimeout.current = setTimeout(() => {
+          // Scroll down (positive deltaY) = next property
+          // Scroll up (negative deltaY) = previous property
+          if (e.deltaY > 0) {
+            goToNextProperty()
+          } else if (e.deltaY < 0) {
+            goToPreviousProperty()
+          }
+        }, 100)
+      }
+    }
+
+    // Attach to window to capture all wheel events when over the container
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    
+    return () => {
+      window.removeEventListener('wheel', handleWheel)
+      if (wheelTimeout.current) {
+        clearTimeout(wheelTimeout.current)
+      }
+    }
+  }, [goToNextProperty, goToPreviousProperty])
 
   // Auto-play video when media becomes active (TikTok-style)
   useEffect(() => {
@@ -850,6 +909,89 @@ export default function PropertyFeedView({
           {currentMediaIdx + 1} / {currentPropertyMedia.length}
         </div>
       )}
+
+      {/* Vertical Navigation Arrows for Large Screens - Property Navigation */}
+      <div className="feed-property-nav-arrows">
+        {/* Up Arrow - Previous Property */}
+        {currentPropertyIndex > 0 && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              goToPreviousProperty()
+            }}
+            style={{
+              position: 'absolute',
+              top: '30%',
+              right: '20px',
+              transform: 'translateY(-50%)',
+              zIndex: 20,
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'none',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backdropFilter: 'blur(10px)',
+              transition: 'all 0.2s ease'
+            }}
+            className="feed-property-nav-arrow"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.7)'
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.5)'
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
+            }}
+            title="Previous Property"
+          >
+            <ChevronUp size={24} color="white" strokeWidth={2.5} />
+          </button>
+        )}
+
+        {/* Down Arrow - Next Property */}
+        {currentPropertyIndex < properties.length - 1 && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              goToNextProperty()
+            }}
+            style={{
+              position: 'absolute',
+              bottom: '30%',
+              right: '20px',
+              transform: 'translateY(50%)',
+              zIndex: 20,
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'none',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backdropFilter: 'blur(10px)',
+              transition: 'all 0.2s ease'
+            }}
+            className="feed-property-nav-arrow"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.7)'
+              e.currentTarget.style.transform = 'translateY(50%) scale(1.1)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.5)'
+              e.currentTarget.style.transform = 'translateY(50%) scale(1)'
+            }}
+            title="Next Property"
+          >
+            <ChevronDown size={24} color="white" strokeWidth={2.5} />
+          </button>
+        )}
+      </div>
 
       {/* Loading indicator */}
       {loading && (
