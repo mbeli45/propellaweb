@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { handleGoogleCallback } from '@/lib/googleAuth'
+import { handleAppleCallback } from '@/lib/appleAuth'
 import { supabase } from '@/lib/supabase'
 import Loader from '@/components/ui/Loader'
 
@@ -44,8 +45,20 @@ export default function AuthCallback() {
           console.log('✅ Session obtained:', data.session?.user?.email)
         }
 
-        // Handle the callback
-        const { user, error: callbackError } = await handleGoogleCallback()
+        // Determine which provider was used and handle callback accordingly
+        const { data: { session } } = await supabase.auth.getSession()
+        const provider = session?.user?.app_metadata?.provider || 'google'
+        
+        console.log('🔐 OAuth provider:', provider)
+        
+        let callbackResult
+        if (provider === 'apple') {
+          callbackResult = await handleAppleCallback()
+        } else {
+          callbackResult = await handleGoogleCallback()
+        }
+
+        const { user, error: callbackError } = callbackResult
 
         if (callbackError) {
           console.error('❌ Callback error:', callbackError)

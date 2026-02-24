@@ -73,10 +73,12 @@
     "welcomeBack": "Bon retour",
     "signInToAccount": "Connectez-vous à votre compte Propella",
     "loginFailed": "Échec de la connexion",
-    "continueWithGoogle": "Continuer avec Google"
+    "continueWithGoogle": "Continuer avec Google",
+    "continueWithApple": "Continuer avec Apple"
   },
   "signup": {
     "continueWithGoogle": "Continuer avec Google",
+    "continueWithApple": "Continuer avec Apple",
     "atLeast8Characters": "Au moins 8 caractères",
     "atLeastOneUppercase": "Au moins une lettre majuscule",
     "atLeastOneLowercase": "Au moins une lettre minuscule",
