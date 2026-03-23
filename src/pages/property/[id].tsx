@@ -391,6 +391,8 @@ export default function PropertyDetail() {
                   src={videoThumbnails[allMedia[currentMediaIndex]] || allMedia[currentMediaIndex]}
                   alt={property.title}
                   className="main-image"
+                  loading="eager"
+                  decoding="async"
                   style={{
                     width: '100%',
                     height: '100%',
@@ -427,6 +429,8 @@ export default function PropertyDetail() {
                 src={allMedia[currentMediaIndex]}
                 alt={property.title}
                 className="main-image"
+                loading="eager"
+                decoding="async"
               />
             )}
             {allMedia.length > 1 && (
@@ -477,6 +481,8 @@ export default function PropertyDetail() {
                     <img 
                       src={thumbnail || media} 
                       alt={`${property.title} ${idx + 1}`}
+                      loading="lazy"
+                      decoding="async"
                       style={{
                         width: '100%',
                         height: '100%',

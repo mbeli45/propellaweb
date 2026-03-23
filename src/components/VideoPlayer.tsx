@@ -171,6 +171,7 @@ export default function VideoPlayer({
           objectFit: 'contain',
         }}
         playsInline
+        preload="metadata"
         controls={false}
         onClick={(e) => {
           // On mobile, clicking video toggles play/pause
@@ -194,6 +195,7 @@ export default function VideoPlayer({
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
+            imageRendering: '-webkit-optimize-contrast',
           }}
           onClick={() => {
             setShowThumbnail(false)

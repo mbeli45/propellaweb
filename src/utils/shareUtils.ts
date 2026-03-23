@@ -206,11 +206,13 @@ export const shareContent = async (options: ShareOptions): Promise<void> => {
 
     if (navigator.share) {
       try {
+        // Ensure URL is always included in shareData
         const shareData: any = {
           title: title || 'Share from Propella',
           text: message,
         }
         
+        // Always add URL to shareData if provided
         if (url) {
           shareData.url = url
         }
@@ -268,10 +270,9 @@ export const shareContent = async (options: ShareOptions): Promise<void> => {
       }
     }
     
-    // Fallback: Copy to clipboard
-    const alreadyHasUrl = url ? message.includes(url) : false
-    const shareText = url
-      ? (alreadyHasUrl ? message : `${message}\n\n${url}`)
+    // Fallback: Copy to clipboard - always include URL
+    const shareText = url && !message.includes(url)
+      ? `${message}\n\n${url}`
       : message
     await navigator.clipboard.writeText(shareText)
     // Note: For share utils, we'll use a simple notification since this is a utility function

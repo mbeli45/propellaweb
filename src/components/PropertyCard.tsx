@@ -137,6 +137,8 @@ export default function PropertyCard({
           src={property.image || property.images?.[0] || '/placeholder-property.jpg'}
           alt={property.title}
           className="property-card-image"
+          loading="lazy"
+          decoding="async"
           onError={(e) => {
             e.currentTarget.src = '/placeholder-property.jpg'
           }}

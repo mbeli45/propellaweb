@@ -17,21 +17,42 @@ export function generateVideoThumbnail(videoUrl: string): Promise<string> {
     const video = document.createElement('video')
     video.crossOrigin = 'anonymous'
     video.preload = 'metadata'
+    video.muted = true // Mute to avoid audio playback
+    
+    // Set timeout to prevent hanging
+    const timeout = setTimeout(() => {
+      resolve(videoUrl) // Fallback after 5 seconds
+    }, 5000)
     
     video.onloadedmetadata = () => {
-      video.currentTime = 1 // Seek to 1 second
+      // Seek to 1 second or 10% of video duration, whichever is smaller
+      const seekTime = Math.min(1, video.duration * 0.1)
+      video.currentTime = seekTime
     }
     
     video.onseeked = () => {
+      clearTimeout(timeout)
       try {
         const canvas = document.createElement('canvas')
-        canvas.width = video.videoWidth
-        canvas.height = video.videoHeight
-        const ctx = canvas.getContext('2d')
+        // Use smaller dimensions for faster processing
+        const maxWidth = 400
+        const maxHeight = 300
+        const aspectRatio = video.videoWidth / video.videoHeight
+        
+        if (aspectRatio > maxWidth / maxHeight) {
+          canvas.width = maxWidth
+          canvas.height = maxWidth / aspectRatio
+        } else {
+          canvas.height = maxHeight
+          canvas.width = maxHeight * aspectRatio
+        }
+        
+        const ctx = canvas.getContext('2d', { alpha: false })
         
         if (ctx) {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-          const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.8)
+          // Use lower quality for faster generation
+          const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.6)
           resolve(thumbnailUrl)
         } else {
           resolve(videoUrl) // Fallback to video URL
@@ -39,10 +60,15 @@ export function generateVideoThumbnail(videoUrl: string): Promise<string> {
       } catch (error) {
         console.error('Error generating video thumbnail:', error)
         resolve(videoUrl) // Fallback to video URL
+      } finally {
+        // Clean up
+        video.src = ''
+        video.load()
       }
     }
     
     video.onerror = () => {
+      clearTimeout(timeout)
       resolve(videoUrl) // Fallback to video URL on error
     }
     
