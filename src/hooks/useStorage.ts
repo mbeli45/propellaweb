@@ -3,6 +3,9 @@ import { supabase } from '@/lib/supabase'
 import { v4 as uuidv4 } from 'uuid'
 
 const supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY
+const imageUploadProvider = import.meta.env.VITE_PUBLIC_IMAGE_UPLOAD_PROVIDER || 'supabase'
+const r2FunctionName = import.meta.env.VITE_PUBLIC_R2_FUNCTION_NAME || 'r2-media'
 
 export type UploadResult = {
   url: string
@@ -14,6 +17,81 @@ export const useStorage = () => {
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
+
+  const shouldUseR2Proxy = (bucket: string) => imageUploadProvider === 'r2_proxy' && bucket === 'properties'
+
+  const getAuthHeaders = async (): Promise<Record<string, string>> => {
+    if (!supabaseAnonKey) {
+      throw new Error('Missing Supabase anon key for function authentication')
+    }
+
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) {
+      throw new Error('You must be signed in to upload files')
+    }
+
+    return {
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: supabaseAnonKey,
+    }
+  }
+
+  const getR2FunctionEndpoint = () => {
+    if (!supabaseUrl) {
+      throw new Error('Missing Supabase URL for function endpoint')
+    }
+    return `${supabaseUrl}/functions/v1/${r2FunctionName}`
+  }
+
+  const uploadViaR2Proxy = async (
+    file: File | string,
+    folder: string,
+    fileOrBlob?: Blob
+  ): Promise<UploadResult> => {
+    const endpoint = getR2FunctionEndpoint()
+    const headers = await getAuthHeaders()
+    const formData = new FormData()
+    formData.append('folder', folder)
+
+    let fileToUpload: File | Blob
+
+    if (file instanceof File) {
+      fileToUpload = file
+    } else if (fileOrBlob) {
+      fileToUpload = fileOrBlob
+    } else if (typeof file === 'string' && file.startsWith('blob:')) {
+      const response = await fetch(file)
+      fileToUpload = await response.blob()
+    } else if (typeof file === 'string' && file.startsWith('data:')) {
+      const response = await fetch(file)
+      fileToUpload = await response.blob()
+    } else {
+      throw new Error('Invalid file format')
+    }
+
+    const fileName = fileToUpload instanceof File ? fileToUpload.name : `image-${Date.now()}.jpg`
+    formData.append('file', fileToUpload, fileName)
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: formData,
+    })
+
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      throw new Error(payload?.error || 'R2 upload failed')
+    }
+
+    if (!payload?.url || !payload?.path) {
+      throw new Error('Invalid upload response from R2 proxy')
+    }
+
+    return {
+      url: payload.url,
+      path: payload.path,
+    }
+  }
 
   /**
    * Pick an image or video from file input (web version)
@@ -71,6 +149,13 @@ export const useStorage = () => {
       setUploading(true)
       setProgress(0)
       setError(null)
+
+      if (shouldUseR2Proxy(bucket)) {
+        const result = await uploadViaR2Proxy(file, folder, fileOrBlob)
+        setUploading(false)
+        setProgress(100)
+        return result
+      }
 
       let fileToUpload: File | Blob
 
@@ -238,6 +323,25 @@ export const useStorage = () => {
    */
   const deleteImage = async (path: string, bucket: string = 'properties'): Promise<boolean> => {
     try {
+      if (shouldUseR2Proxy(bucket)) {
+        const endpoint = getR2FunctionEndpoint()
+        const headers = await getAuthHeaders()
+        const response = await fetch(endpoint, {
+          method: 'DELETE',
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ key: path }),
+        })
+
+        const payload = await response.json().catch(() => ({}))
+        if (!response.ok) {
+          throw new Error(payload?.error || 'Failed to delete media from R2')
+        }
+        return true
+      }
+
       const { error } = await supabase.storage
         .from(bucket)
         .remove([path])

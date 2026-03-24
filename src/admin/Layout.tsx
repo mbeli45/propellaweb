@@ -79,6 +79,12 @@ const CustomAppBar = () => {
   );
 };
 
+const CustomMenu = () => (
+  <Menu>
+    <Menu.ResourceItems />
+  </Menu>
+)
+
 const CustomSidebar = (props: any) => {
   const [open, setOpen] = useSidebarState();
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -142,7 +148,7 @@ const CustomSidebar = (props: any) => {
           },
         }}
       >
-        <Menu />
+        <CustomMenu />
       </Sidebar>
     </>
   );
