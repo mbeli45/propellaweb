@@ -169,6 +169,7 @@
     "mustBeLoggedIn": "You must be logged in to book a site visit.",
     "maximumImages": "Maximum Images",
     "maxImagesLimit": "You can upload up to 10 images per property.",
+    "imageRequired": "Please add at least one media file before submitting.",
     "validationError": "Validation Error",
     "authenticationError": "Authentication Error",
     "mustBeLoggedInToAdd": "You must be logged in to add a property.",

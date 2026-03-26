@@ -166,6 +166,7 @@
     "mustBeLoggedIn": "Vous devez être connecté pour réserver.",
     "maximumImages": "Images maximum",
     "maxImagesLimit": "Vous pouvez télécharger jusqu'à 10 images par propriété.",
+    "imageRequired": "Veuillez ajouter au moins un fichier média avant de soumettre.",
     "validationError": "Erreur de validation",
     "authenticationError": "Erreur d'authentification",
     "mustBeLoggedInToAdd": "Vous devez être connecté pour ajouter une propriété.",

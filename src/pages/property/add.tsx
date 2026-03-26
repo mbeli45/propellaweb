@@ -153,6 +153,15 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
       navigate('/user')
       return
     }
+    if (!isEditMode) {
+      const hasAtLeastOneMedia = form.images.length > 0
+      if (!hasAtLeastOneMedia) {
+        const mediaRequiredError = t('property.imageRequired') || 'Please add at least one media file before submitting'
+        setError(mediaRequiredError)
+        alert(mediaRequiredError, 'error')
+        return
+      }
+    }
 
     setSubmitting(true)
     setError(null)
