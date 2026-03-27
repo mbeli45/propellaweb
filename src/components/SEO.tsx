@@ -83,8 +83,11 @@ export default function SEO({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={finalDescription} />
       <meta property="og:image" content={fullImage} />
+      <meta property="og:image:secure_url" content={fullImage} />
+      <meta property="og:image:type" content="image/jpeg" />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
+      <meta property="og:image:alt" content={fullTitle} />
       <meta property="og:locale" content={ogLocale} />
       <meta property="og:locale:alternate" content={alternateOgLocale} />
       <meta property="og:site_name" content="Propella" />

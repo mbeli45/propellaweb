@@ -173,23 +173,39 @@ export const saveImageToLibrary = async (imageUri: string): Promise<boolean> => 
  */
 const urlToFile = async (url: string, filename: string): Promise<File | null> => {
   try {
-    // Handle CORS - try to fetch with credentials if needed
-    const response = await fetch(url, {
-      mode: 'cors',
-      credentials: 'omit',
-    })
+    const response = await fetch(url)
+    
     if (!response.ok) {
-      console.warn('Failed to fetch image for sharing:', response.statusText)
+      console.warn('Failed to fetch media:', response.status)
       return null
     }
     
     const blob = await response.blob()
-    if (blob.size === 0) {
+    if (!blob || blob.size === 0) {
       console.warn('Empty blob received')
       return null
     }
     
-    const file = new File([blob], filename, { type: blob.type || 'image/jpeg' })
+    // Determine MIME type
+    let mimeType = blob.type
+    if (!mimeType || mimeType === 'application/octet-stream') {
+      const ext = filename.match(/\.(mp4|mov|avi|mkv|webm|jpg|jpeg|png|gif|webp)$/i)?.[1]?.toLowerCase()
+      if (ext) {
+        if (['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext)) {
+          mimeType = ext === 'mov' ? 'video/quicktime' : `video/${ext}`
+        } else {
+          mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : `image/${ext}`
+        }
+      } else {
+        mimeType = 'image/jpeg'
+      }
+    }
+    
+    const file = new File([blob], filename, { 
+      type: mimeType,
+      lastModified: Date.now()
+    })
+    
     return file
   } catch (error) {
     console.error('Error converting URL to file:', error)
@@ -206,78 +222,51 @@ export const shareContent = async (options: ShareOptions): Promise<void> => {
 
     if (navigator.share) {
       try {
-        // Ensure URL is always included in shareData
         const shareData: any = {
           title: title || 'Share from Propella',
           text: message,
         }
         
-        // Always add URL to shareData if provided
+        // Add URL if provided
         if (url) {
           shareData.url = url
         }
 
-        // Add image/video file if available
-        if (imageUrl || imageUri) {
-          const imageUrlToUse = imageUrl || imageUri
-          if (imageUrlToUse && !imageUrlToUse.includes('placeholder')) {
-            try {
-              // Determine file extension from URL or content type
-              let extension = '.jpg'
-              let mimeType = 'image/jpeg'
-              
-              // Check URL for extension
-              const urlMatch = imageUrlToUse.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)/i)
-              if (urlMatch) {
-                extension = `.${urlMatch[1].toLowerCase()}`
-                const ext = urlMatch[1].toLowerCase()
-                if (['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext)) {
-                  mimeType = ext === 'mov' ? 'video/quicktime' : `video/${ext}`
-                } else {
-                  mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : `image/${ext}`
-                }
-              }
-              
-              const filename = `property${extension}`
-              const file = await urlToFile(imageUrlToUse, filename)
-              
-              if (file) {
-                // Check if Web Share API supports files (Level 2)
-                if ('canShare' in navigator) {
-                  const canShareFiles = (navigator as any).canShare({ files: [file] })
-                  if (canShareFiles) {
-                    shareData.files = [file]
-                  }
-                } else {
-                  // Try to share with files anyway (some browsers support it without canShare)
-                  shareData.files = [file]
-                }
-              }
-            } catch (fileError) {
-              console.log('Could not attach file to share, continuing without file:', fileError)
+        // Try to attach media file
+        const mediaUrl = imageUrl || imageUri
+        if (mediaUrl && !mediaUrl.includes('placeholder')) {
+          try {
+            const urlMatch = mediaUrl.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)/i)
+            const extension = urlMatch ? `.${urlMatch[1].toLowerCase()}` : '.jpg'
+            const filename = `property${extension}`
+            
+            const file = await urlToFile(mediaUrl, filename)
+            
+            if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+              shareData.files = [file]
+              console.log('✅ Attached file:', filename, file.type, `${(file.size / 1024).toFixed(2)}KB`)
             }
+          } catch (fileError) {
+            console.log('⚠️ Could not attach file:', fileError)
           }
         }
         
         await navigator.share(shareData)
         return
       } catch (shareError: any) {
-        if (shareError.name !== 'AbortError') {
-          console.log('Web Share API failed, falling back to clipboard')
-        } else {
+        if (shareError.name === 'AbortError') {
           return // User cancelled
         }
+        console.log('Share failed:', shareError.message)
       }
     }
     
-    // Fallback: Copy to clipboard - always include URL
+    // Fallback: Copy to clipboard
     const shareText = url && !message.includes(url)
       ? `${message}\n\n${url}`
       : message
     await navigator.clipboard.writeText(shareText)
-    // Note: For share utils, we'll use a simple notification since this is a utility function
-    // The calling component can handle alerts if needed
-    console.log('Copied! Content has been copied to your clipboard')
+    console.log('📋 Copied to clipboard')
   } catch (error) {
     console.error('Share error:', error)
     throw new Error('Could not share content')

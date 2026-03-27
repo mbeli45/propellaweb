@@ -284,11 +284,24 @@ export default function PropertyDetail() {
     : undefined
   
   const baseUrl = getCanonicalBaseUrl()
-  const seoImage = property && (property.images?.[0] || property.image) 
-    ? (property.images?.[0] || property.image).startsWith('http') 
-      ? (property.images?.[0] || property.image)
-      : `${baseUrl}${property.images?.[0] || property.image}`
-    : '/app-icon.png'
+  
+  // Get the first media (image or video thumbnail) for SEO
+  const getFirstMediaUrl = () => {
+    if (!property) return '/app-icon.png'
+    
+    const firstMedia = property.images?.[0] || property.image
+    if (!firstMedia) return '/app-icon.png'
+    
+    // If it's already a full URL (Cloudflare, etc.), use it directly
+    if (firstMedia.startsWith('http://') || firstMedia.startsWith('https://')) {
+      return firstMedia
+    }
+    
+    // If it's a relative URL, make it absolute
+    return `${baseUrl}${firstMedia.startsWith('/') ? firstMedia : '/' + firstMedia}`
+  }
+  
+  const seoImage = getFirstMediaUrl()
   const seoUrl = property ? createPropertyUrl(property) : undefined
 
   return (
