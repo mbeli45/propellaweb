@@ -580,7 +580,7 @@ export default function PropertyDetail() {
           marginBottom: '20px'
         }}>
           <MapPin size={18} />
-          <span>{property.location}</span>
+          <span>{property.town ? `${property.town}, ${property.location}` : property.location}</span>
         </div>
 
         {/* Badges */}

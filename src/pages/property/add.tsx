@@ -16,6 +16,7 @@ interface PropertyFormData {
   description: string
   price: string
   location: string
+  town?: string // Town/city where property is located
   type: 'rent' | 'sale'
   category: 'budget' | 'standard' | 'premium' | 'luxury'
   propertyType: 'single_room' | 'apartment' | 'studio' | 'shop' | 'land' | 'house'

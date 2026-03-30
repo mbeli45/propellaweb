@@ -13,6 +13,7 @@ export interface PropertyData {
   title: string
   price: number
   location: string
+  town?: string // Town/city where property is located (e.g., Yaoundé, Douala, Buea)
   image: string
   images?: string[]
   type: 'rent' | 'sale'
@@ -39,6 +40,7 @@ export interface PropertyData {
     role?: string
   }
 }
+
 
 interface PropertyCardProps {
   property: PropertyData
@@ -432,7 +434,7 @@ export default function PropertyCard({
               flex: 1,
             }}
           >
-            {property.location || t('propertyCard.locationNotSpecified')}
+            {property.town ? `${property.town}, ${property.location}` : (property.location || t('propertyCard.locationNotSpecified'))}
           </span>
         </div>
 

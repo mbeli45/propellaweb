@@ -39,6 +39,7 @@ export default function UserExplore() {
       filtered = filtered.filter(property =>
         property.title?.toLowerCase().includes(searchLower) ||
         property.location?.toLowerCase().includes(searchLower) ||
+        property.town?.toLowerCase().includes(searchLower) ||
         property.type?.toLowerCase().includes(searchLower) ||
         property.category?.toLowerCase().includes(searchLower)
       )
