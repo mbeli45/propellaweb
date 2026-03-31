@@ -64,6 +64,7 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
         description: initialData.description || '',
         price: initialData.price?.toString() || '',
         location: initialData.location || '',
+        town: initialData.town || '',
         type: initialData.type || 'rent',
         category: initialData.category || 'budget',
         propertyType: initialData.property_type || 'apartment',
@@ -199,6 +200,7 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
         description: form.description,
         price: parseFloat(form.price) || 0,
         location: form.location,
+        town: form.town || null,
         type: form.type,
         category,
         property_type: form.propertyType,
@@ -387,10 +389,46 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
               onLocationSelect={(location) => {
                 console.log('Selected location:', location)
                 handleInputChange('location', location.place_name)
+                
+                // Extract town/city from location context
+                if (location.context && location.context.length > 0) {
+                  // The first context item is usually the town/city
+                  const town = location.context[0]
+                  handleInputChange('town', town)
+                } else {
+                  // If no context, try to extract from place_name
+                  const parts = location.place_name.split(',')
+                  if (parts.length > 1) {
+                    handleInputChange('town', parts[parts.length - 2].trim())
+                  }
+                }
               }}
               placeholder={t('form.searchPropertyLocation') || 'Search for property location...'}
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label style={{ color: Colors.neutral[700] }}>{t('property.town') || 'Town/City'}</label>
+            <input
+              type="text"
+              value={form.town || ''}
+              onChange={(e) => handleInputChange('town', e.target.value)}
+              placeholder={t('form.enterTown') || 'e.g., Yaoundé, Douala, Buea'}
+              style={{
+                borderColor: Colors.neutral[300],
+                backgroundColor: Colors.neutral[50],
+                color: Colors.neutral[900]
+              }}
+            />
+            <p style={{
+              fontSize: '12px',
+              color: Colors.neutral[600],
+              marginTop: '4px',
+              fontStyle: 'italic'
+            }}>
+              {t('propertyForm.townAutoFilled') || 'Auto-filled from location selection'}
+            </p>
           </div>
         </div>
 
