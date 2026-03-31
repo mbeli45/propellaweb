@@ -116,19 +116,45 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (files.length > 0) {
-      // Check if any file exceeds 10MB limit
+      // Import compression utility
+      const { compressMedia, isImageFile, formatFileSize } = await import('@/utils/mediaCompression')
+      
       const maxSize = 10 * 1024 * 1024 // 10MB
-      const validFiles = files.filter(file => {
-        if (file.size > maxSize) {
-          alert(`${file.name} is too large. Maximum file size is 10MB.`, 'error')
-          return false
-        }
-        return true
-      })
+      const processedFiles: File[] = []
 
-      if (validFiles.length > 0) {
+      for (const file of files) {
+        try {
+          // Check if file needs compression
+          if (file.size > maxSize && isImageFile(file)) {
+            alert(`${file.name} (${formatFileSize(file.size)}) is being compressed...`, 'info')
+            const compressedFile = await compressMedia(file, {
+              maxSizeMB: 10,
+              maxWidthOrHeight: 1920,
+              quality: 0.8
+            })
+            
+            if (compressedFile.size > maxSize) {
+              alert(`${file.name} is still too large after compression. Please use a smaller image.`, 'error')
+              continue
+            }
+            
+            alert(`${file.name} compressed from ${formatFileSize(file.size)} to ${formatFileSize(compressedFile.size)}`, 'success')
+            processedFiles.push(compressedFile)
+          } else if (file.size > maxSize) {
+            alert(`${file.name} is too large. Maximum file size is 10MB. Videos cannot be compressed in the browser.`, 'error')
+            continue
+          } else {
+            processedFiles.push(file)
+          }
+        } catch (error) {
+          console.error('Error processing file:', error)
+          alert(`Failed to process ${file.name}. Please try again.`, 'error')
+        }
+      }
+
+      if (processedFiles.length > 0) {
         const maxNewImages = isEditMode ? Math.max(0, 10 - existingImages.length) : 10
-        setForm(prev => ({ ...prev, images: [...prev.images, ...validFiles].slice(0, maxNewImages) }))
+        setForm(prev => ({ ...prev, images: [...prev.images, ...processedFiles].slice(0, maxNewImages) }))
       }
     }
   }
