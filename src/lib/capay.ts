@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { captureException } from './sentry'
 
 export interface CapayPaymentResponse {
   link: string
@@ -70,6 +71,7 @@ export const generatePaymentLink = async (
     }
   } catch (error: any) {
     console.error('[Payment] generatePaymentLink error:', error)
+    captureException(error, { context: 'capay.generatePaymentLink', amount, options })
     throw new Error(error.message || 'Failed to prepare payment')
   }
 }
@@ -98,6 +100,7 @@ export const getPaymentStatus = async (
     return data as CapayPaymentStatusResponse
   } catch (error: any) {
     console.error('[Payment] getPaymentStatus error:', error)
+    captureException(error, { context: 'capay.getPaymentStatus', transId, isWithdrawal })
     throw new Error(error.message || 'Failed to get payment status')
   }
 }
@@ -170,6 +173,7 @@ export const initiateDirectPayment = async (
     }
   } catch (error: any) {
     console.error('[Payment] initiateDirectPayment error:', error)
+    captureException(error, { context: 'capay.initiateDirectPayment', amount, phone, options })
     throw new Error(error.message || 'Failed to process payment')
   }
 }
@@ -229,6 +233,7 @@ export const initiateWithdrawal = async (
     }
   } catch (error: any) {
     console.error('[Payment] initiateWithdrawal error:', error)
+    captureException(error, { context: 'capay.initiateWithdrawal', amount, phone, options })
     throw new Error(error.message || 'Failed to process withdrawal')
   }
 }

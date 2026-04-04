@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 import { supabase } from '@/lib/supabase';
 import { useStorage } from '@/hooks/useStorage';
+import { captureException } from '@/lib/sentry';
 
 export interface AgentVerification {
   id: string;

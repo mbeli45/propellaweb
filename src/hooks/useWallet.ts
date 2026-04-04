@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Database } from '@/types/supabase';
+import { captureException } from '@/lib/sentry';
 
 type Wallet = Database['public']['Tables']['wallets']['Row'];
 type Transaction = Database['public']['Tables']['transactions']['Row'];
@@ -38,6 +39,7 @@ export function useWallet(userId: string) {
       setWallet(data);
     } catch (error: any) {
       setError(error.message);
+      captureException(error, { context: 'useWallet.fetchWallet', userId });
     } finally {
       setLoading(false);
     }
@@ -57,6 +59,7 @@ export function useWallet(userId: string) {
       setTransactions(data);
     } catch (error: any) {
       setError(error.message);
+      captureException(error, { context: 'useWallet.fetchTransactions', userId });
     }
   }, [userId]);
 

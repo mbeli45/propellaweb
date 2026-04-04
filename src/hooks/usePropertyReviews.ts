@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { captureException } from '@/lib/sentry';
 
 export interface PropertyReview {
   id: string;
@@ -63,6 +64,7 @@ export function usePropertyReviews(propertyId: string) {
     } catch (err: any) {
       console.error('Error fetching property reviews:', err);
       setError(err.message || 'Failed to load reviews');
+      captureException(err, { context: 'usePropertyReviews.fetchReviews', propertyId });
       setReviews([]);
       setAverageRating(null);
       setTotalReviews(0);
