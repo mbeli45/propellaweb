@@ -7,6 +7,7 @@ import {
   initiateDirectPayment
 } from '@/lib/fapshi';
 import { supabase } from '@/lib/supabase';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 export function useFapshiPayment() {
   const [loading, setLoading] = useState(false);
@@ -76,6 +77,12 @@ export function useFapshiPayment() {
     } catch (error: any) {
       setError(error.message || 'Failed to process payment');
       console.error('[useFapshiPayment] processPayment error', error);
+      captureException(error, { 
+        context: 'useFapshiPayment.processPayment',
+        reservationId,
+        amount,
+        userId 
+      });
       alert(`Payment Error: ${error.message || 'Failed to process payment'}`);
       throw error;
     } finally {
@@ -106,6 +113,12 @@ export function useFapshiPayment() {
     } catch (error: any) {
       setError(error.message || 'Failed to initiate direct payment');
       console.error('[useFapshiPayment] processDirectPayment error', error);
+      captureException(error, { 
+        context: 'useFapshiPayment.processDirectPayment',
+        amount,
+        userId,
+        phone 
+      });
       alert(`Payment Error: ${error.message || 'Failed to initiate payment'}`);
       throw error;
     } finally {
@@ -173,12 +186,22 @@ export function useFapshiPayment() {
           }
         } catch (pollError: any) {
           console.error('[useFapshiPayment] Polling error:', pollError);
+          captureException(pollError, { 
+            context: 'useFapshiPayment.pollPaymentStatus',
+            transId,
+            reservationId 
+          });
           // Don't stop monitoring on network errors, just log them
         }
       }, 10000); // Check every 10 seconds
 
     } catch (error: any) {
       console.error('[useFapshiPayment] Failed to start monitoring:', error);
+      captureException(error, { 
+        context: 'useFapshiPayment.startPaymentMonitoring',
+        reservationId,
+        transId 
+      });
       stopPaymentMonitoring();
     }
   };
@@ -248,6 +271,11 @@ export function useFapshiPayment() {
       }
     } catch (error) {
       console.error('[useFapshiPayment] Error updating payment status:', error);
+      captureException(error as Error, { 
+        context: 'useFapshiPayment.updatePaymentStatus',
+        reservationId,
+        status 
+      });
     }
   };
 

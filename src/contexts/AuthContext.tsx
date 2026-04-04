@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/supabase'
 import { useNavigate } from 'react-router-dom'
+import { setUser as setSentryUser } from '@/lib/sentry'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 
@@ -55,6 +56,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const profileData = profile as Profile
       profileCache.set(userId, { data: profileData, timestamp: Date.now() })
       setUser(profileData)
+      
+      // Set Sentry user context
+      setSentryUser({
+        id: profileData.id,
+        email: profileData.email || undefined,
+        username: profileData.full_name || undefined,
+      })
     } catch (err: any) {
       console.error('Error fetching profile:', err)
       setError(err.message)
@@ -87,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setUser(null)
         profileCache.clear()
+        setSentryUser(null)
       }
       setLoading(false)
     })
@@ -167,6 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (signOutError) throw signOutError
       setUser(null)
       profileCache.clear()
+      setSentryUser(null)
       navigate('/auth/login')
     } catch (err: any) {
       setError(err.message)

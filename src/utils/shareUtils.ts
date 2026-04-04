@@ -1,4 +1,5 @@
 import { PropertyData } from '@/components/PropertyCard'
+import { captureException } from '@/lib/sentry'
 
 interface ShareOptions {
   title?: string
@@ -156,6 +157,7 @@ export const downloadImage = async (imageUrl: string): Promise<string | null> =>
     return URL.createObjectURL(blob)
   } catch (error) {
     console.error('Error downloading image:', error)
+    captureException(error as Error, { context: 'downloadImage', imageUrl })
     return null
   }
 }
@@ -209,6 +211,7 @@ const urlToFile = async (url: string, filename: string): Promise<File | null> =>
     return file
   } catch (error) {
     console.error('Error converting URL to file:', error)
+    captureException(error as Error, { context: 'urlToFile', url })
     return null
   }
 }
@@ -269,6 +272,7 @@ export const shareContent = async (options: ShareOptions): Promise<void> => {
     console.log('📋 Copied to clipboard')
   } catch (error) {
     console.error('Share error:', error)
+    captureException(error as Error, { context: 'shareContent', options })
     throw new Error('Could not share content')
   }
 }

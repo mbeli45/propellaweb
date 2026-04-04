@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Database, TablesInsert, TablesUpdate } from '@/types/supabase';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 type Reservation = Database['public']['Tables']['reservations']['Row'];
 
@@ -110,6 +111,13 @@ export function useReservations(userId: string) {
     }
   ) => {
     try {
+      addBreadcrumb({
+        category: 'reservation',
+        message: 'Creating reservation',
+        level: 'info',
+        data: { propertyId, userId, amount: options?.amount }
+      });
+
       const insertData: ReservationInsert = {
         user_id: userId,
         property_id: propertyId,
@@ -134,6 +142,13 @@ export function useReservations(userId: string) {
         throw error;
       }
 
+      addBreadcrumb({
+        category: 'reservation',
+        message: 'Reservation created successfully',
+        level: 'info',
+        data: { reservationId: data.id }
+      });
+
       // Persist property status to 'reserved' on successful reservation creation
       try {
         const { error: updateError } = await supabase
@@ -150,6 +165,12 @@ export function useReservations(userId: string) {
     } catch (error: any) {
       console.error('Reservation creation failed:', error);
       setError(error.message);
+      captureException(error, { 
+        context: 'useReservations.createReservation',
+        propertyId,
+        userId,
+        options 
+      });
       throw error;
     }
   };

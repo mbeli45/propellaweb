@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { PropertyData } from '@/components/PropertyCard';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 interface FilterOptions {
   category?: string[];
@@ -111,6 +112,10 @@ export function useProperties(userId: string) {
       setProperties(transformedProperties);
     } catch (err: any) {
       setError(err.message);
+      captureException(err, { 
+        context: 'useProperties.fetchProperties',
+        userId 
+      });
     } finally {
       setLoading(false);
     }
@@ -118,6 +123,13 @@ export function useProperties(userId: string) {
 
   const deleteProperty = async (propertyId: string) => {
     try {
+      addBreadcrumb({
+        category: 'property',
+        message: 'Deleting property',
+        level: 'info',
+        data: { propertyId, userId }
+      });
+
       const { error } = await supabase
         .from('properties')
         .delete()
@@ -128,9 +140,22 @@ export function useProperties(userId: string) {
 
       // Remove from local state
       setProperties(prev => prev.filter(p => p.id !== propertyId));
+      
+      addBreadcrumb({
+        category: 'property',
+        message: 'Property deleted successfully',
+        level: 'info',
+        data: { propertyId }
+      });
+      
       return true;
     } catch (err: any) {
       setError(err.message);
+      captureException(err, { 
+        context: 'useProperties.deleteProperty',
+        propertyId,
+        userId 
+      });
       return false;
     }
   };
@@ -386,6 +411,10 @@ export function useProperty(propertyId: string) {
       setLastFetched(now);
     } catch (err: any) {
       setError(err.message);
+      captureException(err, { 
+        context: 'useProperty.fetchProperty',
+        propertyId 
+      });
     } finally {
       setLoading(false);
     }
@@ -509,6 +538,12 @@ export function useSimilarProperties(currentPropertyId: string, category?: strin
       lastFetchedRef.current = now;
     } catch (err: any) {
       setError(err.message);
+      captureException(err, { 
+        context: 'useSimilarProperties.fetchSimilarProperties',
+        currentPropertyId,
+        category,
+        type 
+      });
     } finally {
       setLoading(false);
     }
@@ -743,6 +778,9 @@ export function useHomeProperties() {
     } catch (err: any) {
       console.error('❌ Error in fetchHomeProperties:', err);
       setError(err.message || 'Failed to load properties');
+      captureException(err, { 
+        context: 'useHomeProperties.fetchHomeProperties'
+      });
     } finally {
       setLoading(false);
     }

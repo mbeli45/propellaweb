@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Database } from '@/types/supabase';
+import { captureException } from '@/lib/sentry';
 
 type Message = Database['public']['Tables']['messages']['Row'];
 
@@ -124,6 +125,10 @@ export function useMessages(userId: string) {
     } catch (error: any) {
       setError(error.message);
       console.error('Error fetching messages:', error);
+      captureException(error, { 
+        context: 'useMessages.fetchMessages',
+        userId 
+      });
     } finally {
       setLoading(false);
     }
@@ -192,6 +197,12 @@ export function useMessages(userId: string) {
       );
       
       setError(error.message);
+      captureException(error, { 
+        context: 'useMessages.sendMessage',
+        userId,
+        receiverId,
+        hasAttachment: !!attachmentUrl 
+      });
       throw error;
     }
   }, [userId]);

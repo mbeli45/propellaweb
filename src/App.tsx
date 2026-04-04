@@ -7,6 +7,7 @@ import { DialogProvider } from './contexts/DialogContext'
 import { BottomSheetProvider } from './contexts/BottomSheetContext'
 import AppRoutes from './routes/AppRoutes'
 import AdminApp from './admin/App'
+import ErrorBoundary from './components/ErrorBoundary'
 import './lib/i18n'
 
 function App() {
@@ -20,33 +21,37 @@ function App() {
   // React-admin's Admin component creates its own BrowserRouter internally
   if (isAdminSubdomain) {
     return (
-      <HelmetProvider>
-        <ThemeProvider>
-          <I18nProvider>
-            <AdminApp />
-          </I18nProvider>
-        </ThemeProvider>
-      </HelmetProvider>
+      <ErrorBoundary>
+        <HelmetProvider>
+          <ThemeProvider>
+            <I18nProvider>
+              <AdminApp />
+            </I18nProvider>
+          </ThemeProvider>
+        </HelmetProvider>
+      </ErrorBoundary>
     )
   }
 
   // Main app with BrowserRouter
   return (
-    <HelmetProvider>
-      <BrowserRouter>
-        <ThemeProvider>
-          <I18nProvider>
-            <DialogProvider>
-              <BottomSheetProvider>
-                <AuthProvider>
-                  <AppRoutes />
-                </AuthProvider>
-              </BottomSheetProvider>
-            </DialogProvider>
-          </I18nProvider>
-        </ThemeProvider>
-      </BrowserRouter>
-    </HelmetProvider>
+    <ErrorBoundary>
+      <HelmetProvider>
+        <BrowserRouter>
+          <ThemeProvider>
+            <I18nProvider>
+              <DialogProvider>
+                <BottomSheetProvider>
+                  <AuthProvider>
+                    <AppRoutes />
+                  </AuthProvider>
+                </BottomSheetProvider>
+              </DialogProvider>
+            </I18nProvider>
+          </ThemeProvider>
+        </BrowserRouter>
+      </HelmetProvider>
+    </ErrorBoundary>
   )
 }
 
