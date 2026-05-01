@@ -1,16 +1,48 @@
 /**
- * Media compression utilities for images and videos
+ * Browser media compression for Propella Web (Vite).
+ * - Images: Canvas resize + quality (no extra deps).
+ * - Large videos: @ffmpeg/ffmpeg + single-thread UMD @ffmpeg/core (no COOP/COEP; see ffmpeg.wasm docs).
  */
+
+import type { FFmpeg } from '@ffmpeg/ffmpeg'
 
 export interface CompressionOptions {
   maxSizeMB?: number
   maxWidthOrHeight?: number
   quality?: number
+  /** MIME type for canvas.toBlob (e.g. image/jpeg) */
   fileType?: string
 }
 
+let ffmpegLoadPromise: Promise<FFmpeg> | null = null
+
+async function loadWebFfmpeg(): Promise<FFmpeg> {
+  if (!ffmpegLoadPromise) {
+    ffmpegLoadPromise = (async () => {
+      const { FFmpeg } = await import('@ffmpeg/ffmpeg')
+      const { toBlobURL } = await import('@ffmpeg/util')
+      const ffmpeg = new FFmpeg()
+      const base = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd'
+      await ffmpeg.load({
+        coreURL: await toBlobURL(`${base}/ffmpeg-core.js`, 'text/javascript'),
+        wasmURL: await toBlobURL(`${base}/ffmpeg-core.wasm`, 'application/wasm'),
+      })
+      return ffmpeg
+    })().catch((err) => {
+      ffmpegLoadPromise = null
+      throw err
+    })
+  }
+  return ffmpegLoadPromise
+}
+
+function baseNameFromFileName(name: string): string {
+  const i = name.lastIndexOf('.')
+  return i > 0 ? name.slice(0, i) : name
+}
+
 /**
- * Compress an image file
+ * Compress an image file using canvas (works in all modern browsers).
  */
 export async function compressImage(
   file: File,
@@ -20,13 +52,16 @@ export async function compressImage(
     maxSizeMB = 10,
     maxWidthOrHeight = 1920,
     quality = 0.8,
-    fileType = file.type
+    fileType = file.type || 'image/jpeg',
   } = options
 
-  // If file is already small enough, return it
-  if (file.size <= maxSizeMB * 1024 * 1024) {
+  const maxBytes = maxSizeMB * 1024 * 1024
+  if (file.size <= maxBytes) {
     return file
   }
+
+  const blobMime =
+    fileType === 'image/png' && quality > 0.55 ? 'image/png' : 'image/jpeg'
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -39,7 +74,6 @@ export async function compressImage(
         let width = img.width
         let height = img.height
 
-        // Calculate new dimensions
         if (width > height) {
           if (width > maxWidthOrHeight) {
             height = (height * maxWidthOrHeight) / width
@@ -70,21 +104,34 @@ export async function compressImage(
               return
             }
 
-            // If compressed file is still too large, reduce quality further
-            if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.5) {
-              compressImage(file, { ...options, quality: quality - 0.1 })
+            if (blob.size > maxBytes && quality > 0.42) {
+              const stepFile = new File(
+                [blob],
+                `${baseNameFromFileName(file.name)}.jpg`,
+                { type: 'image/jpeg', lastModified: Date.now() }
+              )
+              compressImage(stepFile, {
+                ...options,
+                quality: quality - 0.1,
+                maxWidthOrHeight: Math.max(640, Math.floor(maxWidthOrHeight * 0.88)),
+                fileType: 'image/jpeg',
+              })
                 .then(resolve)
                 .catch(reject)
               return
             }
 
-            const compressedFile = new File([blob], file.name, {
-              type: fileType,
-              lastModified: Date.now()
+            const outName =
+              blobMime === 'image/jpeg'
+                ? `${baseNameFromFileName(file.name)}.jpg`
+                : file.name
+            const compressedFile = new File([blob], outName, {
+              type: blob.type || blobMime,
+              lastModified: Date.now(),
             })
             resolve(compressedFile)
           },
-          fileType,
+          blobMime,
           quality
         )
       }
@@ -94,25 +141,87 @@ export async function compressImage(
   })
 }
 
-/**
- * Check if a file is a video
- */
 export function isVideoFile(file: File): boolean {
-  return file.type.startsWith('video/') || 
-         file.name.toLowerCase().match(/\.(mp4|mov|avi|mkv|webm)$/) !== null
+  return (
+    file.type.startsWith('video/') ||
+    /\.(mp4|mov|avi|mkv|webm)$/i.test(file.name)
+  )
 }
 
-/**
- * Check if a file is an image
- */
 export function isImageFile(file: File): boolean {
-  return file.type.startsWith('image/') || 
-         file.name.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/) !== null
+  return (
+    file.type.startsWith('image/') ||
+    /\.(jpg|jpeg|png|gif|webp|heic|heif)$/i.test(file.name)
+  )
 }
 
 /**
- * Compress media file (image or video)
+ * Compress video with FFmpeg.wasm; returns original file if load/encode fails or size not improved.
  */
+export async function compressVideoFile(
+  file: File,
+  options: CompressionOptions = {}
+): Promise<File> {
+  const maxSizeMB = options.maxSizeMB ?? 10
+  const maxBytes = maxSizeMB * 1024 * 1024
+  if (file.size <= maxBytes) {
+    return file
+  }
+
+  const url = URL.createObjectURL(file)
+  try {
+    const ffmpeg = await loadWebFfmpeg()
+    const { fetchFile } = await import('@ffmpeg/util')
+    await ffmpeg.writeFile('input.bin', await fetchFile(url))
+    await ffmpeg.exec([
+      '-y',
+      '-i',
+      'input.bin',
+      '-vf',
+      'scale=1280:-2:force_original_aspect_ratio=decrease',
+      '-c:v',
+      'libx264',
+      '-crf',
+      '28',
+      '-preset',
+      'veryfast',
+      '-movflags',
+      '+faststart',
+      '-c:a',
+      'aac',
+      '-b:a',
+      '96k',
+      'output.mp4',
+    ])
+    const raw = await ffmpeg.readFile('output.mp4')
+    const outBlob = new Blob([raw as BlobPart], { type: 'video/mp4' })
+    const outName = `${baseNameFromFileName(file.name)}.mp4`
+    const outFile = new File([outBlob], outName, {
+      type: 'video/mp4',
+      lastModified: Date.now(),
+    })
+
+    if (outFile.size <= maxBytes) {
+      console.log(
+        `[mediaCompression] Video compressed to under ${maxSizeMB} MB: ${formatFileSize(outFile.size)}`
+      )
+      return outFile
+    }
+    if (outFile.size < file.size) {
+      console.log(
+        `[mediaCompression] Video compressed ${formatFileSize(file.size)} → ${formatFileSize(outFile.size)}`
+      )
+      return outFile
+    }
+    return file
+  } catch (e) {
+    console.warn('[mediaCompression] Web video compression failed:', e)
+    return file
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
 export async function compressMedia(
   file: File,
   options: CompressionOptions = {}
@@ -120,20 +229,12 @@ export async function compressMedia(
   if (isImageFile(file)) {
     return compressImage(file, options)
   }
-  
-  // For videos, we can't easily compress in the browser
-  // Return the original file with a warning
   if (isVideoFile(file)) {
-    console.warn('Video compression not supported in browser. Consider using a smaller video file.')
-    return file
+    return compressVideoFile(file, options)
   }
-
   return file
 }
 
-/**
- * Format file size for display
- */
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 Bytes'
   const k = 1024

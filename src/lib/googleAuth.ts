@@ -16,10 +16,8 @@ export async function signInWithGoogle(options?: GoogleSignInOptions) {
       localStorage.setItem('pendingGoogleRole', options.role)
     }
 
-    // Use environment variable for production, fallback to current origin
-    const redirectUrl = import.meta.env.VITE_PUBLIC_SITE_URL 
-      ? `${import.meta.env.VITE_PUBLIC_SITE_URL}/auth/callback`
-      : `${window.location.origin}/auth/callback`
+    // Always use the current origin so PKCE verifier storage and callback origin match.
+    const redirectUrl = `${window.location.origin}/auth/callback`
 
     console.log('🔐 Google Sign-In redirect URL:', redirectUrl)
 

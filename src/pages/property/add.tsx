@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
-import { useDialog } from '@/contexts/DialogContext'
 import { getColors } from '@/constants/Colors'
 import { supabase } from '@/lib/supabase'
 import { useStorage } from '@/hooks/useStorage'
 import { ArrowLeft, Plus, X, Star, DollarSign, Square, Home, MapPin } from 'lucide-react'
 import LocationSearchInput from '@/components/LocationSearchInput'
+import { compressMedia, formatFileSize, isImageFile, isVideoFile } from '@/utils/mediaCompression'
 import './PropertyForm.css'
 
 interface PropertyFormData {
@@ -44,7 +44,6 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
   const { user } = useAuth()
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
-  const { alert } = useDialog()
   const Colors = getColors(colorScheme)
   const navigate = useNavigate()
   const { uploadMultipleImages, uploading } = useStorage()
@@ -116,46 +115,8 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (files.length > 0) {
-      // Import compression utility
-      const { compressMedia, isImageFile, formatFileSize } = await import('@/utils/mediaCompression')
-      
-      const maxSize = 10 * 1024 * 1024 // 10MB
-      const processedFiles: File[] = []
-
-      for (const file of files) {
-        try {
-          // Check if file needs compression
-          if (file.size > maxSize && isImageFile(file)) {
-            alert(`${file.name} (${formatFileSize(file.size)}) is being compressed...`, 'info')
-            const compressedFile = await compressMedia(file, {
-              maxSizeMB: 10,
-              maxWidthOrHeight: 1920,
-              quality: 0.8
-            })
-            
-            if (compressedFile.size > maxSize) {
-              alert(`${file.name} is still too large after compression. Please use a smaller image.`, 'error')
-              continue
-            }
-            
-            alert(`${file.name} compressed from ${formatFileSize(file.size)} to ${formatFileSize(compressedFile.size)}`, 'success')
-            processedFiles.push(compressedFile)
-          } else if (file.size > maxSize) {
-            alert(`${file.name} is too large. Maximum file size is 10MB. Videos cannot be compressed in the browser.`, 'error')
-            continue
-          } else {
-            processedFiles.push(file)
-          }
-        } catch (error) {
-          console.error('Error processing file:', error)
-          alert(`Failed to process ${file.name}. Please try again.`, 'error')
-        }
-      }
-
-      if (processedFiles.length > 0) {
-        const maxNewImages = isEditMode ? Math.max(0, 10 - existingImages.length) : 10
-        setForm(prev => ({ ...prev, images: [...prev.images, ...processedFiles].slice(0, maxNewImages) }))
-      }
+      const maxNewImages = isEditMode ? Math.max(0, 10 - existingImages.length) : 10
+      setForm(prev => ({ ...prev, images: [...prev.images, ...files].slice(0, maxNewImages) }))
     }
   }
 
@@ -166,18 +127,10 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
     }))
   }
 
-  const isVideoFile = (file: File) => {
-    return file.type.startsWith('video/') || 
-           file.name.toLowerCase().endsWith('.mp4') ||
-           file.name.toLowerCase().endsWith('.mov') ||
-           file.name.toLowerCase().endsWith('.avi') ||
-           file.name.toLowerCase().endsWith('.mkv')
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user?.id || user.role !== 'agent') {
-      alert(t('auth.mustBeAgentToAdd') || 'Only agents can add properties', 'error')
+      setError(t('auth.mustBeAgentToAdd') || 'Only agents can add properties')
       navigate('/user')
       return
     }
@@ -186,22 +139,57 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
       if (!hasAtLeastOneMedia) {
         const mediaRequiredError = t('property.imageRequired') || 'Please add at least one media file before submitting'
         setError(mediaRequiredError)
-        alert(mediaRequiredError, 'error')
         return
       }
     }
 
-    setSubmitting(true)
+      setSubmitting(true)
     setError(null)
+      if (!isEditMode) {
+        navigate('/agent/listings')
+      }
 
     try {
+      const maxSize = 10 * 1024 * 1024 // 10MB
+      const uploadReadyFiles: File[] = []
+
+      for (const file of form.images) {
+        if (file.size <= maxSize) {
+          uploadReadyFiles.push(file)
+          continue
+        }
+
+        try {
+          const compressed = await compressMedia(file, {
+            maxSizeMB: 10,
+            maxWidthOrHeight: 1920,
+            quality: 0.8
+          })
+          if (compressed.size > maxSize) {
+            setError(`${file.name} is still over 10MB after compression. Try a shorter clip or lower resolution.`)
+            continue
+          }
+          uploadReadyFiles.push(compressed)
+        } catch (compressionError) {
+          console.error('Compression failed, keeping original file:', compressionError)
+          uploadReadyFiles.push(file)
+        }
+      }
+
       // Upload new images first
       let newImageUrls: string[] = []
-      if (form.images.length > 0) {
+      if (uploadReadyFiles.length > 0) {
         const uploadResults = await uploadMultipleImages(
-          form.images,
+          uploadReadyFiles,
           'properties',
-          'uploads'
+          'uploads',
+          {
+            title: form.title,
+            location: form.location,
+            price: parseFloat(form.price) || 0,
+            type: form.type,
+            category: form.category,
+          }
         )
         newImageUrls = uploadResults.map(r => r.url).filter(Boolean)
       }
@@ -253,7 +241,7 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
 
         if (updateError) throw updateError
 
-        alert(t('property.propertyUpdated') || 'Property updated successfully', 'success')
+        setError(null)
         navigate(`/property/${propertyId}`)
       } else {
         // Create new property
@@ -269,13 +257,11 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
 
         if (insertError) throw insertError
 
-        alert(t('property.propertyAdded') || 'Property added successfully', 'success')
-        navigate(`/property/${data.id}`)
+        setError(null)
       }
     } catch (err: any) {
       const errorMessage = err.message || (isEditMode ? t('property.failedToUpdateProperty') : t('property.failedToAddProperty')) || 'Failed to save property'
       setError(errorMessage)
-      alert(errorMessage, 'error')
       console.error('Error saving property:', err)
     } finally {
       setSubmitting(false)
@@ -973,14 +959,14 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
         }}>
           <button
             type="submit"
-            disabled={submitting || uploading}
+            disabled={submitting}
             className="form-submit-btn"
             style={{
-              backgroundColor: submitting || uploading ? Colors.neutral[400] : Colors.primary[600],
+              backgroundColor: submitting ? Colors.neutral[400] : Colors.primary[600],
               color: '#FFFFFF'
             }}
           >
-            {submitting || uploading 
+            {submitting
               ? (t('buttons.saving') || 'Saving...') 
               : (t('buttons.submit') || 'Submit')
             }

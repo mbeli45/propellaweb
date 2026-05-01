@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
@@ -23,6 +23,18 @@ export default function UserMap() {
     description?: string;
     property?: any;
   }>>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeSearch, setActiveSearch] = useState('')
+
+  const displayedProperties = useMemo(() => {
+    if (!activeSearch.trim()) return properties
+    const q = activeSearch.trim().toLowerCase()
+    return properties.filter((p: any) =>
+      (p.location || '').toLowerCase().includes(q) ||
+      (p.title || '').toLowerCase().includes(q) ||
+      (p.town || '').toLowerCase().includes(q)
+    )
+  }, [properties, activeSearch])
 
   // Get user location
   useEffect(() => {
@@ -45,7 +57,7 @@ export default function UserMap() {
   useEffect(() => {
     let isMounted = true;
     (async () => {
-      console.log('Starting geocoding for', properties.length, 'properties');
+      console.log('Starting geocoding for', displayedProperties.length, 'properties');
       const results: Array<{
         id: string;
         coordinates: [number, number];
@@ -54,7 +66,7 @@ export default function UserMap() {
         property?: any;
       }> = [];
       
-      for (const p of properties) {
+      for (const p of displayedProperties) {
         if (!isMounted) break;
         
         // Skip properties without location
@@ -92,12 +104,18 @@ export default function UserMap() {
         }
       }
       
-      const failedCount = properties.length - results.length;
-      console.log(`\n📊 Geocoding Summary: ${results.length}/${properties.length} properties shown on map (${failedCount} excluded)`);
+      const failedCount = displayedProperties.length - results.length;
+      console.log(`\n📊 Geocoding Summary: ${results.length}/${displayedProperties.length} properties shown on map (${failedCount} excluded)`);
       if (isMounted) setMarkers(results);
     })();
     return () => { isMounted = false; };
-  }, [properties, geocodeLocation])
+  }, [displayedProperties, geocodeLocation])
+
+  const handleSearch = () => setActiveSearch(searchQuery.trim())
+  const clearSearch = () => {
+    setSearchQuery('')
+    setActiveSearch('')
+  }
 
   return (
     <div style={{ 
@@ -114,6 +132,40 @@ export default function UserMap() {
         minHeight: '400px',
         position: 'relative'
       }}>
+        <div style={{
+          position: 'absolute',
+          top: 12,
+          left: 12,
+          right: 12,
+          display: 'flex',
+          gap: 8,
+          zIndex: 20
+        }}>
+          <div style={{ display: 'flex', gap: 8, flexDirection: 'row' }}>
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
+              placeholder="Search location..."
+              style={{
+                flex: 1,
+                height: 42,
+                borderRadius: 10,
+                border: `1px solid ${Colors.neutral[300]}`,
+                padding: '0 12px',
+                outline: 'none'
+              }}
+            />
+            <button onClick={handleSearch} style={{ borderRadius: 10, border: 'none', padding: '0 14px', background: Colors.primary[600], color: '#fff' }}>
+              Search
+            </button>
+            {activeSearch && (
+              <button onClick={clearSearch} style={{ borderRadius: 10, border: 'none', padding: '0 12px', background: Colors.neutral[200], color: Colors.neutral[800] }}>
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
         <MapView 
           markers={markers}
           userLocation={userLocation}
@@ -122,9 +174,9 @@ export default function UserMap() {
       </div>
 
       {/* Property Cards */}
-      {!loading && properties.length > 0 && (
+      {!loading && displayedProperties.length > 0 && (
         <MapPropertyCards
-          properties={properties}
+          properties={displayedProperties}
           onPropertySelect={(property) => navigate(`/property/${property.id}`)}
           onPropertyFocus={(property) => {
             // Could update map focus here if needed

@@ -138,49 +138,51 @@ export function useBadgeCounts(userId: string, userRole?: string) {
     // Set up real-time subscriptions with reduced frequency
     let reservationSubscription: any, messageSubscription: any;
     
-    // Set up reservation subscription
-    reservationSubscription = supabase
-      .channel('reservation_badges')
-      .on('postgres_changes', {
+    // Set up reservation subscription - must call .on() BEFORE .subscribe()
+    const reservationChannel = supabase.channel(`reservation_badges_${userId}_${Date.now()}`);
+    
+    reservationChannel.on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'reservations',
+      filter: reservationFilter || undefined,
+    }, (payload) => {
+      // For agents/landlords, check if the reservation is for their property
+      if (userRole === 'agent' || userRole === 'landlord') {
+        // We'll let the fetchReservationBadgeCount handle the filtering
+        // since it already has the logic to get user's properties
+      }
+      
+      // Debounce the real-time updates
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+      debounceTimer.current = setTimeout(() => {
+        fetchReservationBadgeCount();
+      }, 500);
+    });
+    
+    reservationSubscription = reservationChannel.subscribe();
+
+    if (messageFilter) {
+      const messageChannel = supabase.channel(`message_badges_${userId}_${Date.now()}`);
+      
+      messageChannel.on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'reservations',
-        filter: reservationFilter,
-      }, (payload) => {
-        // For agents/landlords, check if the reservation is for their property
-        if (userRole === 'agent' || userRole === 'landlord') {
-          // We'll let the fetchReservationBadgeCount handle the filtering
-          // since it already has the logic to get user's properties
-        }
-        
+        table: 'messages',
+        filter: messageFilter,
+      }, () => {
         // Debounce the real-time updates
         if (debounceTimer.current) {
           clearTimeout(debounceTimer.current);
         }
         debounceTimer.current = setTimeout(() => {
-          fetchReservationBadgeCount();
+          fetchMessageBadgeCount();
         }, 500);
-      })
-      .subscribe();
-
-    if (messageFilter) {
-      messageSubscription = supabase
-        .channel('message_badges')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'messages',
-          filter: messageFilter,
-        }, () => {
-          // Debounce the real-time updates
-          if (debounceTimer.current) {
-            clearTimeout(debounceTimer.current);
-          }
-          debounceTimer.current = setTimeout(() => {
-            fetchMessageBadgeCount();
-          }, 500);
-        })
-        .subscribe();
+      });
+      
+      messageSubscription = messageChannel.subscribe();
     }
 
     return () => {

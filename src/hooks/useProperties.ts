@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { PropertyData } from '@/components/PropertyCard';
-import { captureException, addBreadcrumb } from '@/lib/sentry';
+import { captureException, addBreadcrumb, captureMessage } from '@/lib/sentry';
 
 interface FilterOptions {
   category?: string[];
@@ -150,12 +150,22 @@ export function useProperties(userId: string) {
       
       return true;
     } catch (err: any) {
-      setError(err.message);
-      captureException(err, { 
-        context: 'useProperties.deleteProperty',
-        propertyId,
-        userId 
-      });
+      const isReferencedProperty = err?.code === '23503' && String(err?.message || '').includes('transactions_property_id_fkey');
+      const errorMessage = isReferencedProperty
+        ? 'This property has payment history and cannot be deleted. Please archive it instead.'
+        : (err?.message || 'Failed to delete property');
+
+      setError(errorMessage);
+
+      if (isReferencedProperty) {
+        captureMessage('Blocked property deletion due to existing transactions reference', 'warning');
+      } else {
+        captureException(err, {
+          context: 'useProperties.deleteProperty',
+          propertyId,
+          userId
+        });
+      }
       return false;
     }
   };

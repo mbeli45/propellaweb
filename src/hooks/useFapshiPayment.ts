@@ -111,15 +111,20 @@ export function useFapshiPayment() {
       });
       return { transId };
     } catch (error: any) {
-      setError(error.message || 'Failed to initiate direct payment');
+      const message = error?.message || 'Failed to initiate direct payment';
+      setError(message);
       console.error('[useFapshiPayment] processDirectPayment error', error);
-      captureException(error, { 
-        context: 'useFapshiPayment.processDirectPayment',
-        amount,
-        userId,
-        phone 
-      });
-      alert(`Payment Error: ${error.message || 'Failed to initiate payment'}`);
+      // Payment provider non-2xx responses are expected for declines/validation
+      // and should be surfaced to users without polluting Sentry issue counts.
+      if (!message.toLowerCase().includes('non-2xx status code')) {
+        captureException(error, {
+          context: 'useFapshiPayment.processDirectPayment',
+          amount,
+          userId,
+          phone
+        });
+      }
+      alert(`Payment Error: ${message || 'Failed to initiate payment'}`);
       throw error;
     } finally {
       setLoading(false);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
@@ -6,9 +6,10 @@ import { getColors } from '@/constants/Colors'
 import { useProperties } from '@/hooks/useProperties'
 import { useAgentPropertyReservations } from '@/hooks/useReservations'
 import { usePropertyViews } from '@/hooks/usePropertyViews'
+import { useStorage } from '@/hooks/useStorage'
 import { useDialog } from '@/contexts/DialogContext'
 import PropertyCard from '@/components/PropertyCard'
-import { Plus, BarChart3, Home, Users, Calendar } from 'lucide-react'
+import { Plus, BarChart3, Home, Users, Calendar, RefreshCw } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import './Listings.css'
 
@@ -19,6 +20,9 @@ export default function AgentListings() {
   const Colors = getColors(colorScheme)
   const navigate = useNavigate()
   const { getAgentTotalViews } = usePropertyViews()
+  const { pendingUploadCount, pendingUploads, retryPendingUpload } = useStorage()
+  const [retryingPendingId, setRetryingPendingId] = useState<string | null>(null)
+  const previousPendingCountRef = useRef<number>(pendingUploads.length)
 
   const { properties, loading, error, refetch, deleteProperty } = useProperties(user?.id || '')
   const { reservations: agentReservations } = useAgentPropertyReservations(user?.id || '')
@@ -88,7 +92,6 @@ export default function AgentListings() {
       if (success) {
         // Property will be removed from list automatically via refetch
         refetch()
-        alert(t('property.propertyDeletedSuccess') || 'Property deleted successfully', 'success')
       } else {
         alert(t('agent.failedToDeleteProperty') || t('property.failedToDeleteProperty') || 'Failed to delete property. Please try again.', 'error')
       }
@@ -99,6 +102,27 @@ export default function AgentListings() {
       setDeletingPropertyId(null)
     }
   }
+
+  const handleRetryOutboxItem = async (pendingId: string) => {
+    setRetryingPendingId(pendingId)
+    const result = await retryPendingUpload(pendingId)
+    setRetryingPendingId(null)
+    if (result && !result.error) {
+      alert('Upload retried successfully.', 'success')
+      return
+    }
+    alert(result?.error || 'Retry failed.', 'error')
+  }
+
+  const hasPendingCards = activeTab === 'active' && pendingUploads.length > 0
+
+  useEffect(() => {
+    const previousPendingCount = previousPendingCountRef.current
+    if (pendingUploads.length < previousPendingCount) {
+      refetch()
+    }
+    previousPendingCountRef.current = pendingUploads.length
+  }, [pendingUploads.length, refetch])
 
   return (
     <div className="agent-listings-container" style={{ backgroundColor: Colors.neutral[50] }}>
@@ -345,6 +369,43 @@ export default function AgentListings() {
               {t('navigation.reservations')}
             </p>
           </div>
+          <div className="stat-card" style={{
+            flex: 1,
+            borderRadius: '12px',
+            padding: '16px',
+            backgroundColor: Colors.neutral[50],
+            border: `1px solid ${Colors.neutral[200]}`,
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '20px',
+              backgroundColor: Colors.warning[100],
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 8px'
+            }}>
+              <RefreshCw size={20} color={Colors.warning[700]} />
+            </div>
+            <p style={{
+              fontSize: '20px',
+              fontWeight: '700',
+              color: Colors.neutral[900],
+              margin: '0 0 4px 0'
+            }}>
+              {pendingUploadCount}
+            </p>
+            <p style={{
+              fontSize: '12px',
+              fontWeight: '500',
+              color: Colors.neutral[600],
+              margin: 0
+            }}>
+              Outbox pending
+            </p>
+          </div>
         </div>
       </div>
 
@@ -411,7 +472,7 @@ export default function AgentListings() {
         </div>
       )}
 
-      {!loading && !error && filteredProperties.length === 0 && (
+      {!loading && !error && filteredProperties.length === 0 && !hasPendingCards && (
         <div style={{
           textAlign: 'center',
           padding: '40px',
@@ -448,13 +509,73 @@ export default function AgentListings() {
         </div>
       )}
 
-      {!loading && !error && filteredProperties.length > 0 && (
+      {!loading && !error && (filteredProperties.length > 0 || hasPendingCards) && (
         <div className="properties-list" style={{
           padding: '20px',
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
           gap: '16px'
         }}>
+          {activeTab === 'active' && pendingUploads.map((item: any) => (
+            <div key={`pending-${item.id}`} style={{ position: 'relative' }}>
+              <PropertyCard
+                property={{
+                  id: `pending-${item.id}`,
+                  title: item.propertyDraft?.title || 'Uploading property...',
+                  price: item.propertyDraft?.price || 0,
+                  location: item.propertyDraft?.location || `Media: ${typeof item.file === 'string' ? 'queued file' : (item.file?.name || 'queued file')}`,
+                  image: typeof item.file === 'string' ? item.file : '/placeholder-property.jpg',
+                  images: [typeof item.file === 'string' ? item.file : '/placeholder-property.jpg'],
+                  type: item.propertyDraft?.type || 'rent',
+                  category: item.propertyDraft?.category || 'standard',
+                  status: 'available',
+                  owner_id: user?.id || 'pending',
+                }}
+                isOwner
+                onClick={() => {}}
+              />
+              <div style={{
+                position: 'absolute',
+                top: '12px',
+                left: '12px',
+                padding: '4px 10px',
+                borderRadius: '12px',
+                backgroundColor: item.status === 'failed' ? Colors.error[600] : Colors.warning[600],
+                color: '#fff',
+                fontSize: '11px',
+                fontWeight: 700,
+                zIndex: 10,
+              }}>
+                {item.status === 'failed' ? 'Failed' : 'Uploading'}
+              </div>
+              {item.status === 'failed' && (
+                <button
+                  onClick={() => handleRetryOutboxItem(item.id)}
+                  disabled={retryingPendingId === item.id}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    bottom: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    borderRadius: '10px',
+                    border: `1px solid ${Colors.warning[300]}`,
+                    backgroundColor: Colors.warning[100],
+                    color: Colors.warning[800],
+                    padding: '6px 10px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: retryingPendingId === item.id ? 'default' : 'pointer',
+                    zIndex: 10,
+                  }}
+                >
+                  <RefreshCw size={14} color={Colors.warning[700]} />
+                  {retryingPendingId === item.id ? 'Retrying...' : 'Retry'}
+                </button>
+              )}
+            </div>
+          ))}
           {filteredProperties.map((property) => (
             <PropertyCard 
               key={property.id} 

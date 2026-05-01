@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { handleGoogleCallback } from '@/lib/googleAuth'
 import { handleAppleCallback } from '@/lib/appleAuth'
 import { supabase } from '@/lib/supabase'
@@ -7,11 +7,14 @@ import Loader from '@/components/ui/Loader'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
-  const location = useLocation()
   const [error, setError] = useState<string | null>(null)
+  const hasHandledRef = useRef(false)
 
   useEffect(() => {
     const handleCallback = async () => {
+      if (hasHandledRef.current) return
+      hasHandledRef.current = true
+
       try {
         console.log('🔐 Auth callback - URL:', window.location.href)
         console.log('🔐 Hash:', window.location.hash)
@@ -31,9 +34,14 @@ export default function AuthCallback() {
           return
         }
 
-        // Exchange the code for a session
+        // Exchange the code for a session only when one does not already exist.
+        // This avoids PKCE verifier races/duplicate exchange attempts.
+        const {
+          data: { session: existingSession }
+        } = await supabase.auth.getSession()
+
         const code = searchParams.get('code')
-        if (code) {
+        if (!existingSession && code) {
           console.log('🔐 Exchanging code for session...')
           const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
           
@@ -98,7 +106,7 @@ export default function AuthCallback() {
     }
 
     handleCallback()
-  }, [navigate, location])
+  }, [navigate])
 
   return (
     <div style={{

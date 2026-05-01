@@ -1,6 +1,18 @@
 import { supabase } from '@/lib/supabase'
 import { captureException } from './sentry'
 
+function extractErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) return error.message
+  if (typeof error === 'string' && error) return error
+  if (error && typeof error === 'object') {
+    const maybeMessage = (error as any).message
+    const maybeDetails = (error as any).error_description || (error as any).details
+    if (typeof maybeMessage === 'string' && maybeMessage) return maybeMessage
+    if (typeof maybeDetails === 'string' && maybeDetails) return maybeDetails
+  }
+  return fallback
+}
+
 export interface CapayPaymentResponse {
   link: string
   transId: string
@@ -173,8 +185,8 @@ export const initiateDirectPayment = async (
     }
   } catch (error: any) {
     console.error('[Payment] initiateDirectPayment error:', error)
-    captureException(error, { context: 'capay.initiateDirectPayment', amount, phone, options })
-    throw new Error(error.message || 'Failed to process payment')
+    // Caller handles telemetry to avoid duplicate exception events.
+    throw new Error(extractErrorMessage(error, 'Failed to process payment'))
   }
 }
 
@@ -233,8 +245,8 @@ export const initiateWithdrawal = async (
     }
   } catch (error: any) {
     console.error('[Payment] initiateWithdrawal error:', error)
-    captureException(error, { context: 'capay.initiateWithdrawal', amount, phone, options })
-    throw new Error(error.message || 'Failed to process withdrawal')
+    // Caller handles telemetry to avoid duplicate exception events.
+    throw new Error(extractErrorMessage(error, 'Failed to process withdrawal'))
   }
 }
 

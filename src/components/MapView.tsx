@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { PropertyData } from './PropertyCard'
+import { captureMapError, trackMapInteraction } from '../lib/sentry'
 
 interface MapViewProps {
   markers: Array<{
@@ -24,7 +25,16 @@ export default function MapView({ markers, userLocation, onPropertyClick }: MapV
     // Load Mapbox GL JS
     const script = document.createElement('script')
     script.src = 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'
-    script.onload = () => setMapLoaded(true)
+    script.onload = () => {
+      setMapLoaded(true)
+      trackMapInteraction('mapbox_script_loaded')
+    }
+    script.onerror = (error) => {
+      captureMapError(new Error('Failed to load Mapbox script'), {
+        action: 'script_load',
+        scriptSrc: script.src,
+      })
+    }
     document.head.appendChild(script)
 
     const link = document.createElement('link')
@@ -47,96 +57,153 @@ export default function MapView({ markers, userLocation, onPropertyClick }: MapV
 
     const mapboxToken = import.meta.env.VITE_PUBLIC_MAPBOX_ACCESS_TOKEN
     if (!mapboxToken) {
-      console.warn('Mapbox token not configured. Please set VITE_PUBLIC_MAPBOX_ACCESS_TOKEN in your environment.')
+      const error = new Error('Mapbox token not configured')
+      console.warn(error.message)
+      captureMapError(error, { action: 'token_missing' })
       return
     }
 
-    window.mapboxgl.accessToken = mapboxToken
+    try {
+      window.mapboxgl.accessToken = mapboxToken
 
-    // Clean up existing map
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.remove()
-      markersRef.current.forEach(marker => marker.remove())
-      markersRef.current = []
-      if (userMarkerRef.current) {
-        userMarkerRef.current.remove()
-        userMarkerRef.current = null
+      // Clean up existing map
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove()
+        markersRef.current.forEach(marker => marker.remove())
+        markersRef.current = []
+        if (userMarkerRef.current) {
+          userMarkerRef.current.remove()
+          userMarkerRef.current = null
+        }
       }
-    }
 
-    // Determine center and zoom
-    let center: [number, number] = [11.502, 3.848] // Default: Yaoundé, Cameroon
-    let zoom = 12
+      // Determine center and zoom
+      let center: [number, number] = [11.502, 3.848] // Default: Yaoundé, Cameroon
+      let zoom = 12
 
-    // If user location is available, use it
-    if (userLocation) {
-      center = [userLocation.lng, userLocation.lat]
-      zoom = 13
-    }
+      // If user location is available, use it
+      if (userLocation) {
+        center = [userLocation.lng, userLocation.lat]
+        zoom = 13
+      }
 
-    const map = new window.mapboxgl.Map({
-      container: mapRef.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center,
-      zoom
-    })
+      trackMapInteraction('map_initializing', {
+        center,
+        zoom,
+        hasUserLocation: !!userLocation,
+        markerCount: markers.length,
+      })
 
-    mapInstanceRef.current = map
+      const map = new window.mapboxgl.Map({
+        container: mapRef.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center,
+        zoom
+      })
 
-    // Add user location marker if available
-    if (userLocation) {
-      const userMarker = new window.mapboxgl.Marker({ color: '#0069FF' })
-        .setLngLat([userLocation.lng, userLocation.lat])
-        .addTo(map)
-      userMarkerRef.current = userMarker
-    }
+      mapInstanceRef.current = map
 
-    // Add markers to map (already geocoded)
-    markers.forEach((markerData) => {
-      const { coordinates, title, description, property } = markerData
-      
-      const marker = new window.mapboxgl.Marker({ color: '#EF4444' })
-        .setLngLat(coordinates)
-        .setPopup(
-          new window.mapboxgl.Popup().setHTML(`
-            <div style="padding: 8px; min-width: 200px;">
-              <h3 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600;">${title || 'Property'}</h3>
-              <p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">${property?.location || ''}</p>
-              <p style="margin: 0; font-size: 14px; font-weight: 600; color: #1E40AF;">${description || ''}</p>
-            </div>
-          `)
-        )
-        .addTo(map)
+      // Track map errors
+      map.on('error', (e: any) => {
+        captureMapError(new Error(e.error?.message || 'Map error'), {
+          action: 'map_error',
+          errorType: e.error?.type,
+          center,
+          zoom,
+        })
+      })
 
-      if (onPropertyClick && property) {
-        marker.getElement().addEventListener('click', () => {
-          onPropertyClick(property)
+      // Track successful map load
+      map.on('load', () => {
+        trackMapInteraction('map_loaded', { center, zoom })
+      })
+
+      // Add user location marker if available
+      if (userLocation) {
+        try {
+          const userMarker = new window.mapboxgl.Marker({ color: '#0069FF' })
+            .setLngLat([userLocation.lng, userLocation.lat])
+            .addTo(map)
+          userMarkerRef.current = userMarker
+          trackMapInteraction('user_marker_added', { coordinates: userLocation })
+        } catch (error) {
+          captureMapError(error as Error, {
+            action: 'add_user_marker',
+            coordinates: userLocation,
+          })
+        }
+      }
+
+      // Add markers to map (already geocoded)
+      markers.forEach((markerData) => {
+        const { coordinates, title, description, property } = markerData
+        
+        try {
+          const marker = new window.mapboxgl.Marker({ color: '#EF4444' })
+            .setLngLat(coordinates)
+            .setPopup(
+              new window.mapboxgl.Popup().setHTML(`
+                <div style="padding: 8px; min-width: 200px;">
+                  <h3 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600;">${title || 'Property'}</h3>
+                  <p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">${property?.location || ''}</p>
+                  <p style="margin: 0; font-size: 14px; font-weight: 600; color: #1E40AF;">${description || ''}</p>
+                </div>
+              `)
+            )
+            .addTo(map)
+
+          if (onPropertyClick && property) {
+            marker.getElement().addEventListener('click', () => {
+              trackMapInteraction('marker_clicked', { propertyId: property.id })
+              onPropertyClick(property)
+            })
+          }
+
+          markersRef.current.push(marker)
+        } catch (error) {
+          captureMapError(error as Error, {
+            action: 'add_property_marker',
+            coordinates: { lat: coordinates[1], lng: coordinates[0] },
+            propertyId: property?.id,
+          })
+        }
+      })
+
+      // Center map on markers
+      try {
+        if (!userLocation && markers.length > 0) {
+          const bounds = new window.mapboxgl.LngLatBounds()
+          markers.forEach(({ coordinates }) => {
+            bounds.extend(coordinates)
+          })
+          map.fitBounds(bounds, {
+            padding: { top: 50, bottom: 200, left: 50, right: 50 },
+            maxZoom: 15
+          })
+        } else if (userLocation && markers.length > 0) {
+          // Center on user location but include properties in view
+          const bounds = new window.mapboxgl.LngLatBounds()
+          bounds.extend([userLocation.lng, userLocation.lat])
+          markers.forEach(({ coordinates }) => {
+            bounds.extend(coordinates)
+          })
+          map.fitBounds(bounds, {
+            padding: { top: 50, bottom: 200, left: 50, right: 50 },
+            maxZoom: 15
+          })
+        }
+      } catch (error) {
+        captureMapError(error as Error, {
+          action: 'fit_bounds',
+          markerCount: markers.length,
+          hasUserLocation: !!userLocation,
         })
       }
-
-      markersRef.current.push(marker)
-    })
-
-    // Center map on markers
-    if (!userLocation && markers.length > 0) {
-      const bounds = new window.mapboxgl.LngLatBounds()
-      markers.forEach(({ coordinates }) => {
-        bounds.extend(coordinates)
-      })
-      map.fitBounds(bounds, {
-        padding: { top: 50, bottom: 200, left: 50, right: 50 },
-        maxZoom: 15
-      })
-    } else if (userLocation && markers.length > 0) {
-      // Center on user location but include properties in view
-      const bounds = new window.mapboxgl.LngLatBounds()
-      bounds.extend([userLocation.lng, userLocation.lat])
-      markers.forEach(({ coordinates }) => {
-        bounds.extend(coordinates)
-      })
-      map.fitBounds(bounds, {
-        padding: { top: 50, bottom: 200, left: 50, right: 50 },
-        maxZoom: 15
+    } catch (error) {
+      captureMapError(error as Error, {
+        action: 'map_initialization',
+        markerCount: markers.length,
+        hasUserLocation: !!userLocation,
       })
     }
 

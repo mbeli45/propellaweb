@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -13,12 +13,91 @@ export type UploadResult = {
   error?: string
 }
 
+type PendingUploadItem = {
+  id: string
+  file: File | string
+  bucket: string
+  folder: string
+  createdAt: number
+  status?: 'uploading' | 'failed'
+  propertyDraft?: {
+    title?: string
+    location?: string
+    price?: number
+    type?: 'rent' | 'sale'
+    category?: 'budget' | 'standard' | 'premium' | 'luxury'
+  }
+}
+
+const PENDING_UPLOADS_KEY = 'propellaweb:pendingMediaUploads'
+let sharedPendingUploads: PendingUploadItem[] = []
+const pendingUploadSubscribers = new Set<(items: PendingUploadItem[]) => void>()
+
+const publishPendingUploads = (items: PendingUploadItem[]) => {
+  sharedPendingUploads = items
+  pendingUploadSubscribers.forEach((subscriber) => subscriber(items))
+}
+
 export const useStorage = () => {
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [pendingUploads, setPendingUploads] = useState<PendingUploadItem[]>([])
 
   const shouldUseR2Proxy = (bucket: string) => imageUploadProvider === 'r2_proxy' && bucket === 'properties'
+
+  useEffect(() => {
+    const subscriber = (items: PendingUploadItem[]) => {
+      setPendingUploads(items)
+    }
+    pendingUploadSubscribers.add(subscriber)
+    subscriber(sharedPendingUploads)
+
+    if (sharedPendingUploads.length === 0) {
+      try {
+        const raw = sessionStorage.getItem(PENDING_UPLOADS_KEY)
+        if (raw) {
+          const parsed = JSON.parse(raw) as Array<Omit<PendingUploadItem, 'file'> & { fileName: string }>
+          if (Array.isArray(parsed)) {
+            const restored = parsed.map((item) => ({
+              id: item.id,
+              file: item.fileName,
+              bucket: item.bucket,
+              folder: item.folder,
+              createdAt: item.createdAt,
+              status: 'failed' as const,
+              propertyDraft: item.propertyDraft,
+            }))
+            publishPendingUploads(restored)
+          }
+        }
+      } catch {
+        publishPendingUploads([])
+      }
+    }
+
+    return () => {
+      pendingUploadSubscribers.delete(subscriber)
+    }
+  }, [])
+
+  const persistPendingMeta = (items: PendingUploadItem[]) => {
+    const meta = items.map((item) => ({
+      id: item.id,
+      fileName: typeof item.file === 'string' ? item.file : item.file.name,
+      bucket: item.bucket,
+      folder: item.folder,
+      createdAt: item.createdAt,
+      status: item.status,
+      propertyDraft: item.propertyDraft,
+    }))
+    sessionStorage.setItem(PENDING_UPLOADS_KEY, JSON.stringify(meta))
+  }
+
+  const syncPendingUploads = (items: PendingUploadItem[]) => {
+    publishPendingUploads(items)
+    persistPendingMeta(items)
+  }
 
   const getAuthHeaders = async (): Promise<Record<string, string>> => {
     if (!supabaseAnonKey) {
@@ -240,20 +319,100 @@ export const useStorage = () => {
   const uploadMultipleImages = async (
     files: (File | string)[],
     bucket: string = 'properties',
-    folder: string = 'uploads'
+    folder: string = 'uploads',
+    propertyDraft?: PendingUploadItem['propertyDraft']
   ): Promise<UploadResult[]> => {
     const results: UploadResult[] = []
+    const queuedNow: PendingUploadItem[] = files.map((file, index) => ({
+      id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
+      file,
+      bucket,
+      folder,
+      createdAt: Date.now(),
+      status: 'uploading',
+      propertyDraft,
+    }))
+    let currentQueue = [...sharedPendingUploads, ...queuedNow]
+    syncPendingUploads(currentQueue)
 
     for (let i = 0; i < files.length; i++) {
       setProgress((i / files.length) * 100)
       const result = await uploadImage(files[i], bucket, folder)
+      const queuedItem = queuedNow[i]
       if (result) {
         results.push(result)
+        if (!result.error) {
+          currentQueue = currentQueue.filter((item) => item.id !== queuedItem.id)
+          syncPendingUploads(currentQueue)
+        } else {
+          currentQueue = currentQueue.map((item) => item.id === queuedItem.id ? { ...item, status: 'failed' } : item)
+          syncPendingUploads(currentQueue)
+        }
       }
     }
 
     setProgress(100)
     return results
+  }
+
+  const enqueuePendingUploads = async (
+    files: (File | string)[],
+    bucket: string = 'properties',
+    folder: string = 'uploads',
+    propertyDraft?: PendingUploadItem['propertyDraft']
+  ) => {
+    const queued = [
+      ...sharedPendingUploads,
+      ...files.map((file, index) => ({
+        id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
+        file,
+        bucket,
+        folder,
+        createdAt: Date.now(),
+        status: 'uploading' as const,
+        propertyDraft,
+      })),
+    ]
+    syncPendingUploads(queued)
+  }
+
+  const retryPendingUploads = async (): Promise<UploadResult[]> => {
+    if (pendingUploads.length === 0) return []
+    const results: UploadResult[] = []
+    const stillPending: PendingUploadItem[] = []
+    for (let i = 0; i < pendingUploads.length; i++) {
+      const item = pendingUploads[i]
+      const result = await uploadImage(item.file, item.bucket, item.folder)
+      if (result) {
+        results.push(result)
+        if (result.error) stillPending.push(item)
+      } else {
+        stillPending.push(item)
+      }
+    }
+    syncPendingUploads(stillPending)
+    return results
+  }
+
+  const retryPendingUpload = async (id: string): Promise<UploadResult | null> => {
+    const item = sharedPendingUploads.find((p) => p.id === id)
+    if (!item) return null
+    if (typeof item.file === 'string' && !item.file.startsWith('blob:') && !item.file.startsWith('data:')) {
+      return {
+        url: '',
+        path: '',
+        error: 'Original file is unavailable after navigation refresh. Please re-add media.',
+      }
+    }
+    syncPendingUploads(sharedPendingUploads.map((p) => p.id === id ? { ...p, status: 'uploading' } : p))
+    const result = await uploadImage(item.file, item.bucket, item.folder)
+    if (result && !result.error) {
+      const remaining = sharedPendingUploads.filter((p) => p.id !== id)
+      syncPendingUploads(remaining)
+    } else {
+      syncPendingUploads(sharedPendingUploads.map((p) => p.id === id ? { ...p, status: 'failed' } : p))
+    }
+    return result
   }
 
   /**
@@ -359,10 +518,15 @@ export const useStorage = () => {
     takePhoto,
     uploadImage,
     uploadMultipleImages,
+    enqueuePendingUploads,
+    retryPendingUploads,
+    retryPendingUpload,
     uploadFile,
     deleteImage,
     uploading,
     progress,
     error,
+    pendingUploadCount: pendingUploads.length,
+    pendingUploads,
   }
 }
