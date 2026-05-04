@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
@@ -48,12 +48,12 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
   const navigate = useNavigate()
   const { uploadMultipleImages, uploading } = useStorage()
 
-  // Redirect if user is not an agent
+  // Redirect if user is not an agent (stable deps — avoid reruns when auth object identity changes)
   useEffect(() => {
     if (user && user.role !== 'agent') {
       navigate('/user')
     }
-  }, [user, navigate])
+  }, [user?.id, user?.role, navigate])
 
   // Load property data if in edit mode
   useEffect(() => {
@@ -97,30 +97,43 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [existingImages, setExistingImages] = useState<string[]>([])
 
-  // Auto-set site visit fee based on type
+  // Stable object URLs for previews — creating a new URL every render reloads images/videos and feels like constant rerenders.
+  const newImagePreviewUrls = useMemo(
+    () => form.images.map((f) => URL.createObjectURL(f)),
+    [form.images]
+  )
   useEffect(() => {
-    if (form.type === 'rent') {
-      setForm(prev => ({ ...prev, reservationFee: '10000' }))
-    } else if (form.type === 'sale') {
-      setForm(prev => ({ ...prev, reservationFee: '15000' }))
+    return () => {
+      newImagePreviewUrls.forEach((u) => URL.revokeObjectURL(u))
     }
+  }, [newImagePreviewUrls])
+
+  // Auto-set site visit fee based on type (skip if already correct to avoid extra renders)
+  useEffect(() => {
+    const nextFee = form.type === 'rent' ? '10000' : '15000'
+    setForm((prev) => (prev.reservationFee === nextFee ? prev : { ...prev, reservationFee: nextFee }))
   }, [form.type])
 
   const handleInputChange = (field: keyof PropertyFormData, value: any) => {
-    setForm(prev => ({ ...prev, [field]: value }))
+    setSuccessMessage(null)
+    setForm((prev) => ({ ...prev, [field]: value }))
   }
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (files.length > 0) {
+      setSuccessMessage(null)
       const maxNewImages = isEditMode ? Math.max(0, 10 - existingImages.length) : 10
       setForm(prev => ({ ...prev, images: [...prev.images, ...files].slice(0, maxNewImages) }))
     }
+    e.target.value = ''
   }
 
   const removeImage = (index: number) => {
+    setSuccessMessage(null)
     setForm(prev => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index)
@@ -143,11 +156,9 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
       }
     }
 
-      setSubmitting(true)
+    setSubmitting(true)
     setError(null)
-      if (!isEditMode) {
-        navigate('/agent/listings')
-      }
+    setSuccessMessage(null)
 
     try {
       const maxSize = 10 * 1024 * 1024 // 10MB
@@ -258,6 +269,28 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
         if (insertError) throw insertError
 
         setError(null)
+        setSuccessMessage(t('property.propertyAdded') || 'Property added successfully')
+        setForm({
+          title: '',
+          description: '',
+          price: '',
+          location: '',
+          town: '',
+          type: 'rent',
+          category: 'budget',
+          propertyType: 'apartment',
+          bedrooms: '',
+          bathrooms: '',
+          area: '',
+          images: [],
+          reservationFee: '10000',
+          rentPeriod: 'yearly',
+          advance_months_min: '',
+          advance_months_max: '',
+        })
+        if (typeof window !== 'undefined') {
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
       }
     } catch (err: any) {
       const errorMessage = err.message || (isEditMode ? t('property.failedToUpdateProperty') : t('property.failedToAddProperty')) || 'Failed to save property'
@@ -324,6 +357,41 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="property-form-content">
+        {successMessage && !isEditMode && (
+          <div
+            className="success-message"
+            style={{
+              marginBottom: '16px',
+              padding: '14px 16px',
+              borderRadius: '8px',
+              backgroundColor: Colors.primary[50],
+              color: Colors.primary[800],
+              borderLeft: `4px solid ${Colors.primary[600]}`,
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: '12px',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span style={{ fontWeight: 600 }}>{successMessage}</span>
+            <button
+              type="button"
+              onClick={() => navigate('/agent/listings')}
+              style={{
+                padding: '8px 14px',
+                borderRadius: '8px',
+                border: `1px solid ${Colors.primary[600]}`,
+                backgroundColor: Colors.white,
+                color: Colors.primary[700],
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {t('agent.viewListings')}
+            </button>
+          </div>
+        )}
         {error && (
           <div className="error-message" style={{
             backgroundColor: Colors.error[50],
@@ -394,34 +462,7 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
           </div>
 
           <div className="form-group">
-            <label style={{ color: Colors.neutral[700] }}>{t('property.location')} *</label>
-            <LocationSearchInput
-              value={form.location}
-              onChange={(value) => handleInputChange('location', value)}
-              onLocationSelect={(location) => {
-                console.log('Selected location:', location)
-                handleInputChange('location', location.place_name)
-                
-                // Extract town/city from location context
-                if (location.context && location.context.length > 0) {
-                  // The first context item is usually the town/city
-                  const town = location.context[0]
-                  handleInputChange('town', town)
-                } else {
-                  // If no context, try to extract from place_name
-                  const parts = location.place_name.split(',')
-                  if (parts.length > 1) {
-                    handleInputChange('town', parts[parts.length - 2].trim())
-                  }
-                }
-              }}
-              placeholder={t('form.searchPropertyLocation') || 'Search for property location...'}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label style={{ color: Colors.neutral[700] }}>{t('property.town') || 'Town/City'}</label>
+            <label style={{ color: Colors.neutral[700] }}>{t('propertyForm.town') || t('property.town') || 'Town/City'}</label>
             <input
               type="text"
               value={form.town || ''}
@@ -436,11 +477,33 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
             <p style={{
               fontSize: '12px',
               color: Colors.neutral[600],
-              marginTop: '4px',
-              fontStyle: 'italic'
+              marginTop: '4px'
             }}>
-              {t('propertyForm.townAutoFilled') || 'Auto-filled from location selection'}
+              {t('propertyForm.townHint')}
             </p>
+          </div>
+
+          <div className="form-group">
+            <label style={{ color: Colors.neutral[700] }}>{t('property.location')} *</label>
+            <LocationSearchInput
+              value={form.location}
+              onChange={(value) => handleInputChange('location', value)}
+              onLocationSelect={(location) => {
+                handleInputChange('location', location.place_name)
+
+                if (location.context && location.context.length > 0) {
+                  const town = location.context[0]
+                  handleInputChange('town', town)
+                } else {
+                  const parts = location.place_name.split(',')
+                  if (parts.length > 1) {
+                    handleInputChange('town', parts[parts.length - 2].trim())
+                  }
+                }
+              }}
+              placeholder={t('form.searchPropertyLocation') || 'Search for property location...'}
+              required
+            />
           </div>
         </div>
 
@@ -905,12 +968,13 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
               {/* Show new images */}
               {form.images.map((file, index) => {
                 const isVideo = isVideoFile(file)
+                const previewSrc = newImagePreviewUrls[index]
                 return (
-                  <div key={index} className="image-preview-item">
+                  <div key={`${file.name}-${file.size}-${file.lastModified}-${index}`} className="image-preview-item">
                     {isVideo ? (
                       <>
                         <video
-                          src={URL.createObjectURL(file)}
+                          src={previewSrc}
                           style={{
                             width: '100%',
                             height: '100%',
@@ -934,7 +998,7 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
                       </>
                     ) : (
                       <img
-                        src={URL.createObjectURL(file)}
+                        src={previewSrc}
                         alt={`Preview ${index + 1}`}
                       />
                     )}

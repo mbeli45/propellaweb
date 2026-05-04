@@ -32,7 +32,7 @@ export default function AgentLayout() {
 
   const navItems = [
     { path: '/agent', icon: List, label: 'navigation.listings' },
-    { path: '/agent/reservations', icon: CalendarDays, label: 'navigation.reservations', badge: reservationBadgeCount > 0 ? reservationBadgeCount : undefined },
+    { path: '/agent/reservations', icon: CalendarDays, label: 'navigation.bookings', badge: reservationBadgeCount > 0 ? reservationBadgeCount : undefined },
     { path: '/agent/messages', icon: MessageCircle, label: 'navigation.messages', badge: messageBadgeCount > 0 ? messageBadgeCount : undefined },
     { path: '/agent/wallet', icon: Wallet, label: 'navigation.wallet' },
     { path: '/agent/profile', icon: User, label: 'navigation.profile' },

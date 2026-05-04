@@ -6,7 +6,7 @@ import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { useAgentPropertyReservations } from '@/hooks/useReservations'
 import { supabase } from '@/lib/supabase'
-import { Clock, MapPin, CreditCard, CheckCircle2, MessageCircle, Calendar } from 'lucide-react'
+import { Clock, MapPin, CreditCard, MessageCircle, Calendar } from 'lucide-react'
 import { formatPrice } from '@/utils/shareUtils'
 import '../user/Reservations.css'
 
@@ -76,6 +76,10 @@ export default function AgentReservations() {
     return t(`reservations.${status}`) || status
   }
 
+  const getPaymentLabel = (paymentStatus: string) => {
+    return t(`reservations.${paymentStatus}` as any) || paymentStatus
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -101,14 +105,14 @@ export default function AgentReservations() {
           color: Colors.neutral[900],
           marginBottom: '4px'
         }}>
-          {t('reservations.title')}
+          {t('agentReservations.pageTitle')}
         </h1>
         <p style={{ 
           fontSize: '14px', 
           color: Colors.neutral[600],
           marginBottom: '20px'
         }}>
-          {t('reservations.reservationsForProperties')}
+          {t('agentReservations.pageSubtitle', { count: reservations.length })}
         </p>
       </div>
 
@@ -134,10 +138,10 @@ export default function AgentReservations() {
         }}>
           <Calendar size={64} color={Colors.neutral[400]} style={{ marginBottom: '16px' }} />
           <h2 style={{ color: Colors.neutral[800], marginBottom: '8px' }}>
-            {t('reservations.noReservations')}
+            {t('agentReservations.emptyBookingsTitle')}
           </h2>
           <p style={{ color: Colors.neutral[600] }}>
-            {t('reservations.noOneHasReserved')}
+            {t('agentReservations.emptyBookingsBody')}
           </p>
         </div>
       )}
@@ -165,31 +169,47 @@ export default function AgentReservations() {
                     <div style={{ 
                       display: 'flex', 
                       justifyContent: 'space-between', 
-                      alignItems: 'center',
+                      alignItems: 'flex-start',
                       marginBottom: '16px',
                       paddingBottom: '12px',
                       borderBottom: `1px solid ${Colors.neutral[100]}`
                     }}>
-                      <span style={{
-                        padding: '6px 14px',
-                        borderRadius: '20px',
+                      <div style={{
                         fontSize: '12px',
-                        fontWeight: '600',
-                        backgroundColor: `${getStatusColor(reservation.status)}15`,
-                        color: getStatusColor(reservation.status),
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px'
+                        fontWeight: '500',
+                        color: Colors.neutral[700],
+                        lineHeight: 1.45,
+                        maxWidth: '65%',
                       }}>
-                        {reservation.payment_status === 'paid' && (
-                          <CheckCircle2 size={14} />
-                        )}
-                        {getStatusLabel(reservation.status)}
-                      </span>
+                        <span style={{ color: getStatusColor(reservation.status), fontWeight: 600 }}>
+                          {getStatusLabel(reservation.status)}
+                        </span>
+                        {reservation.payment_status ? (
+                          <>
+                            <span style={{ color: Colors.neutral[400], margin: '0 6px' }}>·</span>
+                            <span
+                              style={{
+                                fontWeight: 600,
+                                color:
+                                  reservation.payment_status === 'paid'
+                                    ? Colors.success[700]
+                                    : reservation.payment_status === 'pending'
+                                      ? Colors.warning[700]
+                                      : reservation.payment_status === 'failed'
+                                        ? Colors.error[700]
+                                        : Colors.neutral[700],
+                              }}
+                            >
+                              {getPaymentLabel(reservation.payment_status)}
+                            </span>
+                          </>
+                        ) : null}
+                      </div>
                       <span style={{ 
                         fontSize: '12px', 
                         color: Colors.neutral[600],
-                        fontWeight: '500'
+                        fontWeight: '500',
+                        flexShrink: 0,
                       }}>
                         {formatDate(reservation.reservation_date)}
                       </span>

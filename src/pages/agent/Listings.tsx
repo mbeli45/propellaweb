@@ -20,7 +20,7 @@ export default function AgentListings() {
   const Colors = getColors(colorScheme)
   const navigate = useNavigate()
   const { getAgentTotalViews } = usePropertyViews()
-  const { pendingUploadCount, pendingUploads, retryPendingUpload } = useStorage()
+  const { pendingUploads, retryPendingUpload } = useStorage()
   const [retryingPendingId, setRetryingPendingId] = useState<string | null>(null)
   const previousPendingCountRef = useRef<number>(pendingUploads.length)
 
@@ -366,44 +366,7 @@ export default function AgentListings() {
               color: Colors.neutral[600],
               margin: 0
             }}>
-              {t('navigation.reservations')}
-            </p>
-          </div>
-          <div className="stat-card" style={{
-            flex: 1,
-            borderRadius: '12px',
-            padding: '16px',
-            backgroundColor: Colors.neutral[50],
-            border: `1px solid ${Colors.neutral[200]}`,
-            textAlign: 'center'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '20px',
-              backgroundColor: Colors.warning[100],
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 8px'
-            }}>
-              <RefreshCw size={20} color={Colors.warning[700]} />
-            </div>
-            <p style={{
-              fontSize: '20px',
-              fontWeight: '700',
-              color: Colors.neutral[900],
-              margin: '0 0 4px 0'
-            }}>
-              {pendingUploadCount}
-            </p>
-            <p style={{
-              fontSize: '12px',
-              fontWeight: '500',
-              color: Colors.neutral[600],
-              margin: 0
-            }}>
-              Outbox pending
+              {t('navigation.bookings')}
             </p>
           </div>
         </div>
@@ -460,7 +423,7 @@ export default function AgentListings() {
       </div>
 
       {/* Content */}
-      {loading && (
+      {loading && filteredProperties.length === 0 && !hasPendingCards && (
         <div style={{ textAlign: 'center', padding: '40px', color: Colors.neutral[600] }}>
           {t('agent.loadingYourProperties')}...
         </div>
@@ -509,7 +472,7 @@ export default function AgentListings() {
         </div>
       )}
 
-      {!loading && !error && (filteredProperties.length > 0 || hasPendingCards) && (
+      {!error && (filteredProperties.length > 0 || hasPendingCards) && (
         <div className="properties-list" style={{
           padding: '20px',
           display: 'grid',
