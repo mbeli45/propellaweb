@@ -13,9 +13,11 @@ export type UploadResult = {
   error?: string
 }
 
-type PendingUploadItem = {
+export type PendingUploadItem = {
   id: string
   file: File | string
+  /** Object URL for local File previews; revoked when the item leaves the queue */
+  previewUrl?: string
   bucket: string
   folder: string
   createdAt: number
@@ -27,6 +29,13 @@ type PendingUploadItem = {
     type?: 'rent' | 'sale'
     category?: 'budget' | 'standard' | 'premium' | 'luxury'
   }
+}
+
+const previewUrlForPendingFile = (file: File | string): string | undefined => {
+  if (file instanceof File) {
+    return URL.createObjectURL(file)
+  }
+  return undefined
 }
 
 const PENDING_UPLOADS_KEY = 'propellaweb:pendingMediaUploads'
@@ -95,6 +104,16 @@ export const useStorage = () => {
   }
 
   const syncPendingUploads = (items: PendingUploadItem[]) => {
+    const nextIds = new Set(items.map((i) => i.id))
+    for (const item of sharedPendingUploads) {
+      if (!nextIds.has(item.id) && item.previewUrl) {
+        try {
+          URL.revokeObjectURL(item.previewUrl)
+        } catch {
+          /* ignore */
+        }
+      }
+    }
     publishPendingUploads(items)
     persistPendingMeta(items)
   }
@@ -326,6 +345,7 @@ export const useStorage = () => {
     const queuedNow: PendingUploadItem[] = files.map((file, index) => ({
       id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
       file,
+      previewUrl: previewUrlForPendingFile(file),
       bucket,
       folder,
       createdAt: Date.now(),
@@ -366,6 +386,7 @@ export const useStorage = () => {
       ...files.map((file, index) => ({
         id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
         file,
+        previewUrl: previewUrlForPendingFile(file),
         bucket,
         folder,
         createdAt: Date.now(),

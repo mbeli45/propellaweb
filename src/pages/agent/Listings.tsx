@@ -116,6 +116,17 @@ export default function AgentListings() {
 
   const hasPendingCards = activeTab === 'active' && pendingUploads.length > 0
 
+  const getPendingCardImageSrc = (item: { previewUrl?: string; file: File | string }) => {
+    if (item.previewUrl) return item.previewUrl
+    if (
+      typeof item.file === 'string' &&
+      (item.file.startsWith('blob:') || item.file.startsWith('data:'))
+    ) {
+      return item.file
+    }
+    return '/placeholder-property.jpg'
+  }
+
   useEffect(() => {
     const previousPendingCount = previousPendingCountRef.current
     if (pendingUploads.length < previousPendingCount) {
@@ -486,9 +497,9 @@ export default function AgentListings() {
                   id: `pending-${item.id}`,
                   title: item.propertyDraft?.title || 'Uploading property...',
                   price: item.propertyDraft?.price || 0,
-                  location: item.propertyDraft?.location || `Media: ${typeof item.file === 'string' ? 'queued file' : (item.file?.name || 'queued file')}`,
-                  image: typeof item.file === 'string' ? item.file : '/placeholder-property.jpg',
-                  images: [typeof item.file === 'string' ? item.file : '/placeholder-property.jpg'],
+                  location: item.propertyDraft?.location || 'Background upload in progress',
+                  image: getPendingCardImageSrc(item),
+                  images: [getPendingCardImageSrc(item)],
                   type: item.propertyDraft?.type || 'rent',
                   category: item.propertyDraft?.category || 'standard',
                   status: 'available',
