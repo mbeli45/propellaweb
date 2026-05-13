@@ -205,7 +205,8 @@
     "advancePaymentNote": "Le paiement anticipé est généralement de 6 à 12 mois de loyer payés d'avance",
     "addPhotoVideo": "Ajouter photo ou vidéo",
     "addPhotosVideos": "Ajoutez des photos et vidéos de haute qualité pour présenter votre propriété ({{count}}/10)",
-    "supportedFormats": "Formats supportés : Images (JPG, PNG) et Vidéos (MP4, MOV)"
+    "supportedFormats": "Formats supportés : Images (JPG, PNG) et Vidéos (MP4, MOV). Max 50 Mo par fichier sur le web — utilisez l'application mobile pour les fichiers plus volumineux.",
+    "fileTooLargeUseMobileApp": "{{name}} fait {{size}}. Les fichiers de plus de 50 Mo doivent être téléversés via l'application mobile Propella."
   },
   "messages": {
     "title": "Messages",
@@ -925,7 +926,8 @@
     "addPhotosVideos": "Ajoutez des photos et vidéos de haute qualité pour présenter votre propriété ({{count}}/10)",
     "addPhotoVideo": "Ajouter une photo ou une vidéo",
     "addMediaButton": "Ajouter des photos et vidéos",
-    "supportedFormats": "Formats pris en charge : Images (JPG, PNG) et Vidéos (MP4, MOV)",
+    "supportedFormats": "Formats pris en charge : Images (JPG, PNG) et Vidéos (MP4, MOV). Max 50 Mo par fichier sur le web — utilisez l'application mobile pour les fichiers plus volumineux.",
+    "fileTooLargeUseMobileApp": "{{name}} fait {{size}}. Les fichiers de plus de 50 Mo doivent être téléversés via l'application mobile Propella.",
     "basicInformation": "Informations de base",
     "location": "Emplacement",
     "propertyType": "Type de propriété",
@@ -945,6 +947,8 @@
     "uploadingImages": "Téléchargement de {{count}} images...",
     "propertyTitle": "Titre de la propriété",
     "description": "Description",
+    "town": "Ville",
+    "townHint": "Saisissez d’abord la ville ici si la recherche ne propose pas votre zone. Ce champ se remplit aussi quand vous choisissez un résultat ou la position actuelle.",
     "propertyLocation": "Emplacement de la propriété",
     "listingType": "Type d'annonce",
     "priceFCFA": "Prix (FCFA)",

@@ -88,7 +88,9 @@ export default function PropertyDetail() {
         if (!videoThumbnails[videoUrl]) {
           try {
             const thumbnail = await generateVideoThumbnail(videoUrl)
-            thumbnails[videoUrl] = thumbnail
+            if (thumbnail) {
+              thumbnails[videoUrl] = thumbnail
+            }
           } catch (error) {
             console.error('Failed to generate thumbnail for', videoUrl, error)
           }
@@ -386,6 +388,7 @@ export default function PropertyDetail() {
               <VideoPlayer
                 src={allMedia[currentMediaIndex]}
                 thumbnail={videoThumbnails[allMedia[currentMediaIndex]]}
+                autoPlay
                 controls
                 onClose={() => setPlayingVideo(null)}
                 className="main-video"
@@ -400,18 +403,33 @@ export default function PropertyDetail() {
                 }}
                 onClick={() => setPlayingVideo(allMedia[currentMediaIndex])}
               >
-                <img
-                  src={videoThumbnails[allMedia[currentMediaIndex]] || allMedia[currentMediaIndex]}
-                  alt={property.title}
-                  className="main-image"
-                  loading="eager"
-                  decoding="async"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                  }}
-                />
+                {videoThumbnails[allMedia[currentMediaIndex]] ? (
+                  <img
+                    src={videoThumbnails[allMedia[currentMediaIndex]]}
+                    alt={property.title}
+                    className="main-image"
+                    loading="eager"
+                    decoding="async"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                ) : (
+                  <video
+                    src={`${allMedia[currentMediaIndex]}#t=0.5`}
+                    className="main-image"
+                    preload="metadata"
+                    muted
+                    playsInline
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                )}
                 <div
                   style={{
                     position: 'absolute',
@@ -491,17 +509,31 @@ export default function PropertyDetail() {
                     className={`thumbnail ${currentMediaIndex === idx ? 'active' : ''}`}
                     style={{ position: 'relative' }}
                   >
-                    <img 
-                      src={thumbnail || media} 
-                      alt={`${property.title} ${idx + 1}`}
-                      loading="lazy"
-                      decoding="async"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                      }}
-                    />
+                    {isVideo && !thumbnail ? (
+                      <video
+                        src={`${media}#t=0.5`}
+                        preload="metadata"
+                        muted
+                        playsInline
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <img
+                        src={thumbnail || media}
+                        alt={`${property.title} ${idx + 1}`}
+                        loading="lazy"
+                        decoding="async"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    )}
                     {isVideo && (
                       <div
                         style={{

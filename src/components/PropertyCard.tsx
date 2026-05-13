@@ -1,11 +1,12 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, BedDouble, Bath, Share2, Edit, Trash2 } from 'lucide-react'
+import { MapPin, BedDouble, Bath, Share2, Edit, Trash2, Play } from 'lucide-react'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { calculateRentPrices, formatPrice as formatPriceUtil } from '@/utils/shareUtils'
 import { useShare } from '@/hooks/useShare'
+import { isVideoUrl } from '@/utils/videoUtils'
 import './PropertyCard.css'
 
 export interface PropertyData {
@@ -85,6 +86,18 @@ export default function PropertyCard({
     }
   }
 
+  const displayMedia = useMemo(() => {
+    const candidates = [
+      ...(property.images || []),
+      ...(property.image ? [property.image] : []),
+    ]
+    const firstImage = candidates.find((url) => url && !isVideoUrl(url))
+    if (firstImage) return { url: firstImage, isVideo: false }
+    const firstVideo = candidates.find((url) => url && isVideoUrl(url))
+    if (firstVideo) return { url: firstVideo, isVideo: true }
+    return { url: '/placeholder-property.jpg', isVideo: false }
+  }, [property.image, property.images])
+
   const getCategoryColor = useMemo(() => {
     switch (property.category) {
       case 'budget':
@@ -135,16 +148,48 @@ export default function PropertyCard({
           overflow: 'hidden',
         }}
       >
-        <img
-          src={property.image || property.images?.[0] || '/placeholder-property.jpg'}
-          alt={property.title}
-          className="property-card-image"
-          loading="lazy"
-          decoding="async"
-          onError={(e) => {
-            e.currentTarget.src = '/placeholder-property.jpg'
-          }}
-        />
+        {displayMedia.isVideo ? (
+          <>
+            <video
+              src={`${displayMedia.url}#t=0.5`}
+              className="property-card-image"
+              preload="metadata"
+              muted
+              playsInline
+              poster="/placeholder-property.jpg"
+            />
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: horizontal ? '40px' : '52px',
+                height: horizontal ? '40px' : '52px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(0, 0, 0, 0.55)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 2,
+                pointerEvents: 'none',
+              }}
+            >
+              <Play size={horizontal ? 18 : 24} color="#FFFFFF" fill="#FFFFFF" />
+            </div>
+          </>
+        ) : (
+          <img
+            src={displayMedia.url}
+            alt={property.title}
+            className="property-card-image"
+            loading="lazy"
+            decoding="async"
+            onError={(e) => {
+              e.currentTarget.src = '/placeholder-property.jpg'
+            }}
+          />
+        )}
         {/* Gradient Overlay */}
         <div className="property-card-gradient-overlay" />
         

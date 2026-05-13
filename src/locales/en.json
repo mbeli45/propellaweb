@@ -205,7 +205,8 @@
     "advancePaymentNote": "Advance payment is typically 6-12 months of rent paid upfront",
     "addPhotoVideo": "Add photo or video",
     "addPhotosVideos": "Add high-quality photos and videos to showcase your property ({{count}}/10)",
-    "supportedFormats": "Supported: Images (JPG, PNG) and Videos (MP4, MOV)"
+    "supportedFormats": "Supported: Images (JPG, PNG) and Videos (MP4, MOV). Max 50MB per file on web — use the mobile app for larger files.",
+    "fileTooLargeUseMobileApp": "{{name}} is {{size}}. Files over 50MB must be uploaded using the Propella mobile app."
   },
   "messages": {
     "title": "Messages",
@@ -1085,6 +1086,8 @@
     "propertyTitle": "Property Title",
     "description": "Description",
     "location": "Location",
+    "town": "Town/City",
+    "townHint": "Enter the city or town here first if search does not list your area. It also fills when you pick a search result or use current location.",
     "propertyLocation": "Property Location",
     "propertyType": "Property Type",
     "listingType": "Listing Type",
@@ -1122,7 +1125,8 @@
     "addPhotosVideos": "Add high-quality photos and videos to showcase your property ({{count}}/10)",
     "addPhotoVideo": "Add photo or video",
     "addMediaButton": "Add Photos & Videos",
-    "supportedFormats": "Supported: Images (JPG, PNG) and Videos (MP4, MOV)"
+    "supportedFormats": "Supported: Images (JPG, PNG) and Videos (MP4, MOV). Max 50MB per file on web — use the mobile app for larger files.",
+    "fileTooLargeUseMobileApp": "{{name}} is {{size}}. Files over 50MB must be uploaded using the Propella mobile app."
   },
   "help": {
     "contactUs": "Contact Us",

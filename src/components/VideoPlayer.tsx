@@ -64,7 +64,12 @@ export default function VideoPlayer({
     video.addEventListener('ended', handleEnded)
 
     if (autoPlay) {
-      video.play().catch(console.error)
+      video.play().catch(() => {
+        // Autoplay with sound blocked — retry muted so the user still sees playback.
+        video.muted = true
+        setIsMuted(true)
+        video.play().catch(console.error)
+      })
     }
 
     return () => {

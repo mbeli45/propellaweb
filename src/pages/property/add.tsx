@@ -8,7 +8,11 @@ import { supabase } from '@/lib/supabase'
 import { useStorage } from '@/hooks/useStorage'
 import { ArrowLeft, Plus, X, Star, DollarSign, Square, Home, MapPin } from 'lucide-react'
 import LocationSearchInput from '@/components/LocationSearchInput'
-import { compressMedia, formatFileSize, isImageFile, isVideoFile } from '@/utils/mediaCompression'
+import {
+  formatFileSize,
+  isOverWebUploadLimit,
+  isVideoFile,
+} from '@/utils/fileUtils'
 import './PropertyForm.css'
 
 interface PropertyFormData {
@@ -122,13 +126,31 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
+  const fileTooLargeForWebMessage = (file: File) =>
+    t('propertyForm.fileTooLargeUseMobileApp', {
+      name: file.name,
+      size: formatFileSize(file.size),
+    }) ||
+    `${file.name} is ${formatFileSize(file.size)}. Files over 50MB must be uploaded using the Propella mobile app.`
+
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    if (files.length > 0) {
-      setSuccessMessage(null)
-      const maxNewImages = isEditMode ? Math.max(0, 10 - existingImages.length) : 10
-      setForm(prev => ({ ...prev, images: [...prev.images, ...files].slice(0, maxNewImages) }))
+    if (files.length === 0) {
+      e.target.value = ''
+      return
     }
+
+    const oversized = files.find(isOverWebUploadLimit)
+    if (oversized) {
+      setError(fileTooLargeForWebMessage(oversized))
+      e.target.value = ''
+      return
+    }
+
+    setSuccessMessage(null)
+    setError(null)
+    const maxNewImages = isEditMode ? Math.max(0, 10 - existingImages.length) : 10
+    setForm(prev => ({ ...prev, images: [...prev.images, ...files].slice(0, maxNewImages) }))
     e.target.value = ''
   }
 
@@ -161,37 +183,17 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
     setSuccessMessage(null)
 
     try {
-      const maxSize = 10 * 1024 * 1024 // 10MB
-      const uploadReadyFiles: File[] = []
-
-      for (const file of form.images) {
-        if (file.size <= maxSize) {
-          uploadReadyFiles.push(file)
-          continue
-        }
-
-        try {
-          const compressed = await compressMedia(file, {
-            maxSizeMB: 10,
-            maxWidthOrHeight: 1920,
-            quality: 0.8
-          })
-          if (compressed.size > maxSize) {
-            setError(`${file.name} is still over 10MB after compression. Try a shorter clip or lower resolution.`)
-            continue
-          }
-          uploadReadyFiles.push(compressed)
-        } catch (compressionError) {
-          console.error('Compression failed, keeping original file:', compressionError)
-          uploadReadyFiles.push(file)
-        }
+      const oversized = form.images.find(isOverWebUploadLimit)
+      if (oversized) {
+        setError(fileTooLargeForWebMessage(oversized))
+        setSubmitting(false)
+        return
       }
 
-      // Upload new images first
       let newImageUrls: string[] = []
-      if (uploadReadyFiles.length > 0) {
+      if (form.images.length > 0) {
         const uploadResults = await uploadMultipleImages(
-          uploadReadyFiles,
+          form.images,
           'properties',
           'uploads',
           {
@@ -907,7 +909,7 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
             color: Colors.neutral[600],
             marginBottom: '16px'
           }}>
-            {t('propertyForm.supportedFormats') || 'Supported: Images (JPG, PNG) and Videos (MP4, MOV)'}
+            {t('propertyForm.supportedFormats') || 'Supported: Images (JPG, PNG) and Videos (MP4, MOV). Max 50MB per file on web — use the mobile app for larger files.'}
           </p>
 
           <div className="image-upload-area">
