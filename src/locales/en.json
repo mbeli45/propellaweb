@@ -1130,6 +1130,8 @@
   },
   "help": {
     "contactUs": "Contact Us",
+    "supportCenter": "Support center",
+    "supportCenterDescription": "Official contact options and helpful links",
     "appInformation": "App Information",
     "helpAndSupport": "Help & Support",
     "getHelpFromSupport": "Get help from our support team",
@@ -1177,6 +1179,20 @@
     "includeClearPhotos": "• Include clear, recent photographs",
     "discloseKnownIssues": "• Disclose any known issues or limitations",
     "notPostFraudulent": "• Not post fraudulent or misleading listings"
+  },
+  "supportPage": {
+    "title": "Support",
+    "metaTitle": "Support — Propella",
+    "metaDescription": "Contact Propella for help with your account, listings, payments, and the Propella app. Email, phone, WhatsApp, and links to our FAQ and policies.",
+    "intro": "Need help with Propella? Use any of the options below to reach our team. For common questions, see the FAQ first—it may be faster.",
+    "contactHeading": "Contact us",
+    "emailTitle": "Email",
+    "phoneTitle": "Phone",
+    "whatsappTitle": "WhatsApp",
+    "whatsappDescription": "Chat with us on WhatsApp (same number as phone support)",
+    "responseHeading": "When we respond",
+    "responseBody": "We aim to reply within one to two business days. For urgent issues, phone or WhatsApp is usually fastest.",
+    "resourcesHeading": "Helpful links"
   },
   "forgotPassword": {
     "forgotPassword": "Forgot Password",

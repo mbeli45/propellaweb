@@ -13,6 +13,7 @@ import AgentProfilePage from '@/pages/agent/[id]'
 import Terms from '@/pages/profile/help/Terms'
 import Privacy from '@/pages/profile/help/Privacy'
 import FAQ from '@/pages/profile/help/FAQ'
+import Support from '@/pages/support/Support'
 import Admin from '@/pages/admin/Admin'
 
 function AppRoutes() {
@@ -64,6 +65,7 @@ function AppRoutes() {
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/faq" element={<FAQ />} />
+      <Route path="/support" element={<Support />} />
 
       {/* Default redirect */}
       <Route path="/" element={<Navigate to={getDefaultRoute()} replace />} />

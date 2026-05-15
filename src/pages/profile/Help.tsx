@@ -22,6 +22,12 @@ export default function ProfileHelp() {
 
   const menuItems = [
     {
+      icon: <Globe size={24} />,
+      title: t('help.supportCenter'),
+      description: t('help.supportCenterDescription'),
+      action: () => navigate('/support'),
+    },
+    {
       icon: <MessageCircle size={24} />,
       title: t('help.contactUs'),
       description: t('help.getHelpFromSupport'),

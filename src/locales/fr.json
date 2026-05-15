@@ -1003,6 +1003,8 @@
   },
   "help": {
     "contactUs": "Nous contacter",
+    "supportCenter": "Centre d'assistance",
+    "supportCenterDescription": "Options de contact officielles et liens utiles",
     "appInformation": "Informations sur l'application",
     "helpAndSupport": "Aide et support",
     "getHelpFromSupport": "Obtenez de l'aide de notre équipe de support",
@@ -1050,6 +1052,20 @@
     "includeClearPhotos": "• Inclure des photographies claires et récentes",
     "discloseKnownIssues": "• Divulguer tout problème ou limitation connu",
     "notPostFraudulent": "• Ne pas publier d'annonces frauduleuses ou trompeuses"
+  },
+  "supportPage": {
+    "title": "Assistance",
+    "metaTitle": "Assistance — Propella",
+    "metaDescription": "Contactez Propella pour l'aide liée à votre compte, vos annonces, les paiements et l'application Propella. E-mail, téléphone, WhatsApp et liens vers la FAQ et les politiques.",
+    "intro": "Besoin d'aide avec Propella ? Utilisez l'une des options ci-dessous pour joindre notre équipe. Pour les questions fréquentes, consultez d'abord la FAQ — c'est souvent plus rapide.",
+    "contactHeading": "Nous contacter",
+    "emailTitle": "E-mail",
+    "phoneTitle": "Téléphone",
+    "whatsappTitle": "WhatsApp",
+    "whatsappDescription": "Écrivez-nous sur WhatsApp (même numéro que le support téléphonique)",
+    "responseHeading": "Délais de réponse",
+    "responseBody": "Nous visons une réponse sous un à deux jours ouvrables. Pour les situations urgentes, le téléphone ou WhatsApp est en général le plus rapide.",
+    "resourcesHeading": "Liens utiles"
   },
   "security": {
     "accountSecurity": "Sécurité du compte",
