@@ -10,6 +10,7 @@ import PropertyCard from '@/components/PropertyCard'
 import SEO from '@/components/SEO'
 import { generateAgentStructuredData, getCanonicalBaseUrl } from '@/utils/seoUtils'
 import { Star, User as UserIcon, Mail, Phone, ArrowRight, CheckCircle2, ArrowLeft, X } from 'lucide-react'
+import ModerationActions from '@/components/moderation/ModerationActions'
 import './AgentProfile.css'
 
 export default function AgentProfile() {
@@ -297,6 +298,17 @@ export default function AgentProfile() {
               <span style={{ fontSize: '14px', color: Colors.neutral[700] }}>{agent.phone}</span>
             </div>
           )}
+        </div>
+
+        {/* Moderation actions: report / block agent (App Store guideline 1.2) */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
+          <ModerationActions
+            targetUserId={agentId}
+            targetUserName={agent.full_name}
+            contentType="profile"
+            contentId={agentId}
+            onBlocked={() => navigate(-1)}
+          />
         </div>
       </div>
 

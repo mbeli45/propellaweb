@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { PropertyData } from '@/components/PropertyCard';
 import { captureException, addBreadcrumb, captureMessage } from '@/lib/sentry';
+import { useBlockedUserIds } from '@/hooks/useModeration';
 
 interface FilterOptions {
   category?: string[];
@@ -181,7 +182,7 @@ export function useProperties(userId: string) {
   return { properties, loading, error, deleteProperty, refetch };
 }
 
-export function useAllProperties(filters?: FilterOptions) {
+export function useAllPropertiesBase(filters?: FilterOptions) {
   const [properties, setProperties] = useState<PropertyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -332,6 +333,17 @@ export function useAllProperties(filters?: FilterOptions) {
   }, [fetchAllProperties]);
 
   return { properties, loading, error, refetch: fetchAllProperties };
+}
+
+export function useAllProperties(filters?: FilterOptions) {
+  const base = useAllPropertiesBase(filters);
+  const { blockedIds } = useBlockedUserIds();
+  const blockedSet = useMemo(() => new Set(blockedIds), [blockedIds]);
+  const visibleProperties = useMemo(
+    () => base.properties.filter((p) => !blockedSet.has((p as any).owner_id)),
+    [base.properties, blockedSet],
+  );
+  return { ...base, properties: visibleProperties };
 }
 
 export function useProperty(propertyId: string) {
@@ -570,6 +582,8 @@ export function useSimilarProperties(currentPropertyId: string, category?: strin
 export function useHomeProperties() {
   const [featuredProperties, setFeaturedProperties] = useState<PropertyData[]>([]);
   const [recentProperties, setRecentProperties] = useState<PropertyData[]>([]);
+  const { blockedIds } = useBlockedUserIds();
+  const blockedSet = useMemo(() => new Set(blockedIds), [blockedIds]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -800,11 +814,20 @@ export function useHomeProperties() {
     fetchHomeProperties();
   }, [fetchHomeProperties]);
 
-  return { 
-    featuredProperties, 
-    recentProperties, 
-    loading, 
-    error, 
+  const visibleFeatured = useMemo(
+    () => featuredProperties.filter((p) => !blockedSet.has((p as any).owner_id)),
+    [featuredProperties, blockedSet],
+  );
+  const visibleRecent = useMemo(
+    () => recentProperties.filter((p) => !blockedSet.has((p as any).owner_id)),
+    [recentProperties, blockedSet],
+  );
+
+  return {
+    featuredProperties: visibleFeatured,
+    recentProperties: visibleRecent,
+    loading,
+    error,
     refetch: () => fetchHomeProperties(true)
   };
 }

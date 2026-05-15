@@ -8,6 +8,7 @@ import { useMessages } from '@/hooks/useMessages'
 import { usePresence } from '@/hooks/usePresence'
 import { useStorage } from '@/hooks/useStorage'
 import { Send, Paperclip, ArrowLeft, MoreVertical, Phone, Video, Check, CheckCheck, Clock } from 'lucide-react'
+import ModerationActions from '@/components/moderation/ModerationActions'
 import { supabase } from '@/lib/supabase'
 import './Chat.css'
 
@@ -276,7 +277,17 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {counterpartId ? (
+            <ModerationActions
+              targetUserId={counterpartId}
+              targetUserName={counterpartProfile?.full_name}
+              contentType="chat"
+              contentId={counterpartId}
+              size="compact"
+              onBlocked={() => navigate(-1)}
+            />
+          ) : null}
           <button
             style={{
               background: 'none',

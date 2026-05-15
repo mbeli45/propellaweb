@@ -8,6 +8,7 @@ import { BottomSheetProvider } from './contexts/BottomSheetContext'
 import AppRoutes from './routes/AppRoutes'
 import AdminApp from './admin/App'
 import ErrorBoundary from './components/ErrorBoundary'
+import EULAGate from './components/moderation/EULAGate'
 import './lib/i18n'
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
                 <BottomSheetProvider>
                   <AuthProvider>
                     <AppRoutes />
+                    <EULAGate />
                   </AuthProvider>
                 </BottomSheetProvider>
               </DialogProvider>

@@ -11,7 +11,8 @@ interface AuthContextProps {
   loading: boolean
   error: string | null
   signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string, fullName: string, role: string) => Promise<void>
+  signUp: (email: string, password: string, fullName: string, role: string, eulaAccepted?: boolean) => Promise<void>
+  acceptEula: () => Promise<void>
   signOut: () => Promise<void>
   refreshUser: () => Promise<void>
   forgotPassword: (email: string) => Promise<void>
@@ -144,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [navigate])
 
-  const signUp = useCallback(async (email: string, password: string, fullName: string, role: string) => {
+  const signUp = useCallback(async (email: string, password: string, fullName: string, role: string, eulaAccepted: boolean = false) => {
     try {
       setError(null)
       const { data, error: signUpError } = await supabase.auth.signUp({
@@ -154,12 +155,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: {
             full_name: fullName,
             role: role || 'user',
+            eula_accepted_at: eulaAccepted ? new Date().toISOString() : null,
           },
         },
       })
 
       if (signUpError) throw signUpError
       if (data.user) {
+        // Best-effort persist EULA timestamp to the profile row created by auth trigger.
+        if (eulaAccepted) {
+          supabase
+            .from('profiles')
+            .update({ eula_accepted_at: new Date().toISOString() } as any)
+            .eq('id', data.user.id)
+            .then(({ error: eulaError }) => {
+              if (eulaError) console.warn('Failed to persist eula_accepted_at:', eulaError.message)
+            })
+        }
         await fetchProfile(data.user.id, true)
         navigate('/auth/verify')
       }
@@ -168,6 +180,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw err
     }
   }, [fetchProfile, navigate])
+
+  const acceptEula = useCallback(async () => {
+    if (!user?.id) throw new Error('Not authenticated')
+    const acceptedAt = new Date().toISOString()
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ eula_accepted_at: acceptedAt } as any)
+      .eq('id', user.id)
+    if (updateError) throw updateError
+    setUser((prev) => (prev ? ({ ...prev, eula_accepted_at: acceptedAt } as any) : prev))
+    const cached = profileCache.get(user.id)
+    if (cached) {
+      profileCache.set(user.id, { data: { ...cached.data, eula_accepted_at: acceptedAt } as any, timestamp: Date.now() })
+    }
+  }, [user?.id])
 
   const signOut = useCallback(async () => {
     try {
@@ -346,13 +373,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      error, 
-      signIn, 
-      signUp, 
-      signOut, 
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      error,
+      signIn,
+      signUp,
+      acceptEula,
+      signOut,
       refreshUser,
       forgotPassword,
       resetPassword,

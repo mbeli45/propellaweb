@@ -31,3 +31,9 @@ dist-ssr
 
 # Local Netlify folder
 .netlify
+
+# MCP (Model Context Protocol) — local server configs / secrets
+.mcp.json
+.mcp/
+**/mcp.json
+.cursor/mcp.json

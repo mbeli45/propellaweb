@@ -20,6 +20,7 @@ import { getColors } from '@/constants/Colors'
 import { useProperty, useSimilarProperties } from '@/hooks/useProperties'
 import { useAuth } from '@/contexts/AuthContext'
 import { useShare } from '@/hooks/useShare'
+import ModerationActions from '@/components/moderation/ModerationActions'
 import { useReservations } from '@/hooks/useReservations'
 import { useFapshiPayment } from '@/hooks/useFapshiPayment'
 import { formatPrice, calculateRentPrices, createPropertyUrl } from '@/utils/shareUtils'
@@ -378,6 +379,15 @@ export default function PropertyDetail() {
         >
           <Share2 size={20} color={Colors.neutral[700]} />
         </button>
+        {!isOwner && property?.owner_id ? (
+          <ModerationActions
+            targetUserId={property.owner_id}
+            contentType="property"
+            contentId={property.id}
+            size="compact"
+            onBlocked={() => navigate(-1)}
+          />
+        ) : null}
       </div>
 
       {/* Media Gallery (Videos + Images) */}

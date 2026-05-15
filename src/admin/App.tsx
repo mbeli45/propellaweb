@@ -15,6 +15,7 @@ import { ReviewList, ReviewEdit } from './resources/Reviews';
 import { AgentVerificationList, AgentVerificationEdit } from './resources/AgentVerifications';
 import { CommissionPaymentList, CommissionPaymentEdit } from './resources/CommissionPayments';
 import { CommissionDisputeList, CommissionDisputeEdit } from './resources/CommissionDisputes';
+import { ContentReportList, ContentReportEdit } from './resources/ContentReports';
 import { WalletList } from './resources/Wallets';
 import { WithdrawalRequestList, WithdrawalRequestEdit } from './resources/WithdrawalRequests';
 import { NotificationList } from './resources/Notifications';
@@ -30,6 +31,7 @@ const ReviewIcon = () => <Icon icon="lucide:star" width={24} />;
 const AgentVerificationIcon = () => <Icon icon="lucide:shield-check" width={24} />;
 const CommissionIcon = () => <Icon icon="lucide:coins" width={24} />;
 const DisputeIcon = () => <Icon icon="lucide:alert-triangle" width={24} />;
+const ModerationIcon = () => <Icon icon="lucide:flag" width={24} />;
 const WalletIcon = () => <Icon icon="lucide:wallet" width={24} />;
 const WithdrawalIcon = () => <Icon icon="lucide:arrow-down-circle" width={24} />;
 const NotificationIcon = () => <Icon icon="lucide:bell" width={24} />;
@@ -111,6 +113,14 @@ const AdminApp = () => {
         edit={CommissionDisputeEdit}
         recordRepresentation={(record) => `Dispute: ${record.id?.slice(0, 8)}`}
         icon={DisputeIcon}
+      />
+      <Resource
+        name="content_reports"
+        list={ContentReportList}
+        edit={ContentReportEdit}
+        recordRepresentation={(record) => `Report: ${record.id?.slice(0, 8)}`}
+        icon={ModerationIcon}
+        options={{ label: 'Moderation Queue' }}
       />
       <Resource
         name="wallets"

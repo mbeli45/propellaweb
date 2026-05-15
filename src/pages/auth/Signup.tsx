@@ -22,6 +22,7 @@ export default function Signup() {
   const [userType, setUserType] = useState<UserType>('normal')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [eulaAccepted, setEulaAccepted] = useState(false)
   const { signUp } = useAuth()
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
@@ -69,11 +70,12 @@ export default function Signup() {
   }, [password, Colors, getPasswordStrength])
 
   const isFormValid = useMemo(() => {
-    return name.trim() !== '' && 
-           email.trim() !== '' && 
-           password.trim() !== '' && 
-           passwordStrength.score >= 3
-  }, [name, email, password, passwordStrength.score])
+    return name.trim() !== '' &&
+           email.trim() !== '' &&
+           password.trim() !== '' &&
+           passwordStrength.score >= 3 &&
+           eulaAccepted
+  }, [name, email, password, passwordStrength.score, eulaAccepted])
 
   const handleSignUp = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,11 +90,16 @@ export default function Signup() {
       return
     }
 
+    if (!eulaAccepted) {
+      setError(t('signup.mustAcceptTerms'))
+      return
+    }
+
     setError(null)
     setLoading(true)
 
     try {
-      await signUp(email, password, name, userType)
+      await signUp(email, password, name, userType, true)
       navigate(`/auth/verify?email=${encodeURIComponent(email)}`)
     } catch (err: any) {
       setError(err.message || t('auth.signupSuccess'))
@@ -403,31 +410,54 @@ export default function Signup() {
             )}
           </div>
 
-          {/* Terms and Privacy */}
+          {/* Terms and Privacy + EULA checkbox (App Store guideline 1.2) */}
           <div
             className="auth-terms-container"
             style={{
               backgroundColor: Colors.neutral[50],
+              padding: '16px',
+              borderRadius: '12px',
+              marginBottom: '24px',
             }}
           >
-            <p className="auth-terms-text" style={{ color: Colors.neutral[600] }}>
-              {t('signup.byCreatingAccount')}{' '}
-              <a
-                href="/terms"
-                className="auth-terms-link"
-                style={{ color: Colors.primary[600] }}
-              >
-                {t('signup.termsOfService')}
-              </a>
-              {' '}{t('signup.and')}{' '}
-              <a
-                href="/privacy"
-                className="auth-terms-link"
-                style={{ color: Colors.primary[600] }}
-              >
-                {t('signup.privacyPolicy')}
-              </a>
-            </p>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={eulaAccepted}
+                onChange={(e) => setEulaAccepted(e.target.checked)}
+                style={{
+                  width: '18px',
+                  height: '18px',
+                  marginTop: '2px',
+                  accentColor: Colors.primary[600],
+                  cursor: 'pointer',
+                }}
+              />
+              <span className="auth-terms-text" style={{ color: Colors.neutral[700], fontSize: '13px', lineHeight: '18px' }}>
+                {t('signup.byCreatingAccount')}{' '}
+                <a
+                  href="/terms"
+                  className="auth-terms-link"
+                  style={{ color: Colors.primary[600], fontWeight: 500 }}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t('signup.termsOfService')}
+                </a>
+                {' '}{t('signup.and')}{' '}
+                <a
+                  href="/privacy"
+                  className="auth-terms-link"
+                  style={{ color: Colors.primary[600], fontWeight: 500 }}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t('signup.privacyPolicy')}
+                </a>
+                {'. '}
+                <span style={{ color: Colors.neutral[600], fontSize: '12px' }}>{t('moderation.zeroTolerance')}</span>
+              </span>
+            </label>
           </div>
 
           {/* Sign Up Button */}

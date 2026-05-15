@@ -232,6 +232,33 @@ export default function Terms() {
           </ul>
         </div>
 
+        {/* Zero Tolerance for Objectionable Content (App Store guideline 1.2) */}
+        <div style={{
+          backgroundColor: Colors.white,
+          borderRadius: '12px',
+          padding: '20px',
+          marginBottom: '16px',
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
+        }}>
+          <h2 style={{ fontSize: '18px', fontWeight: '600', color: Colors.neutral[900], marginBottom: '12px' }}>
+            {t('help.zeroToleranceTitle')}
+          </h2>
+          <p style={{ fontSize: '15px', color: Colors.neutral[700], lineHeight: '22px', marginBottom: '12px' }}>
+            {t('help.zeroToleranceIntro')}
+          </p>
+          <ul style={{ paddingLeft: '20px', marginBottom: '12px' }}>
+            <li style={{ fontSize: '15px', color: Colors.neutral[700], lineHeight: '22px', marginBottom: '4px' }}>{t('help.zeroToleranceHate')}</li>
+            <li style={{ fontSize: '15px', color: Colors.neutral[700], lineHeight: '22px', marginBottom: '4px' }}>{t('help.zeroToleranceSexual')}</li>
+            <li style={{ fontSize: '15px', color: Colors.neutral[700], lineHeight: '22px', marginBottom: '4px' }}>{t('help.zeroToleranceViolence')}</li>
+            <li style={{ fontSize: '15px', color: Colors.neutral[700], lineHeight: '22px', marginBottom: '4px' }}>{t('help.zeroToleranceScam')}</li>
+            <li style={{ fontSize: '15px', color: Colors.neutral[700], lineHeight: '22px', marginBottom: '4px' }}>{t('help.zeroToleranceImpersonation')}</li>
+            <li style={{ fontSize: '15px', color: Colors.neutral[700], lineHeight: '22px', marginBottom: '4px' }}>{t('help.zeroToleranceIllegal')}</li>
+          </ul>
+          <p style={{ fontSize: '15px', color: Colors.neutral[700], lineHeight: '22px', marginBottom: '0' }}>
+            {t('help.zeroToleranceEnforcement')}
+          </p>
+        </div>
+
         {/* 6. Payment and Fees */}
         <div style={{
           backgroundColor: Colors.white,

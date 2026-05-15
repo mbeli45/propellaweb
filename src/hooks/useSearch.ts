@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Database } from '@/types/supabase';
 import { PropertyData } from '@/components/PropertyCard';
 import debounce from 'lodash/debounce';
+import { useBlockedUserIds } from '@/hooks/useModeration';
 
 type Property = Database['public']['Tables']['properties']['Row'];
 type SearchFilters = {
@@ -26,6 +27,12 @@ export function useSearch() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const itemsPerPage = 20;
+  const { blockedIds } = useBlockedUserIds();
+  const blockedSet = useMemo(() => new Set(blockedIds), [blockedIds]);
+  const visibleResults = useMemo(
+    () => results.filter((p) => !blockedSet.has((p as any).owner_id)),
+    [results, blockedSet],
+  );
 
   // Debounced search function
   const debouncedSearch = useCallback(
@@ -188,7 +195,7 @@ export function useSearch() {
   return {
     searchTerm,
     filters,
-    results,
+    results: visibleResults,
     loading,
     error,
     totalCount,
