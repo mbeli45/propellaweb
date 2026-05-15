@@ -96,7 +96,7 @@
     "mustAcceptTerms": "You must accept the Terms of Use to create an account.",
     "acceptToContinue": "Accept to Continue",
     "updatedTermsTitle": "Updated Terms of Use",
-    "updatedTermsBody": "We've updated our Terms of Use to better protect our community. Please review and accept to continue using Propella. Propella has zero tolerance for objectionable content or abusive users."
+    "updatedTermsBody": "We've updated our Terms of Use to better protect our community. Propella is a property listing platform — we have zero tolerance for fake listings, scams, discriminatory housing practices, or abusive users. Please review and accept to continue using Propella."
   },
   "moderation": {
     "report": "Report",
@@ -133,7 +133,7 @@
     "manageBlocked": "Manage Blocked Users",
     "noBlockedUsers": "You haven't blocked anyone.",
     "blockedUsersTitle": "Blocked Users",
-    "zeroTolerance": "Propella enforces zero tolerance for objectionable content and abusive users. Reports are reviewed within 24 hours; offending content is removed and offending users are ejected.",
+    "zeroTolerance": "Propella has zero tolerance for fake listings, scams, discriminatory housing practices, harassment, or other objectionable content. Reports are reviewed within 24 hours — offending listings are removed and offending users are ejected.",
     "adminTitle": "Moderation Queue",
     "adminSubtitle": "Review pending content reports and act within 24 hours.",
     "adminPendingTab": "Pending",
@@ -1233,14 +1233,14 @@
     "discloseKnownIssues": "• Disclose any known issues or limitations",
     "notPostFraudulent": "• Not post fraudulent or misleading listings",
     "zeroToleranceTitle": "Zero Tolerance for Objectionable Content and Abusive Users",
-    "zeroToleranceIntro": "Propella has zero tolerance for objectionable content or abusive behavior. By using the App, you agree that the following are strictly prohibited:",
-    "zeroToleranceHate": "• Hate speech, harassment, or discrimination based on tribe, ethnicity, religion, gender, sexual orientation, or any other protected characteristic",
-    "zeroToleranceSexual": "• Sexual, pornographic, or sexually explicit content",
-    "zeroToleranceViolence": "• Threats of violence, self-harm, or content that promotes harm to others",
-    "zeroToleranceScam": "• Fraudulent, deceptive, or scam listings and messages",
-    "zeroToleranceImpersonation": "• Impersonation of any person, organization, or brand",
-    "zeroToleranceIllegal": "• Any unlawful content under applicable law",
-    "zeroToleranceEnforcement": "Reports are reviewed within 24 hours. Confirmed violations result in immediate removal of the content and ejection of the offending user from the platform. We also provide tools to report objectionable content and block abusive users; blocking instantly hides the blocked user's content from your feed and notifies our team."
+    "zeroToleranceIntro": "Propella is a property listing platform. We have zero tolerance for any content or behaviour that puts our community at risk. The following are strictly prohibited:",
+    "zeroToleranceHate": "• Fake, misleading, or duplicate property listings — including listings for properties you do not own or are not authorised to represent",
+    "zeroToleranceSexual": "• Sexual, pornographic, or sexually explicit content in listings, messages, photos, or profiles",
+    "zeroToleranceViolence": "• Threats of violence, harassment, or abusive messages directed at landlords, agents, tenants, or other users",
+    "zeroToleranceScam": "• Scams, fraudulent payment requests, fake reservation fees, or any attempt to circumvent the Propella platform",
+    "zeroToleranceImpersonation": "• Impersonation of any landlord, agent, agency, or other person — or unauthorised use of their photos, brand, or contact details",
+    "zeroToleranceIllegal": "• Discrimination against tenants or buyers based on tribe, ethnicity, religion, gender, sexual orientation, family status, or any other protected characteristic, and any listing or activity that violates applicable property, rental, or housing laws",
+    "zeroToleranceEnforcement": "Reports are reviewed within 24 hours. Confirmed violations result in immediate removal of the offending listing or content and ejection of the offending user from the platform. You can report any listing, message, or profile, and block abusive users — blocking instantly hides their listings and messages from your view and notifies our team."
   },
   "supportPage": {
     "title": "Support",

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -81,6 +81,9 @@ export function useBlockedUserIds() {
   const { user } = useAuth()
   const [blockedIds, setBlockedIds] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  // Per-instance channel suffix: avoids "cannot add postgres_changes callbacks
+  // after subscribe()" when multiple consumers (home/search/all) mount together.
+  const channelSuffixRef = useRef(Math.random().toString(36).slice(2, 10))
 
   const refresh = useCallback(async () => {
     if (!user?.id) {
@@ -110,8 +113,9 @@ export function useBlockedUserIds() {
 
   useEffect(() => {
     if (!user?.id) return
+    const channelName = `blocked_users_web:${user.id}:${channelSuffixRef.current}`
     const channel = supabase
-      .channel(`blocked_users_web:${user.id}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'blocked_users', filter: `blocker_id=eq.${user.id}` },

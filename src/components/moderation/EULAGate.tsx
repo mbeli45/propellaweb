@@ -143,7 +143,7 @@ export default function EULAGate() {
               cursor: 'pointer',
             }}
           >
-            {t('common.signOut') || 'Sign out'}
+            {t('auth.signOut')}
           </button>
           <button
             type="button"
