@@ -91,7 +91,7 @@ export default function Signup() {
     }
 
     if (!eulaAccepted) {
-      setError(t('signup.mustAcceptTerms'))
+      setError(t('eula.mustAccept'))
       return
     }
 

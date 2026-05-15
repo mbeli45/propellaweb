@@ -91,12 +91,14 @@
     "createAccountButton": "Create Account",
     "or": "or",
     "alreadyHaveAccount": "Already have an account?",
-    "signIn": "Sign In",
-    "eulaAgreement": "I agree to the Terms of Use (EULA) and Privacy Policy. I understand that Propella has zero tolerance for objectionable content or abusive users.",
-    "mustAcceptTerms": "You must accept the Terms of Use to create an account.",
-    "acceptToContinue": "Accept to Continue",
-    "updatedTermsTitle": "Updated Terms of Use",
-    "updatedTermsBody": "We've updated our Terms of Use to better protect our community. Propella is a property listing platform — we have zero tolerance for fake listings, scams, discriminatory housing practices, or abusive users. Please review and accept to continue using Propella."
+    "signIn": "Sign In"
+  },
+  "eula": {
+    "title": "Updated Terms of Use",
+    "body": "We've updated our Terms of Use to better protect our community. Propella is a property listing platform — we have zero tolerance for fake listings, scams, discriminatory housing practices, or abusive users. Please review and accept to continue using Propella.",
+    "agreement": "I agree to the Terms of Use (EULA) and Privacy Policy. I understand that Propella has zero tolerance for objectionable content or abusive users.",
+    "mustAccept": "You must accept the Terms of Use to create an account.",
+    "acceptToContinue": "Accept to Continue"
   },
   "moderation": {
     "report": "Report",

@@ -28,7 +28,7 @@ export default function EULAGate() {
       setError(null)
       await acceptEula()
     } catch (e: any) {
-      setError(e?.message || t('signup.mustAcceptTerms'))
+      setError(e?.message || t('eula.mustAccept'))
     } finally {
       setSubmitting(false)
     }
@@ -64,13 +64,13 @@ export default function EULAGate() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
           <AlertTriangle size={22} color={Colors.primary[600]} />
           <h2 style={{ fontSize: '18px', fontWeight: 600, color: Colors.neutral[900], margin: 0 }}>
-            {t('signup.updatedTermsTitle')}
+            {t('eula.title')}
           </h2>
         </div>
 
         <div style={{ maxHeight: '240px', overflowY: 'auto', marginBottom: '12px' }}>
           <p style={{ fontSize: '14px', color: Colors.neutral[700], lineHeight: '20px', marginTop: 0 }}>
-            {t('signup.updatedTermsBody')}
+            {t('eula.body')}
           </p>
           <p style={{ fontSize: '14px', color: Colors.neutral[700], lineHeight: '20px' }}>
             {t('moderation.zeroTolerance')}
@@ -120,7 +120,7 @@ export default function EULAGate() {
             style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: Colors.primary[600], cursor: 'pointer' }}
           />
           <span style={{ fontSize: '13px', color: Colors.neutral[800], lineHeight: '18px' }}>
-            {t('signup.eulaAgreement')}
+            {t('eula.agreement')}
           </span>
         </label>
 
@@ -160,7 +160,7 @@ export default function EULAGate() {
               cursor: !accepted || submitting ? 'not-allowed' : 'pointer',
             }}
           >
-            {submitting ? t('moderation.submitting') : t('signup.acceptToContinue')}
+            {submitting ? t('moderation.submitting') : t('eula.acceptToContinue')}
           </button>
         </div>
       </div>

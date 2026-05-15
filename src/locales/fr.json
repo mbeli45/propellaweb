@@ -91,12 +91,14 @@
     "createAccountButton": "Créer un compte",
     "or": "ou",
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
-    "signIn": "Se connecter",
-    "eulaAgreement": "J'accepte les Conditions d'utilisation (CLUF) et la Politique de confidentialité. Je comprends que Propella applique une tolérance zéro envers les contenus répréhensibles ou les utilisateurs abusifs.",
-    "mustAcceptTerms": "Vous devez accepter les Conditions d'utilisation pour créer un compte.",
-    "acceptToContinue": "Accepter pour continuer",
-    "updatedTermsTitle": "Conditions d'utilisation mises à jour",
-    "updatedTermsBody": "Nous avons mis à jour nos Conditions d'utilisation pour mieux protéger notre communauté. Propella est une plateforme d'annonces immobilières — nous appliquons une tolérance zéro envers les annonces fausses, les arnaques, les pratiques discriminatoires en matière de logement et les utilisateurs abusifs. Veuillez consulter et accepter pour continuer."
+    "signIn": "Se connecter"
+  },
+  "eula": {
+    "title": "Conditions d'utilisation mises à jour",
+    "body": "Nous avons mis à jour nos Conditions d'utilisation pour mieux protéger notre communauté. Propella est une plateforme d'annonces immobilières — nous appliquons une tolérance zéro envers les annonces fausses, les arnaques, les pratiques discriminatoires en matière de logement et les utilisateurs abusifs. Veuillez consulter et accepter pour continuer.",
+    "agreement": "J'accepte les Conditions d'utilisation (CLUF) et la Politique de confidentialité. Je comprends que Propella applique une tolérance zéro envers les contenus répréhensibles ou les utilisateurs abusifs.",
+    "mustAccept": "Vous devez accepter les Conditions d'utilisation pour créer un compte.",
+    "acceptToContinue": "Accepter pour continuer"
   },
   "moderation": {
     "report": "Signaler",
