@@ -223,37 +223,57 @@ export const shareContent = async (options: ShareOptions): Promise<void> => {
   try {
     const { title, message, url, imageUrl, imageUri } = options
 
+    // Build the full text that should always travel with the share
+    const fullText = url && !message.includes(url)
+      ? `${message}\n\n${url}`
+      : message
+
     if (navigator.share) {
       try {
-        const shareData: any = {
-          title: title || 'Share from Propella',
-          text: message,
-        }
-        
-        // Add URL if provided
-        if (url) {
-          shareData.url = url
-        }
-
-        // Try to attach media file
+        // Try to prepare a media file for attachment
+        let file: File | null = null
         const mediaUrl = imageUrl || imageUri
         if (mediaUrl && !mediaUrl.includes('placeholder')) {
           try {
             const urlMatch = mediaUrl.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)/i)
             const extension = urlMatch ? `.${urlMatch[1].toLowerCase()}` : '.jpg'
             const filename = `property${extension}`
-            
-            const file = await urlToFile(mediaUrl, filename)
-            
-            if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-              shareData.files = [file]
-              console.log('✅ Attached file:', filename, file.type, `${(file.size / 1024).toFixed(2)}KB`)
-            }
+            file = await urlToFile(mediaUrl, filename)
           } catch (fileError) {
-            console.log('⚠️ Could not attach file:', fileError)
+            console.log('⚠️ Could not prepare file:', fileError)
           }
         }
-        
+
+        const hasShareableFile = !!(file && navigator.canShare && navigator.canShare({ files: [file] }))
+
+        // Most target apps (WhatsApp, Instagram, Telegram on mobile) drop the
+        // text/url fields when files are attached. Copy text to clipboard first
+        // so the user can paste it as a caption.
+        if (hasShareableFile) {
+          try {
+            await navigator.clipboard.writeText(fullText)
+            console.log('📋 Copied caption to clipboard for paste')
+          } catch {
+            // Clipboard may be blocked; continue anyway
+          }
+        }
+
+        const shareData: any = {
+          title: title || 'Share from Propella',
+          text: fullText,
+        }
+
+        // Only include url separately when not sharing files — duplicating it
+        // alongside files confuses some target apps and the text already has it.
+        if (url && !hasShareableFile) {
+          shareData.url = url
+        }
+
+        if (hasShareableFile && file) {
+          shareData.files = [file]
+          console.log('✅ Attached file:', file.name, file.type, `${(file.size / 1024).toFixed(2)}KB`)
+        }
+
         await navigator.share(shareData)
         return
       } catch (shareError: any) {
@@ -263,12 +283,9 @@ export const shareContent = async (options: ShareOptions): Promise<void> => {
         console.log('Share failed:', shareError.message)
       }
     }
-    
+
     // Fallback: Copy to clipboard
-    const shareText = url && !message.includes(url)
-      ? `${message}\n\n${url}`
-      : message
-    await navigator.clipboard.writeText(shareText)
+    await navigator.clipboard.writeText(fullText)
     console.log('📋 Copied to clipboard')
   } catch (error) {
     console.error('Share error:', error)
