@@ -88,10 +88,10 @@ export function useMessages(userId: string) {
       setError(null);
       
       // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout')), 10000)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), 20000)
       );
-      
+
       const queryPromise = supabase
         .from('messages')
         .select('*')
@@ -102,6 +102,7 @@ export function useMessages(userId: string) {
       const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) throw error;
+      if (!data) return;
       
       // Always merge server messages with any existing optimistic messages
       setMessages(prev => {
@@ -125,10 +126,13 @@ export function useMessages(userId: string) {
     } catch (error: any) {
       setError(error.message);
       console.error('Error fetching messages:', error);
-      captureException(error, { 
-        context: 'useMessages.fetchMessages',
-        userId 
-      });
+      // Skip Sentry capture for transient network timeouts — they're not actionable
+      if (error?.message !== 'Request timeout') {
+        captureException(error, {
+          context: 'useMessages.fetchMessages',
+          userId
+        });
+      }
     } finally {
       setLoading(false);
     }

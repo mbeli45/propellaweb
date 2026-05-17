@@ -91,12 +91,21 @@
     "createAccountButton": "Créer un compte",
     "or": "ou",
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
-    "signIn": "Se connecter"
+    "signIn": "Se connecter",
+    "createAccount": "Créer un compte",
+    "iAmA": "Je suis un",
+    "fullName": "Nom complet",
+    "emailAddress": "Adresse email",
+    "password": "Mot de passe",
+    "enterYourFullName": "Entrez votre nom complet",
+    "enterYourEmail": "Entrez votre email",
+    "createStrongPassword": "Créez un mot de passe fort",
+    "byCreatingAccount": "En créant un compte, vous acceptez nos"
   },
   "eula": {
     "title": "Conditions d'utilisation mises à jour",
-    "body": "Nous avons mis à jour nos Conditions d'utilisation pour mieux protéger notre communauté. Propella est une plateforme d'annonces immobilières — nous appliquons une tolérance zéro envers les annonces fausses, les arnaques, les pratiques discriminatoires en matière de logement et les utilisateurs abusifs. Veuillez consulter et accepter pour continuer.",
-    "agreement": "J'accepte les Conditions d'utilisation (CLUF) et la Politique de confidentialité. Je comprends que Propella applique une tolérance zéro envers les contenus répréhensibles ou les utilisateurs abusifs.",
+    "body": "Nous avons mis à jour nos Conditions d'utilisation pour mieux protéger notre communauté. Propella est une plateforme d'annonces immobilières. Nous appliquons une tolérance zéro envers les annonces fausses, les arnaques, les pratiques discriminatoires en matière de logement et les utilisateurs abusifs. Veuillez consulter et accepter pour continuer.",
+    "agreement": "J'accepte les Conditions d'utilisation et la Politique de confidentialité. Je comprends que Propella applique une tolérance zéro envers les contenus répréhensibles ou les utilisateurs abusifs.",
     "mustAccept": "Vous devez accepter les Conditions d'utilisation pour créer un compte.",
     "acceptToContinue": "Accepter pour continuer"
   },
@@ -135,7 +144,7 @@
     "manageBlocked": "Gérer les utilisateurs bloqués",
     "noBlockedUsers": "Vous n'avez bloqué personne.",
     "blockedUsersTitle": "Utilisateurs bloqués",
-    "zeroTolerance": "Propella applique une tolérance zéro envers les annonces fausses, les arnaques, les pratiques discriminatoires en matière de logement, le harcèlement et tout autre contenu répréhensible. Les signalements sont examinés dans les 24 heures — les annonces en infraction sont supprimées et les utilisateurs fautifs sont exclus.",
+    "zeroTolerance": "Propella applique une tolérance zéro envers les annonces fausses, les arnaques, les pratiques discriminatoires en matière de logement, le harcèlement et tout autre contenu répréhensible. Les signalements sont examinés dans les 24 heures. Les annonces en infraction sont supprimées et les utilisateurs fautifs sont exclus.",
     "adminTitle": "File d'attente de modération",
     "adminSubtitle": "Examinez les signalements en attente et agissez dans les 24 heures.",
     "adminPendingTab": "En attente",
@@ -242,9 +251,9 @@
     "location": "Emplacement",
     "propertyType": "Type de propriété",
     "listingType": "Type d'annonce",
-    "pricing": "Tarification",
+    "pricing": "Prix",
     "propertyDetails": "Détails de la propriété",
-    "propertyPhotos": "Photos de la propriété",
+    "propertyPhotos": "Photos et vidéos de propriété",
     "town": "Ville",
     "townAutoFilled": "Rempli automatiquement à partir de la sélection de l'emplacement",
     "townHint": "Saisissez d’abord la ville ici si la recherche ne propose pas votre zone. Ce champ se remplit aussi quand vous choisissez un résultat ou la position actuelle.",
@@ -253,15 +262,45 @@
     "howEnterRent": "Comment souhaitez-vous saisir le loyer ?",
     "monthlyRentFCFA": "Loyer mensuel (FCFA)",
     "yearlyRentFCFA": "Loyer annuel (FCFA)",
-    "reservationFeeFCFA": "Frais de réservation (FCFA)",
-    "autoSetReservationFee": "Défini automatiquement en fonction du type d'annonce (Lecture seule)",
+    "reservationFeeFCFA": "Frais de visite (FCFA)",
+    "autoSetReservationFee": "Défini automatiquement selon le type d'annonce (Lecture seule)",
     "minAdvanceMonths": "Avance min (mois)",
     "maxAdvanceMonths": "Avance max (mois)",
     "advancePaymentNote": "Le paiement anticipé est généralement de 6 à 12 mois de loyer payés d'avance",
-    "addPhotoVideo": "Ajouter photo ou vidéo",
+    "addPhotoVideo": "Ajouter une photo ou une vidéo",
     "addPhotosVideos": "Ajoutez des photos et vidéos de haute qualité pour présenter votre propriété ({{count}}/10)",
-    "supportedFormats": "Formats supportés : Images (JPG, PNG) et Vidéos (MP4, MOV). Max 50 Mo par fichier sur le web — utilisez l'application mobile pour les fichiers plus volumineux.",
-    "fileTooLargeUseMobileApp": "{{name}} fait {{size}}. Les fichiers de plus de 50 Mo doivent être téléversés via l'application mobile Propella."
+    "supportedFormats": "Formats pris en charge : Images (JPG, PNG) et Vidéos (MP4, MOV). Max 50 Mo par fichier sur le web — utilisez l'application mobile pour les fichiers plus volumineux.",
+    "fileTooLargeUseMobileApp": "{{name}} fait {{size}}. Les fichiers de plus de 50 Mo doivent être téléversés via l'application mobile Propella.",
+    "addMediaButton": "Ajouter des photos et vidéos",
+    "additionalInformation": "Informations supplémentaires",
+    "documentVerificationRequired": "Vérification de document requise",
+    "propertyAddedSuccessfully": "Propriété ajoutée avec succès ! Veuillez télécharger les documents requis ci-dessous.",
+    "propertyUpdatedSuccessfully": "Propriété mise à jour avec succès !",
+    "propertyAdded": "Propriété ajoutée",
+    "propertyUpdated": "Propriété mise à jour",
+    "failedToAddProperty": "Échec de l'ajout de la propriété",
+    "failedToUpdateProperty": "Échec de la mise à jour de la propriété",
+    "failedToLoad": "Échec du chargement",
+    "primary": "PRINCIPALE",
+    "addPhoto": "Ajouter une photo",
+    "uploadingImages": "Téléchargement de {{count}} images...",
+    "propertyTitle": "Titre de la propriété",
+    "description": "Description",
+    "propertyLocation": "Emplacement de la propriété",
+    "priceFCFA": "Prix (FCFA)",
+    "siteVisitFeeNote": "Frais de visite standard pour les propriétés locatives",
+    "siteVisitFeeSaleNote": "Frais de visite standard pour les propriétés à vendre",
+    "category": "Catégorie",
+    "basedOnPrice": "Basé sur votre prix de {{price}} FCFA, cette propriété tombe automatiquement dans la catégorie \"{{category}}\".",
+    "priceRanges": "Fourchettes de prix : Budget (≤300k) • Standard (350k-450k) • Premium (500k-650k) • Luxe (≥650k)",
+    "bedrooms": "Chambres",
+    "bathrooms": "Salles de bain",
+    "areaM2": "Surface (m²)",
+    "verificationRequired": "Vérification requise",
+    "verificationDescription": "Cette propriété nécessite une vérification de documents avant de pouvoir être publiée. Veuillez télécharger les documents requis ci-dessous.",
+    "verificationNote": "Note : La vérification prend généralement 1 à 2 jours ouvrables. Vous serez notifié une fois votre propriété approuvée.",
+    "submit": "Soumettre",
+    "previewCounter": "{{current}}/{{total}}"
   },
   "messages": {
     "title": "Messages",
@@ -560,7 +599,6 @@
     "failedToLoadProperties": "Échec du chargement des propriétés.",
     "popularLocations": "Emplacements populaires"
   },
-
   "chat": {
     "voiceMessage": "Message vocal",
     "voiceMessagePlayback": "Lecture du message vocal",
@@ -591,7 +629,6 @@
     "document": "📄 Document",
     "cancel": "Annuler"
   },
-
   "commission": {
     "pleaseFillRequiredFields": "Veuillez remplir tous les champs requis",
     "pleaseEnterValidCommission": "Veuillez saisir un montant de commission valide",
@@ -658,7 +695,6 @@
     "oneTimeVerificationFee": "Frais de vérification unique pour valider vos identifiants et documents",
     "verificationProgress": "Progression de la vérification"
   },
-
   "search": {
     "searchProperties": "Rechercher des propriétés...",
     "searchLocation": "Rechercher un lieu...",
@@ -756,7 +792,6 @@
     "properties": "propriétés",
     "loadingYourProperties": "Chargement de vos propriétés..."
   },
-
   "explore": {
     "errorLoadingProperties": "Erreur de chargement des propriétés",
     "exploreProperties": "Explorer les propriétés",
@@ -901,7 +936,6 @@
     "contactTitle": "Contact",
     "contactSubtitle": "Partager un contact"
   },
-
   "buttons": {
     "deleteProperty": "Supprimer la propriété",
     "submitReview": "Soumettre l'avis",
@@ -974,56 +1008,6 @@
     "supportTeamHereToHelp": "Si vous n'avez pas trouvé la réponse à votre question, notre équipe de support est là pour vous aider.",
     "contactSupport": "Contacter le support"
   },
-
-
-  "propertyForm": {
-    "propertyPhotos": "Photos et vidéos de propriété",
-    "addPhotosVideos": "Ajoutez des photos et vidéos de haute qualité pour présenter votre propriété ({{count}}/10)",
-    "addPhotoVideo": "Ajouter une photo ou une vidéo",
-    "addMediaButton": "Ajouter des photos et vidéos",
-    "supportedFormats": "Formats pris en charge : Images (JPG, PNG) et Vidéos (MP4, MOV). Max 50 Mo par fichier sur le web — utilisez l'application mobile pour les fichiers plus volumineux.",
-    "fileTooLargeUseMobileApp": "{{name}} fait {{size}}. Les fichiers de plus de 50 Mo doivent être téléversés via l'application mobile Propella.",
-    "basicInformation": "Informations de base",
-    "location": "Emplacement",
-    "propertyType": "Type de propriété",
-    "pricing": "Prix",
-    "propertyDetails": "Détails de la propriété",
-    "additionalInformation": "Informations supplémentaires",
-    "documentVerificationRequired": "Vérification de document requise",
-    "propertyAddedSuccessfully": "Propriété ajoutée avec succès ! Veuillez télécharger les documents requis ci-dessous.",
-    "propertyUpdatedSuccessfully": "Propriété mise à jour avec succès !",
-    "propertyAdded": "Propriété ajoutée",
-    "propertyUpdated": "Propriété mise à jour",
-    "failedToAddProperty": "Échec de l'ajout de la propriété",
-    "failedToUpdateProperty": "Échec de la mise à jour de la propriété",
-    "failedToLoad": "Échec du chargement",
-    "primary": "PRINCIPALE",
-    "addPhoto": "Ajouter une photo",
-    "uploadingImages": "Téléchargement de {{count}} images...",
-    "propertyTitle": "Titre de la propriété",
-    "description": "Description",
-    "town": "Ville",
-    "townHint": "Saisissez d’abord la ville ici si la recherche ne propose pas votre zone. Ce champ se remplit aussi quand vous choisissez un résultat ou la position actuelle.",
-    "propertyLocation": "Emplacement de la propriété",
-    "listingType": "Type d'annonce",
-    "priceFCFA": "Prix (FCFA)",
-    "reservationFeeFCFA": "Frais de visite (FCFA)",
-    "autoSetReservationFee": "Défini automatiquement selon le type d'annonce (Lecture seule)",
-    "siteVisitFeeNote": "Frais de visite standard pour les propriétés locatives",
-    "siteVisitFeeSaleNote": "Frais de visite standard pour les propriétés à vendre",
-    "category": "Catégorie",
-    "basedOnPrice": "Basé sur votre prix de {{price}} FCFA, cette propriété tombe automatiquement dans la catégorie \"{{category}}\".",
-    "priceRanges": "Fourchettes de prix : Budget (≤300k) • Standard (350k-450k) • Premium (500k-650k) • Luxe (≥650k)",
-    "bedrooms": "Chambres",
-    "bathrooms": "Salles de bain",
-    "areaM2": "Surface (m²)",
-    "verificationRequired": "Vérification requise",
-    "verificationDescription": "Cette propriété nécessite une vérification de documents avant de pouvoir être publiée. Veuillez télécharger les documents requis ci-dessous.",
-    "verificationNote": "Note : La vérification prend généralement 1 à 2 jours ouvrables. Vous serez notifié une fois votre propriété approuvée.",
-    "submit": "Soumettre",
-    "previewCounter": "{{current}}/{{total}}"
-  },
-
   "profileForm": {
     "basicInformation": "Informations de base",
     "fullName": "Nom complet *",
@@ -1109,13 +1093,13 @@
     "notPostFraudulent": "• Ne pas publier d'annonces frauduleuses ou trompeuses",
     "zeroToleranceTitle": "Tolérance zéro envers les contenus répréhensibles et les utilisateurs abusifs",
     "zeroToleranceIntro": "Propella est une plateforme d'annonces immobilières. Nous appliquons une tolérance zéro envers tout contenu ou comportement mettant notre communauté en danger. Ce qui suit est strictement interdit :",
-    "zeroToleranceHate": "• Annonces immobilières fausses, trompeuses ou en double — y compris la publication d'annonces pour des biens dont vous n'êtes ni propriétaire ni mandataire autorisé",
+    "zeroToleranceHate": "• Annonces immobilières fausses, trompeuses ou en double, y compris la publication d'annonces pour des biens dont vous n'êtes ni propriétaire ni mandataire autorisé",
     "zeroToleranceSexual": "• Contenu sexuel, pornographique ou sexuellement explicite dans les annonces, messages, photos ou profils",
     "zeroToleranceViolence": "• Menaces de violence, harcèlement ou messages abusifs adressés aux propriétaires, agents, locataires ou autres utilisateurs",
     "zeroToleranceScam": "• Arnaques, demandes de paiement frauduleuses, faux frais de réservation ou toute tentative de contourner la plateforme Propella",
-    "zeroToleranceImpersonation": "• Usurpation de l'identité d'un propriétaire, agent, agence ou autre personne — ou utilisation non autorisée de leurs photos, marque ou coordonnées",
+    "zeroToleranceImpersonation": "• Usurpation de l'identité d'un propriétaire, agent, agence ou autre personne, ou utilisation non autorisée de leurs photos, marque ou coordonnées",
     "zeroToleranceIllegal": "• Discrimination envers les locataires ou acheteurs fondée sur la tribu, l'origine ethnique, la religion, le genre, l'orientation sexuelle, la situation familiale ou toute autre caractéristique protégée, ainsi que toute annonce ou activité enfreignant les lois applicables en matière de propriété, de location ou de logement",
-    "zeroToleranceEnforcement": "Les signalements sont examinés dans les 24 heures. Les violations confirmées entraînent le retrait immédiat de l'annonce ou du contenu en infraction et l'exclusion de l'utilisateur fautif de la plateforme. Vous pouvez signaler toute annonce, message ou profil et bloquer les utilisateurs abusifs — le blocage masque instantanément leurs annonces et messages de votre vue et notifie notre équipe."
+    "zeroToleranceEnforcement": "Les signalements sont examinés dans les 24 heures. Les violations confirmées entraînent le retrait immédiat de l'annonce ou du contenu en infraction et l'exclusion de l'utilisateur fautif de la plateforme. Vous pouvez signaler toute annonce, message ou profil et bloquer les utilisateurs abusifs. Le blocage masque instantanément leurs annonces et messages de votre vue et notifie notre équipe."
   },
   "supportPage": {
     "title": "Assistance",
@@ -1135,7 +1119,6 @@
     "accountSecurity": "Sécurité du compte",
     "privacySettings": "Paramètres de confidentialité"
   },
-
   "terms": {
     "acceptanceOfTerms": "1. Acceptation des conditions",
     "descriptionOfService": "2. Description du service",
@@ -1265,7 +1248,6 @@
     "enterAmountToWithdraw": "Entrez le montant à retirer",
     "confirmWithdrawal": "Confirmer le retrait"
   },
-
   "loading": {
     "loadingAnalytics": "Chargement des analyses...",
     "loadingAgentProfile": "Chargement du profil d'agent...",
@@ -1288,8 +1270,6 @@
   "typing": {
     "typing": "écrit..."
   },
-
-
   "imagePicker": {
     "takePhoto": "Prendre une photo",
     "chooseFromGallery": "Choisir depuis la galerie",
@@ -1353,8 +1333,6 @@
     "errorDetails": "Détails de l'erreur (Développement) :",
     "tryAgain": "Réessayer"
   },
-
-
   "forgotPassword": {
     "forgotPassword": "Mot de passe oublié",
     "resetYourPassword": "Réinitialisez votre mot de passe",
@@ -1400,7 +1378,6 @@
     "goBack": "Retour",
     "skip": "Passer"
   },
-
   "resetPassword": {
     "resetPassword": "Réinitialiser le mot de passe",
     "sessionExpired": "Session expirée",
@@ -1418,30 +1395,6 @@
     "passwordStrength": "Force du mot de passe",
     "passwordResetSuccess": "Réinitialisation du mot de passe réussie !",
     "resetFailed": "Échec de la réinitialisation du mot de passe"
-  },
-  "signup": {
-    "createAccount": "Créer un compte",
-    "iAmA": "Je suis un",
-    "fullName": "Nom complet",
-    "emailAddress": "Adresse email",
-    "password": "Mot de passe",
-    "enterYourFullName": "Entrez votre nom complet",
-    "enterYourEmail": "Entrez votre email",
-    "createStrongPassword": "Créez un mot de passe fort",
-    "atLeast8Characters": "Au moins 8 caractères",
-    "atLeastOneUppercase": "Au moins une lettre majuscule",
-    "atLeastOneLowercase": "Au moins une lettre minuscule",
-    "atLeastOneNumber": "Au moins un chiffre",
-    "atLeastOneSpecial": "Au moins un caractère spécial",
-    "creatingAccount": "Création du compte...",
-    "createAccountButton": "Créer un compte",
-    "or": "ou",
-    "alreadyHaveAccount": "Vous avez déjà un compte ?",
-    "signIn": "Se connecter",
-    "byCreatingAccount": "En créant un compte, vous acceptez nos",
-    "termsOfService": "Conditions d'utilisation",
-    "and": "et",
-    "privacyPolicy": "Politique de confidentialité"
   },
   "commissions": {
     "commissionPayments": "Paiements de commission",

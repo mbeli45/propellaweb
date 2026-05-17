@@ -53,8 +53,8 @@ export function useAuth() {
           .eq('id', userId)
           .single();
 
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Profile fetch timeout')), 10000)
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Profile fetch timeout')), 20000)
         );
 
         const { data: profile, error: profileError } = await Promise.race([
@@ -144,8 +144,8 @@ export function useAuth() {
         password,
       });
       
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Sign in timeout')), 15000)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Sign in timeout')), 20000)
       );
 
       const { data: passwordData, error: passwordError } = await Promise.race([
@@ -274,8 +274,8 @@ export function useAuth() {
         },
       });
 
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Sign up timeout')), 15000)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Sign up timeout')), 20000)
       );
 
       const { data, error } = await Promise.race([
@@ -431,8 +431,8 @@ export function useAuth() {
         email: email
       });
 
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Resend timeout - please check your connection')), 15000)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Resend timeout - please check your connection')), 20000)
       );
 
       const { error } = await Promise.race([
@@ -662,10 +662,10 @@ export function useAuth() {
         ? supabase.auth.resetPasswordForEmail(emailToUse)
         : supabase.auth.resend({ type: 'signup', email: emailToUse });
       
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Resend timeout - please check your connection')), 15000)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Resend timeout - please check your connection')), 20000)
       );
-      
+
       const { error } = await Promise.race([
         resendOperation,
         timeoutPromise
