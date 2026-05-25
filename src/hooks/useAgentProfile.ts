@@ -135,7 +135,8 @@ export function useAgentProfile(agentId: string): UseAgentProfileReturn {
         .select(`
           id, title, description, price, location, type, category,
           bedrooms, bathrooms, area, amenities, images, status,
-          reservation_fee, owner_id, created_at
+          reservation_fee, rent_period, advance_months_min, advance_months_max,
+          owner_id, created_at
         `)
         .eq('owner_id', agentId)
         .eq('status', 'available')

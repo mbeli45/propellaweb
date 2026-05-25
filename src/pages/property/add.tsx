@@ -52,9 +52,9 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
   const navigate = useNavigate()
   const { uploadMultipleImages, uploading } = useStorage()
 
-  // Redirect if user is not an agent (stable deps — avoid reruns when auth object identity changes)
+  // Redirect if user is not an agent/landlord (stable deps — avoid reruns when auth object identity changes)
   useEffect(() => {
-    if (user && user.role !== 'agent') {
+    if (user && user.role !== 'agent' && user.role !== 'landlord') {
       navigate('/user')
     }
   }, [user?.id, user?.role, navigate])
@@ -164,7 +164,7 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user?.id || user.role !== 'agent') {
+    if (!user?.id || (user.role !== 'agent' && user.role !== 'landlord')) {
       setError(t('auth.mustBeAgentToAdd') || 'Only agents can add properties')
       navigate('/user')
       return
@@ -271,27 +271,10 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
         if (insertError) throw insertError
 
         setError(null)
-        setSuccessMessage(t('property.propertyAdded') || 'Property added successfully')
-        setForm({
-          title: '',
-          description: '',
-          price: '',
-          location: '',
-          town: '',
-          type: 'rent',
-          category: 'budget',
-          propertyType: 'apartment',
-          bedrooms: '',
-          bathrooms: '',
-          area: '',
-          images: [],
-          reservationFee: '10000',
-          rentPeriod: 'yearly',
-          advance_months_min: '',
-          advance_months_max: '',
-        })
-        if (typeof window !== 'undefined') {
-          window.scrollTo({ top: 0, behavior: 'smooth' })
+        if (data?.id) {
+          navigate(`/property/${data.id}`)
+        } else {
+          navigate('/agent')
         }
       }
     } catch (err: any) {
@@ -379,7 +362,7 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
             <span style={{ fontWeight: 600 }}>{successMessage}</span>
             <button
               type="button"
-              onClick={() => navigate('/agent/listings')}
+              onClick={() => navigate('/agent')}
               style={{
                 padding: '8px 14px',
                 borderRadius: '8px',

@@ -38,6 +38,11 @@ export default function AgentProfile() {
   const [reviewComment, setReviewComment] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
 
+  const structuredData = useMemo(() => {
+    if (!agent) return undefined
+    return generateAgentStructuredData(agent, properties.length, reviews.length, averageRating)
+  }, [agent, properties.length, reviews.length, averageRating])
+
   if (loading) {
     return (
       <div style={{
@@ -129,12 +134,6 @@ export default function AgentProfile() {
       setSubmittingReview(false)
     }
   }
-
-  // Generate structured data for SEO
-  const structuredData = useMemo(() => {
-    if (!agent) return undefined
-    return generateAgentStructuredData(agent, properties.length, reviews.length, averageRating)
-  }, [agent, properties.length, reviews.length, averageRating])
 
   // Get current language from i18n
   const currentLang = typeof window !== 'undefined' 

@@ -85,6 +85,7 @@ export default function GuestHome() {
     setFilters(newFilters)
     updateFilters({
       category: newFilters.category,
+      propertyType: newFilters.propertyType,
       minPrice: newFilters.priceRange[0],
       maxPrice: newFilters.priceRange[1],
       bedrooms: newFilters.bedrooms || undefined,

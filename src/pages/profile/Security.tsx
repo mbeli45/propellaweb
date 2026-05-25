@@ -101,7 +101,7 @@ export default function ProfileSecurity() {
           overflow: 'hidden',
           boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
         }}>
-          {menuItems.map((item, index) => (
+          {securityItems.map((item, index) => (
             <div
               key={index}
               style={{
@@ -109,7 +109,7 @@ export default function ProfileSecurity() {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '16px',
-                borderBottom: index < menuItems.length - 1 ? `1px solid ${Colors.neutral[200]}` : 'none'
+                borderBottom: index < securityItems.length - 1 ? `1px solid ${Colors.neutral[200]}` : 'none'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>

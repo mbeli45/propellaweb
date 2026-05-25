@@ -21,7 +21,7 @@ import { useProperty, useSimilarProperties } from '@/hooks/useProperties'
 import { useAuth } from '@/contexts/AuthContext'
 import { useShare } from '@/hooks/useShare'
 import ModerationActions from '@/components/moderation/ModerationActions'
-import { useReservations } from '@/hooks/useReservations'
+import { useReservations, usePropertyReservation } from '@/hooks/useReservations'
 import { useFapshiPayment } from '@/hooks/useFapshiPayment'
 import { formatPrice, calculateRentPrices, createPropertyUrl } from '@/utils/shareUtils'
 import { generatePropertyStructuredData, getCanonicalBaseUrl } from '@/utils/seoUtils'
@@ -44,7 +44,8 @@ export default function PropertyDetail() {
   const { user } = useAuth()
   const { isSharing, shareProperty } = useShare()
   const { processDirectPayment, loading: paymentLoading } = useFapshiPayment()
-  const { createReservation, loading: reservationLoading } = useReservations(user?.id || '')
+  const { createReservation, updateReservationPayment, loading: reservationLoading } = useReservations(user?.id || '')
+  const { hasActiveBooking } = usePropertyReservation(user?.id || '', id || '')
 
   const { property, loading, error } = useProperty(id || '')
   const { properties: similarProperties } = useSimilarProperties(
@@ -154,77 +155,105 @@ export default function PropertyDetail() {
       setPaymentMessage(t('property.mustBeLoggedIn'))
       return
     }
+    // Pre-insert a `pending` reservation BEFORE initiating MeSomb so the row
+    // exists even if the client crashes / closes / loses connection between
+    // payment confirmation and our follow-up update. The poll loop below
+    // promotes it to `confirmed`; failed outcomes flip it to `cancelled`.
+    let pendingReservationId: string | null = null
+
     try {
       setWaitingForPayment(true)
       setPaymentMessage(t('buttons.processing'))
-      
+
+      const today = new Date()
+      const reservationDate = new Date(today)
+      reservationDate.setDate(today.getDate() + 1)
+
+      const pendingReservation = await createReservation(
+        property.id,
+        reservationDate.toISOString().split('T')[0],
+        null,
+        {
+          status: 'pending',
+          amount: totalFee,
+          payment_status: 'initiated',
+        },
+      )
+      pendingReservationId = pendingReservation?.id ?? null
+      if (!pendingReservationId) {
+        throw new Error('Failed to create pending reservation')
+      }
+
+      // Pass reservation id as externalId so MeSomb echoes it back as `reference`
+      // on the webhook payload for later server-side reconciliation.
       const { transId } = await processDirectPayment(
         totalFee,
         user.id,
         phoneNumber,
-        { 
-          message: `Reservation for ${property.title}`, 
-          externalId: property.id,
+        {
+          message: `Reservation for ${property.title}`,
+          externalId: pendingReservationId,
           name: user.full_name || undefined,
           email: user.email || undefined,
-          medium: selectedPaymentMethod === 'orange' ? 'orange money' : 'mobile money'
-        }
+          medium: selectedPaymentMethod === 'orange' ? 'orange money' : 'mobile money',
+        },
       )
-      
+
       setPaymentMessage(t('wallet.waitingForPayment'))
-      
-      // Poll payment status
-      let status = null
-      let attempts = 0
-      while (attempts < 10) {
-        await new Promise(resolve => setTimeout(resolve, 3000))
+
+      // Poll up to ~5 minutes (100 × 3 s). PIN entry on Cameroon mobile
+      // networks routinely takes 30–90 s — the previous 30 s window was the
+      // root cause of payments that were taken but never bookable.
+      let status: string | null = null
+      const POLL_INTERVAL_MS = 3000
+      const POLL_MAX_ATTEMPTS = 100
+      for (let attempts = 0; attempts < POLL_MAX_ATTEMPTS; attempts++) {
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS))
         try {
           const result = await getPaymentStatus(transId)
           status = result.status
-          if (status === 'SUCCESSFUL') {
-            break
-          }
-          if (status === 'FAILED' || status === 'EXPIRED') {
-            setPaymentMessage(t('wallet.paymentFailed'))
-            setWaitingForPayment(false)
-            return
-          }
         } catch (err) {
-          console.error('Error checking payment status:', err)
+          // Transient network: keep polling.
+          console.warn('Error checking payment status, retrying:', err)
+          continue
         }
-        attempts++
+        if (status === 'SUCCESSFUL') break
+        if (status === 'FAILED' || status === 'EXPIRED') break
       }
 
       if (status === 'SUCCESSFUL') {
-        // Create reservation
-        const today = new Date()
-        const reservationDate = new Date(today)
-        reservationDate.setDate(today.getDate() + 1)
-        
-        await createReservation(
-          property.id,
-          reservationDate.toISOString().split('T')[0],
-          null,
-          {
-            status: 'confirmed',
-            amount: totalFee,
-            transaction_id: transId,
-            payment_status: 'paid',
-            paid_at: new Date().toISOString()
-          }
-        )
-        
+        await updateReservationPayment(pendingReservationId, property.id, 'confirmed', {
+          transaction_id: transId,
+        })
         setPaymentMessage(t('reservations.reservationCreated'))
         setTimeout(() => {
           closeModal()
           navigate('/user/reservations')
         }, 2000)
+      } else if (status === 'FAILED' || status === 'EXPIRED') {
+        await updateReservationPayment(pendingReservationId, property.id, 'failed', {
+          transaction_id: transId,
+        })
+        setPaymentMessage(t('wallet.paymentFailed'))
+        setWaitingForPayment(false)
       } else {
+        // Polling exceeded — leave the row `pending`. The user sees it in their
+        // bookings; the eventual MeSomb webhook (or a manual status check) can
+        // finalise it. Don't mark it failed: MeSomb may still confirm async.
         setPaymentMessage(t('wallet.paymentTimeout'))
         setWaitingForPayment(false)
       }
     } catch (error: any) {
       console.error('Reservation error:', error)
+      // Initiation itself failed — clean up the pending row so the property
+      // doesn't stay locked as `reserved`.
+      if (pendingReservationId) {
+        try {
+          await updateReservationPayment(pendingReservationId, property.id, 'failed')
+        } catch (cleanupErr) {
+          console.warn('Failed to roll back pending reservation:', cleanupErr)
+        }
+      }
       setPaymentMessage(error.message || t('reservations.reservationCreationFailed'))
       setWaitingForPayment(false)
     }
@@ -1015,35 +1044,61 @@ export default function PropertyDetail() {
           />
         </button>
         {!isOwner && (
-          <button
-            onClick={handleReserve}
-            disabled={reservationLoading || paymentLoading}
-            style={{
-              flex: 1,
-              padding: '16px',
-              backgroundColor: Colors.primary[600],
-              color: Colors.white,
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: (reservationLoading || paymentLoading) ? 'not-allowed' : 'pointer',
-              opacity: (reservationLoading || paymentLoading) ? 0.6 : 1,
-              transition: 'background 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              if (!reservationLoading && !paymentLoading) {
+          hasActiveBooking ? (
+            <button
+              onClick={() => navigate(`/chat/${property.owner_id}?propertyId=${property.id}`)}
+              style={{
+                flex: 1,
+                padding: '16px',
+                backgroundColor: Colors.primary[600],
+                color: Colors.white,
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = Colors.primary[700]
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!reservationLoading && !paymentLoading) {
+              }}
+              onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = Colors.primary[600]
-              }
-            }}
-          >
-            {reservationLoading || paymentLoading ? t('buttons.processing') : t('propertyDetails.bookSiteVisit')}
-          </button>
+              }}
+            >
+              {t('propertyDetails.messageAgent')}
+            </button>
+          ) : (
+            <button
+              onClick={handleReserve}
+              disabled={reservationLoading || paymentLoading}
+              style={{
+                flex: 1,
+                padding: '16px',
+                backgroundColor: Colors.primary[600],
+                color: Colors.white,
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: (reservationLoading || paymentLoading) ? 'not-allowed' : 'pointer',
+                opacity: (reservationLoading || paymentLoading) ? 0.6 : 1,
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                if (!reservationLoading && !paymentLoading) {
+                  e.currentTarget.style.backgroundColor = Colors.primary[700]
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!reservationLoading && !paymentLoading) {
+                  e.currentTarget.style.backgroundColor = Colors.primary[600]
+                }
+              }}
+            >
+              {reservationLoading || paymentLoading ? t('buttons.processing') : t('propertyDetails.bookSiteVisit')}
+            </button>
+          )
         )}
       </div>
 

@@ -53,7 +53,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Propella" />
-    
+
+    <!-- Disable browser translators on the dynamic app shell — Propella has its own en/fr i18n,
+         and Google Translate mutates DOM nodes that React owns, causing removeChild crashes. -->
+    <meta name="google" content="notranslate" />
+
     <!-- Canonical URL -->
     <link rel="canonical" href="https://propellacam.com/" />
     
@@ -63,7 +67,7 @@
     <link rel="alternate" hreflang="x-default" href="https://propellacam.com/" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root" translate="no" class="notranslate"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

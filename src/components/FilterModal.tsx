@@ -47,7 +47,7 @@ export default function FilterModal({
   }, [visible, initialFilters])
 
   const propertyTypes = ['Single Room', 'Apartment', 'Studio', 'Shop', 'Land', 'House']
-  const categories = ['Budget', 'Standard', 'Premium']
+  const categories = ['Budget', 'Standard', 'Premium', 'Luxury']
   const bedroomOptions = [1, 2, 3, 4, '5+']
   const bathroomOptions = [1, 2, 3, '4+']
 

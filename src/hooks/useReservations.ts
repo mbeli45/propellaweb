@@ -254,6 +254,57 @@ export function useReservations(userId: string) {
     }
   };
 
+  // Apply a payment-outcome update to an existing pending reservation row.
+  // The booking flow pre-inserts a `pending` reservation before initiating MeSomb;
+  // this finalises it once the polling loop sees a definitive status. Filtered to
+  // `status=pending` so re-calls (e.g. retries) don't stomp on a confirmed row.
+  const updateReservationPayment = async (
+    reservationId: string,
+    propertyId: string,
+    outcome: 'confirmed' | 'failed',
+    extra?: { transaction_id?: string },
+  ) => {
+    try {
+      const updateData: ReservationUpdate =
+        outcome === 'confirmed'
+          ? {
+              status: 'confirmed',
+              payment_status: 'paid',
+              paid_at: new Date().toISOString(),
+              transaction_id: extra?.transaction_id ?? null,
+            }
+          : {
+              status: 'cancelled',
+              payment_status: 'failed',
+              transaction_id: extra?.transaction_id ?? null,
+            };
+
+      const { error } = await supabase
+        .from('reservations')
+        .update(updateData)
+        .eq('id', reservationId)
+        .eq('user_id', userId)
+        .eq('status', 'pending');
+
+      if (error) {
+        console.error('updateReservationPayment failed:', error);
+        return;
+      }
+
+      // createReservation marks the property `reserved` optimistically — free it
+      // up again if the payment didn't go through.
+      if (outcome === 'failed') {
+        const { error: revertErr } = await supabase
+          .from('properties')
+          .update({ status: 'available' })
+          .eq('id', propertyId);
+        if (revertErr) console.error('Failed to revert property status:', revertErr);
+      }
+    } catch (err: any) {
+      console.error('Unexpected updateReservationPayment error:', err);
+    }
+  };
+
   // Request refund - calls edge function to process the refund
   const requestRefund = async (reservationId: string) => {
     try {
@@ -303,6 +354,7 @@ export function useReservations(userId: string) {
     createReservation,
     debugCreateReservation,
     cancelReservation,
+    updateReservationPayment,
     requestRefund,
     refreshReservations: fetchReservations,
   };
@@ -360,13 +412,13 @@ export function useAgentPropertyReservations(agentId: string) {
 
 // Optimized hook for checking specific property reservation
 export function usePropertyReservation(userId: string, propertyId: string) {
-  const [hasConfirmedBooking, setHasConfirmedBooking] = useState(false);
+  const [hasActiveBooking, setHasActiveBooking] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const checkPropertyReservation = useCallback(async () => {
     if (!userId || !propertyId) {
-      setHasConfirmedBooking(false);
+      setHasActiveBooking(false);
       return;
     }
 
@@ -377,14 +429,14 @@ export function usePropertyReservation(userId: string, propertyId: string) {
         .select('id, status')
         .eq('user_id', userId)
         .eq('property_id', propertyId)
-        .eq('status', 'confirmed')
+        .in('status', ['pending', 'confirmed'])
         .limit(1);
 
       if (error) throw error;
-      setHasConfirmedBooking(data && data.length > 0);
+      setHasActiveBooking(!!data && data.length > 0);
     } catch (err: any) {
       setError(err.message);
-      setHasConfirmedBooking(false);
+      setHasActiveBooking(false);
     } finally {
       setLoading(false);
     }
@@ -394,5 +446,36 @@ export function usePropertyReservation(userId: string, propertyId: string) {
     checkPropertyReservation();
   }, [checkPropertyReservation]);
 
-  return { hasConfirmedBooking, loading, error, refetch: checkPropertyReservation };
+  // Realtime sync: refetch when this user's reservation for this property changes.
+  // Covers (a) mesomb-webhook flipping a pending row to confirmed while the user
+  // sits on the property page, (b) the second device case, and (c) the client
+  // poll-timeout case where the modal closes with a still-pending row — without
+  // this the button would stay on "Book Site Visit" and the user could create a
+  // duplicate reservation by tapping again.
+  useEffect(() => {
+    if (!userId || !propertyId) return;
+    const channel = supabase
+      .channel(`property_reservation_${userId}_${propertyId}_${Date.now()}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reservations',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload: any) => {
+          const row = payload.new ?? payload.old;
+          if (row?.property_id === propertyId) {
+            checkPropertyReservation();
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      try { supabase.removeChannel(channel); } catch { /* noop */ }
+    };
+  }, [userId, propertyId, checkPropertyReservation]);
+
+  return { hasActiveBooking, loading, error, refetch: checkPropertyReservation };
 }

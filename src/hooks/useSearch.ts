@@ -9,6 +9,7 @@ type Property = Database['public']['Tables']['properties']['Row'];
 type SearchFilters = {
   type?: 'rent' | 'sale';
   category?: string[];
+  propertyType?: string[];
   minPrice?: number;
   maxPrice?: number;
   bedrooms?: number;
@@ -16,6 +17,12 @@ type SearchFilters = {
   location?: string;
   amenities?: string[];
 };
+
+// FilterModal renders display labels ("Apartment", "Single Room", "Budget"),
+// but DB columns store canonical lowercase/snake_case values.
+const toCanonicalCategory = (label: string) => label.toLowerCase().trim();
+const toCanonicalPropertyType = (label: string) =>
+  label.toLowerCase().trim().replace(/\s+/g, '_');
 
 export function useSearch() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,9 +94,13 @@ export function useSearch() {
         query = query.not('id', 'in', `(${reservedIdsString})`);
       }
 
-      // Apply search term
+      // Apply search term — location can live in either the full address (`location`)
+      // or the standalone town field, so match both alongside title/description.
       if (term) {
-        query = query.or(`title.ilike.%${term}%,description.ilike.%${term}%,location.ilike.%${term}%`);
+        const safeTerm = term.replace(/[%,()]/g, '');
+        query = query.or(
+          `title.ilike.%${safeTerm}%,description.ilike.%${safeTerm}%,location.ilike.%${safeTerm}%,town.ilike.%${safeTerm}%`
+        );
       }
 
       // Apply filters
@@ -97,7 +108,10 @@ export function useSearch() {
         query = query.eq('type', filters.type);
       }
       if (filters.category?.length) {
-        query = query.in('category', filters.category);
+        query = query.in('category', filters.category.map(toCanonicalCategory));
+      }
+      if (filters.propertyType?.length) {
+        query = query.in('property_type', filters.propertyType.map(toCanonicalPropertyType));
       }
       if (filters.minPrice) {
         query = query.gte('price', filters.minPrice);
@@ -112,7 +126,10 @@ export function useSearch() {
         query = query.eq('bathrooms', filters.bathrooms);
       }
       if (filters.location) {
-        query = query.ilike('location', `%${filters.location}%`);
+        const safeLocation = filters.location.replace(/[%,()]/g, '');
+        query = query.or(
+          `location.ilike.%${safeLocation}%,town.ilike.%${safeLocation}%`
+        );
       }
       if (filters.amenities?.length) {
         query = query.contains('amenities', filters.amenities);
@@ -146,6 +163,9 @@ export function useSearch() {
         description: property.description,
         amenities: property.amenities || [],
         reservationFee: property.reservation_fee ?? undefined,
+        rent_period: property.rent_period ?? null,
+        advance_months_min: property.advance_months_min ?? undefined,
+        advance_months_max: property.advance_months_max ?? undefined,
         status: property.status ?? undefined,
         owner_id: property.owner_id,
         owner: property.profiles ? {

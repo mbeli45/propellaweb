@@ -759,6 +759,7 @@
     "totalAmount": "Montant total :",
     "feeNote": "Ces frais seront déduits de votre paiement total lorsque vous terminerez la transaction.",
     "bookSiteVisit": "Réserver une visite",
+    "messageAgent": "Message",
     "enterPhoneNumber": "Entrez votre numéro de téléphone",
     "phoneNumberHint": "Entrez un numéro MTN (6xxx) ou Orange (9xxx) sans code pays",
     "reservationNote": "Votre réservation sera traitée en toute sécurité. Vous recevrez une confirmation une fois terminée."

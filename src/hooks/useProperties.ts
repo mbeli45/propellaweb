@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { PropertyData } from '@/components/PropertyCard';
-import { captureException, addBreadcrumb, captureMessage } from '@/lib/sentry';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 import { useBlockedUserIds } from '@/hooks/useModeration';
 
 interface FilterOptions {
@@ -158,9 +158,7 @@ export function useProperties(userId: string) {
 
       setError(errorMessage);
 
-      if (isReferencedProperty) {
-        captureMessage('Blocked property deletion due to existing transactions reference', 'warning');
-      } else {
+      if (!isReferencedProperty) {
         captureException(err, {
           context: 'useProperties.deleteProperty',
           propertyId,
@@ -384,6 +382,9 @@ export function useProperty(propertyId: string) {
           images,
           status,
           reservation_fee,
+          rent_period,
+          advance_months_min,
+          advance_months_max,
           owner_id,
           created_at,
           profiles!inner (
@@ -416,6 +417,7 @@ export function useProperty(propertyId: string) {
         images: data.images || [], // Only use images array
         status: data.status || undefined,
         reservationFee: data.reservation_fee || undefined,
+        rent_period: data.rent_period as 'monthly' | 'yearly' | null | undefined,
         advance_months_min: data.advance_months_min || undefined,
         advance_months_max: data.advance_months_max || undefined,
         isVerified: data.profiles?.role === 'agent' || data.profiles?.role === 'landlord',
@@ -500,6 +502,9 @@ export function useSimilarProperties(currentPropertyId: string, category?: strin
           area,
           images,
           status,
+          rent_period,
+          advance_months_min,
+          advance_months_max,
           owner_id,
           profiles!inner (
             id,
@@ -543,6 +548,7 @@ export function useSimilarProperties(currentPropertyId: string, category?: strin
         images: property.images || [],
         status: property.status || undefined,
         reservationFee: undefined, // Skip for similar properties
+        rent_period: property.rent_period as 'monthly' | 'yearly' | null | undefined,
         advance_months_min: property.advance_months_min || undefined,
         advance_months_max: property.advance_months_max || undefined,
         isVerified: property.profiles?.role === 'agent' || property.profiles?.role === 'landlord',

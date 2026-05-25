@@ -1,3 +1,9 @@
 {
+  "permissions": {
+    "allow": [
+      "mcp__sentry__search_issues",
+      "mcp__sentry__get_sentry_resource"
+    ]
+  },
   "enableAllProjectMcpServers": true
 }
