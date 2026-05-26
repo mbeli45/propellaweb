@@ -21,6 +21,7 @@ import { WithdrawalRequestList, WithdrawalRequestEdit } from './resources/Withdr
 import { NotificationList } from './resources/Notifications';
 import { PropertyViewList } from './resources/PropertyViews';
 import StorageMigrationPage from './pages/StorageMigration';
+import Dashboard from './pages/Dashboard';
 
 // Menu icons - Using Lucide and Heroicons for better design
 const PropertyIcon = () => <Icon icon="lucide:building-2" width={24} />;
@@ -56,6 +57,7 @@ const AdminApp = () => {
       theme={adminTheme}
       layout={Layout}
       loginPage={LoginPage}
+      dashboard={Dashboard}
       requireAuth
     >
       <Resource

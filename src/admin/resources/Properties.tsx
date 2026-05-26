@@ -12,56 +12,223 @@ import {
   NumberInput,
   BooleanInput,
   SelectInput,
-  ImageField,
-  ArrayField,
-  SingleFieldList,
-  ChipField,
+  Filter,
   EditButton,
-  ShowButton,
   useRecordContext,
   ReferenceField,
   ReferenceInput,
+  FunctionField,
 } from 'react-admin';
+import { Box, Stack, Typography, Divider } from '@mui/material';
 import { Colors } from '@/constants/Colors';
 import { DeleteButtonWithConfirm } from '../components/DeleteButtonWithConfirm';
 import { EditToolbar } from '../components/EditToolbar';
+import StatusChip from '../components/StatusChip';
+import {
+  ResponsiveList,
+  CardHeader,
+  CardRow,
+  IconAvatar,
+  useRecord,
+} from '../components/MobileListCard';
+import {
+  BackBar,
+  DetailPage,
+  DetailHero,
+  DetailSection,
+  DetailGrid,
+  DetailField,
+  DetailEntityCard,
+  MetaItem,
+} from '../components/DetailLayout';
 
 const PropertyTitle = () => {
   const record = useRecordContext();
   return <span>Property: {record?.title || record?.id}</span>;
 };
 
-export const PropertyList = () => {
+const formatXaf = (n: number | string | null | undefined) => {
+  const num = Number(n ?? 0);
+  return `${Math.round(num).toLocaleString('en-US')} XAF`;
+};
+
+const PropertyFilter = (props: any) => (
+  <Filter {...props}>
+    <SelectInput
+      source="status"
+      choices={[
+        { id: 'available', name: 'Available' },
+        { id: 'reserved', name: 'Reserved' },
+        { id: 'sold', name: 'Sold' },
+        { id: 'rented', name: 'Rented' },
+      ]}
+      alwaysOn
+    />
+    <SelectInput
+      source="type"
+      choices={[
+        { id: 'rent', name: 'For rent' },
+        { id: 'sale', name: 'For sale' },
+      ]}
+    />
+    <BooleanInput source="is_featured" label="Featured" />
+  </Filter>
+);
+
+const PropertyCard = () => {
+  const r = useRecord<any>();
+  if (!r) return null;
   return (
-    <List
-      sort={{ field: 'created_at', order: 'DESC' }}
-      sx={{
-        '& .RaList-content': {
-          boxShadow: 'none',
-        },
-      }}
-    >
-      <Datagrid rowClick="edit">
-        <TextField source="title" />
-        <NumberField source="price" options={{ style: 'currency', currency: 'XAF' }} />
-        <TextField source="status" />
-        <ReferenceField source="owner_id" reference="profiles" label="Owner">
-          <TextField source="full_name" />
-        </ReferenceField>
-        <TextField source="location" />
-        <BooleanField source="is_featured" />
-        <DateField source="created_at" showTime />
-        <EditButton />
-        <ShowButton />
-        <DeleteButtonWithConfirm />
-      </Datagrid>
-    </List>
+    <Stack spacing={1.5}>
+      <CardHeader
+        avatar={
+          <IconAvatar
+            icon="lucide:building-2"
+            tone={r.status === 'available' ? 'success' : r.status === 'reserved' ? 'warning' : 'neutral'}
+          />
+        }
+        title={r.title ?? 'Untitled'}
+        subtitle={r.location ?? '—'}
+        right={<StatusChip source="status" />}
+      />
+      <Divider />
+      <CardRow label="Price" value={formatXaf(r.price)} />
+      <CardRow
+        label="Owner"
+        value={
+          <ReferenceField source="owner_id" reference="profiles" link={false}>
+            <TextField source="full_name" />
+          </ReferenceField>
+        }
+      />
+      {r.is_featured && (
+        <CardRow
+          label="Featured"
+          value={
+            <Typography variant="body2" sx={{ color: Colors.primary[700], fontWeight: 600 }}>
+              ★ Yes
+            </Typography>
+          }
+        />
+      )}
+      <CardRow label="Added" value={new Date(r.created_at).toLocaleDateString('en-US')} />
+    </Stack>
   );
 };
 
-export const PropertyEdit = () => (
-  <Edit title={<PropertyTitle />}>
-    <SimpleForm toolbar={<EditToolbar />}>
+const PropertyDatagrid = () => (
+  <Datagrid rowClick="edit" bulkActionButtons={false}>
+    <TextField source="title" />
+    <FunctionField
+      label="Price"
+      sortBy="price"
+      render={(r: any) => <Typography variant="body2" fontWeight={700}>{formatXaf(r.price)}</Typography>}
+    />
+    <FunctionField label="Status" render={() => <StatusChip source="status" />} />
+    <ReferenceField source="owner_id" reference="profiles" label="Owner" link={false}>
+      <TextField source="full_name" />
+    </ReferenceField>
+    <TextField source="location" />
+    <BooleanField source="is_featured" label="Featured" />
+    <DateField source="created_at" />
+    <EditButton />
+    <DeleteButtonWithConfirm />
+  </Datagrid>
+);
+
+export const PropertyList = () => (
+  <List
+    sort={{ field: 'created_at', order: 'DESC' }}
+    filters={<PropertyFilter />}
+    sx={{ '& .RaList-content': { boxShadow: 'none' } }}
+  >
+    <ResponsiveList desktop={<PropertyDatagrid />} card={<PropertyCard />} />
+  </List>
+);
+
+const PropertyDetail = () => {
+  const r = useRecordContext<any>();
+  if (!r) return <DetailPage>Loading…</DetailPage>;
+  const firstImage = Array.isArray(r.images) && r.images.length > 0 ? r.images[0] : null;
+  return (
+    <DetailPage>
+      <DetailHero
+        eyebrow={r.is_featured ? '★ Featured property' : 'Property'}
+        title={r.title || 'Untitled property'}
+        amount={formatXaf(r.price)}
+        badges={
+          <>
+            <StatusChip source="status" value={r.status} />
+            {r.type && <StatusChip value={r.type} />}
+            {r.category && <StatusChip value={r.category} />}
+          </>
+        }
+        meta={
+          <>
+            <MetaItem label="Property ID" value={`#${String(r.id).slice(0, 8)}`} />
+            <MetaItem label="Added" value={new Date(r.created_at).toLocaleDateString('en-US')} />
+            {r.bedrooms != null && <MetaItem label="Bedrooms" value={r.bedrooms} />}
+            {r.bathrooms != null && <MetaItem label="Bathrooms" value={r.bathrooms} />}
+            {r.area != null && <MetaItem label="Area" value={`${r.area} m²`} />}
+          </>
+        }
+      />
+
+      {firstImage && (
+        <DetailSection title="Cover">
+          <Box
+            component="img"
+            src={firstImage}
+            alt={r.title || 'Property'}
+            sx={{
+              display: 'block',
+              maxWidth: '100%',
+              height: 'auto',
+              maxHeight: 360,
+              objectFit: 'cover',
+              border: `1px solid ${Colors.neutral[200]}`,
+            }}
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        </DetailSection>
+      )}
+
+      <DetailSection title="Listing">
+        <DetailGrid cols={2}>
+          <DetailEntityCard
+            icon="lucide:user"
+            tone="neutral"
+            label="Owner"
+            value={
+              <ReferenceField source="owner_id" reference="profiles" link={false}>
+                <TextField source="full_name" />
+              </ReferenceField>
+            }
+          />
+          <DetailEntityCard
+            icon="lucide:map-pin"
+            tone="primary"
+            label="Location"
+            value={r.location || '—'}
+          />
+        </DetailGrid>
+      </DetailSection>
+
+      {r.description && (
+        <DetailSection title="Description">
+          <Typography variant="body1" sx={{ color: Colors.neutral[800], lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+            {r.description}
+          </Typography>
+        </DetailSection>
+      )}
+
+      <DetailSection title="Edit" noDivider>
+        <SimpleForm
+          toolbar={<EditToolbar />}
+          sx={{ padding: 0, '& .RaSimpleForm-form': { padding: 0 } }}
+        >
       <TextInput source="title" fullWidth />
       <TextInput source="description" multiline rows={4} fullWidth />
       <ReferenceInput source="owner_id" reference="profiles" label="Owner">
@@ -100,12 +267,21 @@ export const PropertyEdit = () => (
       <NumberInput source="reservation_fee" />
       <BooleanInput source="is_featured" />
       <TextInput source="images" label="Images (comma-separated URLs)" fullWidth />
-    </SimpleForm>
+        </SimpleForm>
+      </DetailSection>
+    </DetailPage>
+  );
+};
+
+export const PropertyEdit = () => (
+  <Edit title={false} component={Box} actions={false}>
+    <PropertyDetail />
   </Edit>
 );
 
 export const PropertyCreate = () => (
-  <Create>
+  <Create component={Box} actions={false}>
+    <BackBar title="New property" />
     <SimpleForm>
       <TextInput source="title" fullWidth required />
       <TextInput source="description" multiline rows={4} fullWidth required />

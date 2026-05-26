@@ -101,24 +101,22 @@ export const adminTheme = createTheme({
         },
       },
     },
+    // No rounded corners anywhere in admin — tables, list wrappers, drawer.
+    // The user-facing app still uses its own theme with rounded cards.
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+          borderRadius: 0,
+          boxShadow: 'none',
           border: `1px solid ${Colors.neutral[200]}`,
-          '@media (max-width: 768px)': {
-            margin: '8px',
-            borderRadius: 12,
-          },
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+          borderRadius: 0,
+          boxShadow: 'none',
           '& .RaSimpleForm-form': {
             '@media (max-width: 768px)': {
               padding: '16px',
@@ -132,27 +130,19 @@ export const adminTheme = createTheme({
           },
         },
         elevation1: {
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+          boxShadow: 'none',
         },
       },
     },
+    // MUI AppBar is no longer used — our custom Layout renders a plain Box as
+    // the topbar. The override is harmless but unnecessary; left intentionally
+    // minimal so any stray MUI AppBar use elsewhere still picks up the brand.
     MuiAppBar: {
       styleOverrides: {
         root: {
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-          backgroundColor: `${Colors.white} !important`,
+          backgroundColor: Colors.white,
           color: Colors.neutral[900],
-          borderBottom: `1px solid ${Colors.neutral[200]}`,
-          '@media (max-width: 768px)': {
-            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.08)',
-            '& .RaAppBar-title': {
-              fontSize: '0.875rem',
-              fontWeight: 600,
-            },
-            '& .RaAppBar-toolbar': {
-              minHeight: '52px !important',
-            },
-          },
+          boxShadow: 'none',
         },
       },
     },
@@ -161,31 +151,15 @@ export const adminTheme = createTheme({
         paper: {
           borderRight: `1px solid ${Colors.neutral[200]}`,
           backgroundColor: Colors.white,
-          top: '64px !important', // Start below header
-          height: 'calc(100vh - 64px) !important', // Extend to bottom
-          '@media (max-width: 768px)': {
-            top: '56px !important',
-            height: 'calc(100vh - 56px) !important',
-          },
         },
       },
     },
+    // ListItemButton lives in the sidebar — the navigation rows compose their
+    // own active/hover treatment via sx, so we keep the global override empty
+    // here instead of forcing margin/borderRadius that fights it.
     MuiListItemButton: {
       styleOverrides: {
-        root: {
-          borderRadius: 12,
-          margin: '4px 8px',
-          '&:hover': {
-            backgroundColor: Colors.primary[50],
-          },
-          '&.Mui-selected': {
-            backgroundColor: Colors.primary[100],
-            color: Colors.primary[700],
-            '&:hover': {
-              backgroundColor: Colors.primary[200],
-            },
-          },
-        },
+        root: {},
       },
     },
     MuiTextField: {
@@ -292,40 +266,12 @@ export const adminTheme = createTheme({
     MuiTableContainer: {
       styleOverrides: {
         root: {
+          // Mobile renders the ResponsiveList card layout instead of a table,
+          // so the only mobile concern here is preventing accidental horizontal
+          // overflow on the few remaining tables (Edit pages, etc.).
           '@media (max-width: 768px)': {
-            overflowX: 'visible',
-            overflowY: 'visible',
-            width: '100%',
-            position: 'relative',
-            margin: '0',
-            padding: '0',
-            '& .RaDatagrid-root': {
-              minWidth: 'auto',
-              margin: 0,
-              width: '100%',
-            },
-            '& .RaDatagrid-table': {
-              fontSize: '0.75rem',
-              minWidth: 'auto',
-              width: '100%',
-            },
-            '& table': {
-              minWidth: 'auto',
-              width: '100%',
-            },
-            '& thead': {
-              position: 'sticky',
-              top: 0,
-              zIndex: 10,
-              backgroundColor: Colors.neutral[50],
-            },
-            // Hide columns 4, 5, 6, 7, etc. but keep last 3 (action columns)
-            '& th:nth-child(n+5):not(:nth-last-child(-n+3))': {
-              display: 'none',
-            },
-            '& td:nth-child(n+5):not(:nth-last-child(-n+3))': {
-              display: 'none',
-            },
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
           },
         },
       },
@@ -353,50 +299,17 @@ export const adminTheme = createTheme({
     },
     MuiTableCell: {
       styleOverrides: {
-        root: {
-          '@media (max-width: 768px)': {
-            padding: '10px 8px',
-            fontSize: '0.75rem',
-            lineHeight: 1.4,
-            maxWidth: '120px',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            '&:first-of-type': {
-              paddingLeft: '12px',
-              maxWidth: '140px',
-            },
-            '&:nth-last-of-type(-n+3)': {
-              maxWidth: '50px',
-              padding: '8px 4px',
-              textAlign: 'center',
-            },
-          },
-        },
+        // Desktop table cells get a calmer header treatment; mobile no longer
+        // needs the column-hide hacks because ResponsiveList swaps the table
+        // for a card layout below 768px.
         head: {
-          '@media (max-width: 768px)': {
-            padding: '12px 8px',
-            fontSize: '0.6875rem',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            color: Colors.neutral[600],
-            backgroundColor: Colors.neutral[50],
-            borderBottom: `2px solid ${Colors.neutral[200]}`,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            maxWidth: '120px',
-            '&:first-of-type': {
-              paddingLeft: '12px',
-              maxWidth: '140px',
-            },
-            '&:nth-last-of-type(-n+3)': {
-              maxWidth: '50px',
-              padding: '8px 4px',
-              textAlign: 'center',
-            },
-          },
+          fontWeight: 700,
+          fontSize: '0.75rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+          color: Colors.neutral[600],
+          backgroundColor: Colors.neutral[50],
+          borderBottom: `1px solid ${Colors.neutral[200]}`,
         },
       },
     },
