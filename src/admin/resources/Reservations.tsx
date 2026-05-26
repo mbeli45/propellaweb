@@ -266,7 +266,15 @@ const ReservationCard = () => {
       )}
       <CardRow label="Date" value={formatDate(r.reservation_date)} />
       {refundable && (
-        <Box sx={{ mt: 1 }} onClick={(e) => e.preventDefault()}>
+        <Box
+          sx={{ mt: 1 }}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
           <ProcessRefundButton />
         </Box>
       )}
@@ -289,7 +297,23 @@ const ReservationDatagrid = () => (
     <FunctionField label="Payment" render={() => <StatusChip source="payment_status" />} />
     <FunctionField label="Refund" render={() => <StatusChip source="refund_status" />} />
     <DateField source="created_at" showTime />
-    <ProcessRefundButton />
+    <FunctionField
+      label=""
+      render={() => (
+        <Box
+          component="span"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          sx={{ display: 'inline-flex' }}
+        >
+          <ProcessRefundButton />
+        </Box>
+      )}
+    />
     <DeleteButtonWithConfirm />
   </Datagrid>
 );
