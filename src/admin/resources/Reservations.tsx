@@ -114,11 +114,40 @@ const ProcessRefundButton = () => {
       const { data, error } = await supabase.functions.invoke('mesomb-refund', { body: payload });
 
       if (error) {
-        const ctxJson = (error as any)?.context?.body ? await (error as any).context.json?.() : null;
-        const detail = ctxJson?.error || ctxJson?.details || error.message;
-        notify(`Refund failed: ${detail}`, { type: 'error', autoHideDuration: 8000 });
+        const ctx: Response | undefined = (error as any)?.context;
+        let parsed: any = null;
+        let rawText = '';
+        if (ctx && typeof ctx.clone === 'function') {
+          try {
+            rawText = await ctx.clone().text();
+            try {
+              parsed = JSON.parse(rawText);
+            } catch {
+              parsed = null;
+            }
+          } catch (readErr) {
+            console.warn('Could not read refund error body:', readErr);
+          }
+        }
+        console.error('mesomb-refund failed', {
+          status: ctx?.status,
+          parsed,
+          rawText,
+          errorMessage: error.message,
+        });
+        const detail =
+          parsed?.error ||
+          parsed?.details ||
+          parsed?.message ||
+          (rawText && rawText.length < 300 ? rawText : null) ||
+          error.message ||
+          'Unknown error';
+        const statusSuffix = ctx?.status ? ` [HTTP ${ctx.status}]` : '';
+        notify(`Refund failed${statusSuffix}: ${detail}`, { type: 'error', autoHideDuration: 10000 });
         return;
       }
+
+      console.log('mesomb-refund response', data);
 
       if (data?.success) {
         notify(
@@ -128,7 +157,8 @@ const ProcessRefundButton = () => {
         setOpen(false);
         refresh();
       } else {
-        notify(`Refund failed: ${data?.error || 'Unknown error'}`, { type: 'error' });
+        const detail = data?.error || data?.details || data?.message || 'Unknown error';
+        notify(`Refund failed: ${detail}`, { type: 'error', autoHideDuration: 10000 });
       }
     } catch (err: any) {
       notify(`Refund failed: ${err?.message || 'Unexpected error'}`, { type: 'error' });
