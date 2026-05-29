@@ -102,7 +102,7 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
     if (!newMessageText.trim() || !currentUser?.id || !counterpartId) return
 
     try {
-      await sendMessage(currentUser.id, counterpartId, newMessageText.trim())
+      await sendMessage(counterpartId, newMessageText.trim())
       setNewMessageText('')
       inputRef.current?.focus()
     } catch (error) {
@@ -122,7 +122,7 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
       const image = await pickImage()
       if (image && currentUser?.id && counterpartId) {
         const uploadedUrl = await uploadImage(image, 'messages')
-        await sendMessage(currentUser.id, counterpartId, '', uploadedUrl)
+        await sendMessage(counterpartId, '', uploadedUrl)
       }
     } catch (error) {
       console.error('Error sending image:', error)
