@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
@@ -7,7 +7,8 @@ import { getColors } from '@/constants/Colors'
 import { useMessages } from '@/hooks/useMessages'
 import { usePresence } from '@/hooks/usePresence'
 import { useStorage } from '@/hooks/useStorage'
-import { Send, Paperclip, ArrowLeft, MoreVertical, Phone, Video, Check, CheckCheck, Clock } from 'lucide-react'
+import { useProperty } from '@/hooks/useProperties'
+import { Send, Paperclip, ArrowLeft, Check, CheckCheck, Clock, AlertCircle } from 'lucide-react'
 import ModerationActions from '@/components/moderation/ModerationActions'
 import { supabase } from '@/lib/supabase'
 import './Chat.css'
@@ -20,6 +21,8 @@ interface ChatDetailProps {
 export default function ChatDetail({ counterpartId: propCounterpartId, hideBackButton = false }: ChatDetailProps = {} as ChatDetailProps) {
   const { id: routeCounterpartId } = useParams<{ id?: string }>()
   const counterpartId = propCounterpartId || routeCounterpartId
+  const [searchParams] = useSearchParams()
+  const propertyId = searchParams.get('propertyId') || undefined
   const { user: currentUser } = useAuth()
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
@@ -102,7 +105,7 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
     if (!newMessageText.trim() || !currentUser?.id || !counterpartId) return
 
     try {
-      await sendMessage(counterpartId, newMessageText.trim())
+      await sendMessage(counterpartId, newMessageText.trim(), undefined, undefined, undefined, propertyId)
       setNewMessageText('')
       inputRef.current?.focus()
     } catch (error) {
@@ -122,7 +125,7 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
       const image = await pickImage()
       if (image && currentUser?.id && counterpartId) {
         const uploadedUrl = await uploadImage(image, 'messages')
-        await sendMessage(counterpartId, '', uploadedUrl)
+        await sendMessage(counterpartId, '', uploadedUrl, 'image', undefined, propertyId)
       }
     } catch (error) {
       console.error('Error sending image:', error)
@@ -145,9 +148,21 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
   }
 
   const getMessageStatus = (message: any) => {
-    if (message.read) return <CheckCheck size={14} color={Colors.primary[600]} />
-    if (message.sent) return <Check size={14} color={Colors.neutral[400]} />
-    return <Clock size={14} color={Colors.neutral[400]} />
+    const status = message.status ?? (message.read ? 'read' : 'sent')
+    switch (status) {
+      case 'sending':
+        return <Clock size={14} color="rgba(255, 255, 255, 0.6)" />
+      case 'sent':
+        return <Check size={14} color="rgba(255, 255, 255, 0.7)" />
+      case 'delivered':
+        return <CheckCheck size={14} color="rgba(255, 255, 255, 0.8)" />
+      case 'read':
+        return <CheckCheck size={14} color="#4CAF50" />
+      case 'failed':
+        return <AlertCircle size={14} color={Colors.error[500]} />
+      default:
+        return null
+    }
   }
 
   if (profileLoading || messagesLoading) {
@@ -284,34 +299,10 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
               targetUserName={counterpartProfile?.full_name}
               contentType="chat"
               contentId={counterpartId}
-              size="compact"
+              mode="menu"
               onBlocked={() => navigate(-1)}
             />
           ) : null}
-          <button
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '8px',
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            <Phone size={20} color={Colors.neutral[600]} />
-          </button>
-          <button
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '8px',
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            <MoreVertical size={20} color={Colors.neutral[600]} />
-          </button>
         </div>
       </div>
 
@@ -366,6 +357,14 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
                 borderBottomLeftRadius: isOwn ? '16px' : '4px',
                 boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
               }}>
+                {message.property_id && (
+                  <MessagePropertyCard
+                    propertyId={message.property_id}
+                    isOwn={isOwn}
+                    Colors={Colors}
+                    onOpen={(id) => navigate(`/property/${id}`)}
+                  />
+                )}
                 {message.attachment_url && (
                   <img
                     src={message.attachment_url}
@@ -508,5 +507,89 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
         </button>
       </div>
     </div>
+  )
+}
+
+interface MessagePropertyCardProps {
+  propertyId: string
+  isOwn: boolean
+  Colors: ReturnType<typeof getColors>
+  onOpen: (id: string) => void
+}
+
+function MessagePropertyCard({ propertyId, isOwn, Colors, onOpen }: MessagePropertyCardProps) {
+  const { property } = useProperty(propertyId)
+  if (!property) return null
+
+  const cover = property.images?.[0] || property.image
+  const priceLabel = property.price
+    ? `${property.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} FCFA`
+    : ''
+
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(propertyId)}
+      style={{
+        display: 'flex',
+        gap: '10px',
+        padding: '8px',
+        marginBottom: '8px',
+        borderRadius: '10px',
+        backgroundColor: isOwn ? 'rgba(255,255,255,0.15)' : Colors.neutral[50],
+        border: isOwn ? '1px solid rgba(255,255,255,0.25)' : `1px solid ${Colors.neutral[200]}`,
+        cursor: 'pointer',
+        textAlign: 'left',
+        width: '100%',
+        maxWidth: '260px',
+      }}
+    >
+      {cover && (
+        <img
+          src={cover}
+          alt={property.title}
+          style={{
+            width: '64px',
+            height: '64px',
+            borderRadius: '8px',
+            objectFit: 'cover',
+            flexShrink: 0,
+          }}
+        />
+      )}
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
+        <span
+          style={{
+            fontSize: '13px',
+            fontWeight: 600,
+            color: isOwn ? Colors.white : Colors.neutral[900],
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {property.title}
+        </span>
+        {priceLabel && (
+          <span style={{ fontSize: '12px', color: isOwn ? 'rgba(255,255,255,0.85)' : Colors.primary[600], marginTop: '2px' }}>
+            {priceLabel}
+          </span>
+        )}
+        {property.location && (
+          <span
+            style={{
+              fontSize: '11px',
+              color: isOwn ? 'rgba(255,255,255,0.7)' : Colors.neutral[500],
+              marginTop: '2px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {property.location}
+          </span>
+        )}
+      </div>
+    </button>
   )
 }
