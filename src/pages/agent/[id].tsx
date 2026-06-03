@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase'
 import PropertyCard from '@/components/PropertyCard'
 import SEO from '@/components/SEO'
 import { generateAgentStructuredData, getCanonicalBaseUrl } from '@/utils/seoUtils'
-import { Star, User as UserIcon, Mail, Phone, ArrowRight, CheckCircle2, ArrowLeft, X } from 'lucide-react'
+import { Star, User as UserIcon, Phone, ArrowRight, CheckCircle2, ArrowLeft, X } from 'lucide-react'
 import ModerationActions from '@/components/moderation/ModerationActions'
 import './AgentProfile.css'
 
@@ -285,12 +285,6 @@ export default function AgentProfile() {
           gap: '16px',
           marginTop: '12px'
         }}>
-          {agent.email && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Mail size={16} color={Colors.primary[700]} />
-              <span style={{ fontSize: '14px', color: Colors.neutral[700] }}>{agent.email}</span>
-            </div>
-          )}
           {agent.phone && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <Phone size={16} color={Colors.primary[700]} />
