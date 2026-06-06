@@ -17,6 +17,7 @@ import {
   useRecordContext,
   ReferenceField,
   ReferenceInput,
+  AutocompleteInput,
   FunctionField,
 } from 'react-admin';
 import { Box, Stack, Typography, Divider } from '@mui/material';
@@ -54,6 +55,18 @@ const formatXaf = (n: number | string | null | undefined) => {
 
 const PropertyFilter = (props: any) => (
   <Filter {...props}>
+    <TextInput source="title@ilike" label="Search title" alwaysOn resettable />
+    <ReferenceInput source="owner_id" reference="profiles" alwaysOn>
+      <AutocompleteInput
+        label="Agent / Landlord"
+        optionText={(r: any) =>
+          r ? `${r.full_name || r.email || '(no name)'}${r.role ? ` · ${r.role}` : ''}` : ''
+        }
+        filterToQuery={(q: string) => ({ 'full_name@ilike': q })}
+        sx={{ minWidth: 240 }}
+      />
+    </ReferenceInput>
+    <TextInput source="location@ilike" label="Search location" resettable />
     <SelectInput
       source="status"
       choices={[

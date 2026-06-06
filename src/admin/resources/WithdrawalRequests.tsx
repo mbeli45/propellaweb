@@ -11,6 +11,7 @@ import {
   NumberInput,
   ReferenceField,
   ReferenceInput,
+  AutocompleteInput,
   Filter,
   useRecordContext,
   FunctionField,
@@ -47,6 +48,16 @@ const formatDate = (iso: string | null | undefined) =>
 
 const WithdrawalFilter = (props: any) => (
   <Filter {...props}>
+    <ReferenceInput source="user_id" reference="profiles" alwaysOn>
+      <AutocompleteInput
+        label="User"
+        optionText={(r: any) => (r ? r.full_name || r.email || '(no name)' : '')}
+        filterToQuery={(q: string) => ({ 'full_name@ilike': q })}
+        sx={{ minWidth: 220 }}
+      />
+    </ReferenceInput>
+    <TextInput source="phone@ilike" label="Search phone" resettable />
+    <TextInput source="fapshi_reference@ilike" label="Search ref" resettable />
     <SelectInput
       source="status"
       choices={[

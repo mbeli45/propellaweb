@@ -13,6 +13,7 @@ import {
   NumberInput,
   ReferenceField,
   ReferenceInput,
+  AutocompleteInput,
   Filter,
   useRecordContext,
   FunctionField,
@@ -58,6 +59,15 @@ const AgentVerificationTitle = () => {
 
 const VerificationFilter = (props: any) => (
   <Filter {...props}>
+    <TextInput source="business_name@ilike" label="Search business" alwaysOn resettable />
+    <ReferenceInput source="agent_id" reference="profiles" alwaysOn>
+      <AutocompleteInput
+        label="Agent"
+        optionText={(r: any) => (r ? r.full_name || r.email || '(no name)' : '')}
+        filterToQuery={(q: string) => ({ 'full_name@ilike': q })}
+        sx={{ minWidth: 220 }}
+      />
+    </ReferenceInput>
     <SelectInput source="verification_status" choices={VERIFICATION_STATUS_CHOICES} alwaysOn />
     <BooleanInput source="verification_fee_paid" label="Fee paid" />
   </Filter>

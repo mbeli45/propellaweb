@@ -10,7 +10,9 @@ import {
   NumberInput,
   ReferenceField,
   ReferenceInput,
+  AutocompleteInput,
   SelectInput,
+  Filter,
   useRecordContext,
 } from 'react-admin';
 import { Box, Stack, Typography, Divider } from '@mui/material';
@@ -50,6 +52,28 @@ const StarRating = ({ rating }: { rating: number }) => {
     </Typography>
   );
 };
+
+const ReviewFilter = (props: any) => (
+  <Filter {...props}>
+    <TextInput source="comment@ilike" label="Search comment" alwaysOn resettable />
+    <ReferenceInput source="property_id" reference="properties" alwaysOn>
+      <AutocompleteInput
+        label="Property"
+        optionText="title"
+        filterToQuery={(q: string) => ({ 'title@ilike': q })}
+        sx={{ minWidth: 220 }}
+      />
+    </ReferenceInput>
+    <ReferenceInput source="user_id" reference="profiles">
+      <AutocompleteInput
+        label="Reviewer"
+        optionText={(r: any) => (r ? r.full_name || r.email || '(no name)' : '')}
+        filterToQuery={(q: string) => ({ 'full_name@ilike': q })}
+        sx={{ minWidth: 220 }}
+      />
+    </ReferenceInput>
+  </Filter>
+);
 
 const ReviewCard = () => {
   const r = useRecord<any>();
@@ -101,6 +125,7 @@ const ReviewDatagrid = () => (
 export const ReviewList = () => (
   <List
     sort={{ field: 'created_at', order: 'DESC' }}
+    filters={<ReviewFilter />}
     sx={{ '& .RaList-content': { boxShadow: 'none' } }}
   >
     <ResponsiveList desktop={<ReviewDatagrid />} card={<ReviewCard />} />

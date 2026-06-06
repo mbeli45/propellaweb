@@ -20,7 +20,7 @@ import { WalletList } from './resources/Wallets';
 import { WithdrawalRequestList, WithdrawalRequestEdit } from './resources/WithdrawalRequests';
 import { NotificationList } from './resources/Notifications';
 import { PropertyViewList } from './resources/PropertyViews';
-import StorageMigrationPage from './pages/StorageMigration';
+// import StorageMigrationPage from './pages/StorageMigration';
 import Dashboard from './pages/Dashboard';
 
 // Menu icons - Using Lucide and Heroicons for better design
@@ -37,7 +37,7 @@ const WalletIcon = () => <Icon icon="lucide:wallet" width={24} />;
 const WithdrawalIcon = () => <Icon icon="lucide:arrow-down-circle" width={24} />;
 const NotificationIcon = () => <Icon icon="lucide:bell" width={24} />;
 const AnalyticsIcon = () => <Icon icon="lucide:bar-chart-3" width={24} />;
-const StorageMigrationIcon = () => <Icon icon="lucide:database-backup" width={24} />;
+// const StorageMigrationIcon = () => <Icon icon="lucide:database-backup" width={24} />;
 
 const AdminApp = () => {
   // Determine basename based on hostname
@@ -149,12 +149,12 @@ const AdminApp = () => {
         recordRepresentation={(record) => `View: ${record.id?.slice(0, 8)}`}
         icon={AnalyticsIcon}
       />
-      <Resource
+      {/* <Resource
         name="storage-migration"
         list={StorageMigrationPage}
         icon={StorageMigrationIcon}
         options={{ label: 'Storage Migration' }}
-      />
+      /> */}
     </Admin>
   );
 };

@@ -6,7 +6,10 @@ import {
   DateField,
   Filter,
   SelectInput,
+  TextInput,
   ReferenceField,
+  ReferenceInput,
+  AutocompleteInput,
   FunctionField,
 } from 'react-admin';
 import { Box, Stack, Typography, Divider } from '@mui/material';
@@ -38,6 +41,15 @@ const TYPE_TO_ICON: Record<string, { icon: string; tone: 'primary' | 'success' |
 
 const TransactionFilter = (props: any) => (
   <Filter {...props}>
+    <ReferenceInput source="user_id" reference="profiles" alwaysOn>
+      <AutocompleteInput
+        label="User"
+        optionText={(r: any) => (r ? r.full_name || r.email || '(no name)' : '')}
+        filterToQuery={(q: string) => ({ 'full_name@ilike': q })}
+        sx={{ minWidth: 220 }}
+      />
+    </ReferenceInput>
+    <TextInput source="reference@ilike" label="Search reference" resettable />
     <SelectInput
       source="type"
       choices={[

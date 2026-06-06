@@ -10,6 +10,8 @@ import {
   TextInput,
   ReferenceField,
   ReferenceInput,
+  AutocompleteInput,
+  Filter,
   EditButton,
   ShowButton,
   useRecordContext,
@@ -21,10 +23,34 @@ const CommissionDisputeTitle = () => {
   return <span>Dispute: {record?.id?.slice(0, 8)}</span>;
 };
 
+const CommissionDisputeFilter = (props: any) => (
+  <Filter {...props}>
+    <TextInput source="description@ilike" label="Search description" alwaysOn resettable />
+    <ReferenceInput source="reported_by" reference="profiles">
+      <AutocompleteInput
+        label="Reported by"
+        optionText={(r: any) => (r ? r.full_name || r.email || '(no name)' : '')}
+        filterToQuery={(q: string) => ({ 'full_name@ilike': q })}
+        sx={{ minWidth: 220 }}
+      />
+    </ReferenceInput>
+    <SelectInput
+      source="status"
+      choices={[
+        { id: 'pending', name: 'Pending' },
+        { id: 'resolved', name: 'Resolved' },
+        { id: 'dismissed', name: 'Dismissed' },
+      ]}
+      alwaysOn
+    />
+  </Filter>
+);
+
 export const CommissionDisputeList = () => (
   <List
     sort={{ field: 'created_at', order: 'DESC' }}
     filterDefaultValues={{ status: 'pending' }}
+    filters={<CommissionDisputeFilter />}
     sx={{
       '& .RaList-content': {
         boxShadow: 'none',

@@ -5,6 +5,9 @@ import {
   NumberField,
   DateField,
   ReferenceField,
+  ReferenceInput,
+  AutocompleteInput,
+  Filter,
   FunctionField,
 } from 'react-admin';
 import { Stack, Typography, Divider } from '@mui/material';
@@ -21,6 +24,19 @@ const formatXaf = (n: number | string | null | undefined) => {
   const num = Number(n ?? 0);
   return `${Math.round(num).toLocaleString('en-US')} XAF`;
 };
+
+const WalletFilter = (props: any) => (
+  <Filter {...props}>
+    <ReferenceInput source="user_id" reference="profiles" alwaysOn>
+      <AutocompleteInput
+        label="User"
+        optionText={(r: any) => (r ? r.full_name || r.email || '(no name)' : '')}
+        filterToQuery={(q: string) => ({ 'full_name@ilike': q })}
+        sx={{ minWidth: 220 }}
+      />
+    </ReferenceInput>
+  </Filter>
+);
 
 const WalletCard = () => {
   const r = useRecord<any>();
@@ -91,6 +107,7 @@ const WalletDatagrid = () => (
 export const WalletList = () => (
   <List
     sort={{ field: 'updated_at', order: 'DESC' }}
+    filters={<WalletFilter />}
     sx={{ '& .RaList-content': { boxShadow: 'none' } }}
   >
     <ResponsiveList desktop={<WalletDatagrid />} card={<WalletCard />} rowClick={false} />

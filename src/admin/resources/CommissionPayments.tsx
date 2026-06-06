@@ -12,6 +12,8 @@ import {
   TextInput,
   ReferenceField,
   ReferenceInput,
+  AutocompleteInput,
+  Filter,
   EditButton,
   ShowButton,
   useRecordContext,
@@ -23,9 +25,41 @@ const CommissionPaymentTitle = () => {
   return <span>Commission Payment: {record?.id?.slice(0, 8)}</span>;
 };
 
+const CommissionPaymentFilter = (props: any) => (
+  <Filter {...props}>
+    <ReferenceInput source="agent_id" reference="profiles" alwaysOn>
+      <AutocompleteInput
+        label="Agent"
+        optionText={(r: any) => (r ? r.full_name || r.email || '(no name)' : '')}
+        filterToQuery={(q: string) => ({ 'full_name@ilike': q })}
+        sx={{ minWidth: 220 }}
+      />
+    </ReferenceInput>
+    <ReferenceInput source="property_id" reference="properties">
+      <AutocompleteInput
+        label="Property"
+        optionText="title"
+        filterToQuery={(q: string) => ({ 'title@ilike': q })}
+        sx={{ minWidth: 220 }}
+      />
+    </ReferenceInput>
+    <SelectInput
+      source="status"
+      choices={[
+        { id: 'pending', name: 'Pending' },
+        { id: 'completed', name: 'Completed' },
+        { id: 'failed', name: 'Failed' },
+        { id: 'cancelled', name: 'Cancelled' },
+      ]}
+      alwaysOn
+    />
+  </Filter>
+);
+
 export const CommissionPaymentList = () => (
   <List
     sort={{ field: 'created_at', order: 'DESC' }}
+    filters={<CommissionPaymentFilter />}
     sx={{
       '& .RaList-content': {
         boxShadow: 'none',

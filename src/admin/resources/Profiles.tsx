@@ -96,6 +96,9 @@ const RoleChip = () => {
 
 const ProfileFilter = (props: any) => (
   <Filter {...props}>
+    <TextInput source="full_name@ilike" label="Search name" alwaysOn resettable />
+    <TextInput source="email@ilike" label="Search email" resettable />
+    <TextInput source="phone@ilike" label="Search phone" resettable />
     <SelectInput
       source="role"
       choices={[

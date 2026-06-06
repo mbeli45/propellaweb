@@ -10,6 +10,8 @@ import {
   SelectField,
   TextInput,
   ReferenceField,
+  ReferenceInput,
+  AutocompleteInput,
   Filter,
   useRecordContext,
   useNotify,
@@ -72,6 +74,15 @@ const ContentReportTitle = () => {
 
 const ContentReportFilter = (props: any) => (
   <Filter {...props}>
+    <TextInput source="details@ilike" label="Search details" alwaysOn resettable />
+    <ReferenceInput source="reported_user_id" reference="profiles">
+      <AutocompleteInput
+        label="Reported user"
+        optionText={(r: any) => (r ? r.full_name || r.email || '(no name)' : '')}
+        filterToQuery={(q: string) => ({ 'full_name@ilike': q })}
+        sx={{ minWidth: 220 }}
+      />
+    </ReferenceInput>
     <SelectInput source="status" choices={STATUS_CHOICES} alwaysOn />
     <SelectInput source="content_type" choices={CONTENT_TYPE_CHOICES} />
     <SelectInput source="reason" choices={REASON_CHOICES} />

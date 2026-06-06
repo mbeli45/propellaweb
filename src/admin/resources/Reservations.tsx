@@ -14,6 +14,7 @@ import {
   TextInput,
   ReferenceField,
   ReferenceInput,
+  AutocompleteInput,
   Filter,
   BooleanInput,
   useRecordContext,
@@ -232,6 +233,22 @@ const ProcessRefundButton = () => {
 
 const ReservationFilter = (props: any) => (
   <Filter {...props}>
+    <ReferenceInput source="user_id" reference="profiles" alwaysOn>
+      <AutocompleteInput
+        label="Client"
+        optionText={(r: any) => (r ? r.full_name || r.email || '(no name)' : '')}
+        filterToQuery={(q: string) => ({ 'full_name@ilike': q })}
+        sx={{ minWidth: 220 }}
+      />
+    </ReferenceInput>
+    <ReferenceInput source="property_id" reference="properties">
+      <AutocompleteInput
+        label="Property"
+        optionText="title"
+        filterToQuery={(q: string) => ({ 'title@ilike': q })}
+        sx={{ minWidth: 220 }}
+      />
+    </ReferenceInput>
     <BooleanInput source="refund_requested" label="Refund requested" alwaysOn />
     <SelectInput
       source="refund_status"
