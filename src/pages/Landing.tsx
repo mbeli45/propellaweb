@@ -8,7 +8,7 @@ function Landing() {
   return (
     <>
       <SEO 
-        title="PropellaCam — Find Your Home in Cameroon"
+        title="Propella — Find Your Home in Cameroon"
         description="Browse verified listings. Book site visits. Pay with Mobile Money."
         keywords="real estate Cameroon, properties Cameroon, house for sale, apartment for rent, land, Yaoundé, Douala, Buea"
       />
@@ -17,8 +17,8 @@ function Landing() {
         {/* NAV */}
         <nav>
           <div className="nav-logo">
-            <img src="/app-icon.png" alt="PropellaCam" className="logo-img" />
-            <span>PropellaCam</span>
+            <img src="/app-icon.png" alt="Propella" className="logo-img" />
+            <span>Propella</span>
           </div>
           <div className="nav-links">
             <a href="#features">Features</a>
@@ -48,34 +48,34 @@ function Landing() {
               <p className="hero-sub">Browse verified listings. Book site visits. Pay with Mobile Money.</p>
               <div className="hero-badges">
                 <a 
-                  className="badge" 
+                  className="badge badge-apple" 
                   href="https://apps.apple.com/us/app/propellacam/id6759719240" 
                   target="_blank" 
                   rel="noopener noreferrer"
                 >
-                  <Icon icon="mdi:apple" width="20" height="20" />
+                  <Icon icon="mdi:apple" width="32" height="32" />
                   <div className="bl">
                     <small>Download on the</small>
-                    App Store
+                    <strong>App Store</strong>
                   </div>
                 </a>
                 <a 
-                  className="badge" 
+                  className="badge badge-google" 
                   href="https://play.google.com/store/apps/details?id=com.propella.app" 
                   target="_blank" 
                   rel="noopener noreferrer"
                 >
-                  <Icon icon="mdi:google-play" width="20" height="20" />
+                  <Icon icon="logos:google-play-icon" width="28" height="28" />
                   <div className="bl">
-                    <small>Get it on</small>
-                    Google Play
+                    <small>GET IT ON</small>
+                    <strong>Google Play</strong>
                   </div>
                 </a>
               </div>
             </div>
             <div className="hero-phone-wrap">
               <div className="hero-phone">
-                <img src="/screenshots/1.png" alt="PropellaCam App" onError={(e) => { e.currentTarget.src = '/app-icon.png' }} />
+                <img src="/screenshots/1.png" alt="Propella App" onError={(e) => { e.currentTarget.src = '/app-icon.png' }} />
               </div>
             </div>
           </section>
@@ -157,7 +157,7 @@ function Landing() {
           <div className="ll-copy">
             <div className="s-label">FOR LANDLORDS</div>
             <h2 className="s-h2">List your property and reach <i>thousands</i></h2>
-            <p>Join landlords and agents across Cameroon who use PropellaCam to list properties, manage bookings, and get paid faster.</p>
+            <p>Join landlords and agents across Cameroon who use Propella to list properties, manage bookings, and get paid faster.</p>
             <div className="stat-row">
               <div>
                 <div className="stat-num">100+</div>
@@ -234,30 +234,30 @@ function Landing() {
         {/* FINAL CTA */}
         <section className="final">
           <h2>Ready to find<br />your <i>dream</i> home?</h2>
-          <p>Join thousands of users who trust PropellaCam for their real estate needs.</p>
+          <p>Join thousands of users who trust Propella for their real estate needs.</p>
           <div className="final-btns">
             <a 
-              className="badge" 
+              className="badge badge-apple" 
               href="https://apps.apple.com/us/app/propellacam/id6759719240" 
               target="_blank" 
               rel="noopener noreferrer"
             >
-              <Icon icon="mdi:apple" width="20" height="20" />
+              <Icon icon="mdi:apple" width="32" height="32" />
               <div className="bl">
                 <small>Download on the</small>
-                App Store
+                <strong>App Store</strong>
               </div>
             </a>
             <a 
-              className="badge" 
+              className="badge badge-google" 
               href="https://play.google.com/store/apps/details?id=com.propella.app" 
               target="_blank" 
               rel="noopener noreferrer"
             >
-              <Icon icon="mdi:google-play" width="20" height="20" />
+              <Icon icon="logos:google-play-icon" width="28" height="28" />
               <div className="bl">
-                <small>Get it on</small>
-                Google Play
+                <small>GET IT ON</small>
+                <strong>Google Play</strong>
               </div>
             </a>
           </div>
@@ -265,8 +265,8 @@ function Landing() {
 
         {/* FOOTER */}
         <footer>
-          <div className="foot-logo">PropellaCam</div>
-          <small>&copy; 2026 PropellaCam. All rights reserved.</small>
+          <div className="foot-logo">Propella</div>
+          <small>&copy; 2026 Propella. All rights reserved.</small>
           <div className="foot-links">
             <Link to="/terms">Terms</Link>
             <Link to="/privacy">Privacy</Link>

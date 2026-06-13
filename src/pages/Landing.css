@@ -113,26 +113,45 @@ nav {
   line-height: 1.5; margin-bottom: 36px;
 }
 
-/* store badges — black pill style */
+/* store badges — official style */
 .hero-badges {
   display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
   margin-bottom: 56px;
 }
 
 .badge {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 12px;
   background: var(--ink); color: var(--white);
-  padding: 13px 22px; border-radius: 50px;
+  padding: 10px 20px; border-radius: 8px;
   text-decoration: none; font-weight: 500; font-size: 14px;
   transition: transform .15s, box-shadow .15s;
   letter-spacing: -.1px;
+  min-width: 150px;
 }
 
 .badge:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.2); }
 
-.badge .bl { display: flex; flex-direction: column; line-height: 1.25; }
+.badge .bl { 
+  display: flex; 
+  flex-direction: column; 
+  line-height: 1.2; 
+  align-items: flex-start;
+}
 
-.badge .bl small { font-size: 10px; font-weight: 400; opacity: .65; margin-bottom: 1px; }
+.badge .bl small { 
+  font-size: 9px; 
+  font-weight: 400; 
+  opacity: .7; 
+  margin-bottom: 1px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.badge .bl strong {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
 
 .badge svg { flex-shrink: 0; }
 
