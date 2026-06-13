@@ -5,6 +5,7 @@ import UserLayout from '@/layouts/UserLayout'
 import AgentLayout from '@/layouts/AgentLayout'
 import AuthLayout from '@/layouts/AuthLayout'
 import LoadingScreen from '@/components/LoadingScreen'
+import Landing from '@/pages/Landing'
 import PropertyDetail from '@/pages/property/[id]'
 import AddProperty from '@/pages/property/add'
 import EditProperty from '@/pages/property/edit/[id]'
@@ -28,13 +29,16 @@ function AppRoutes() {
 
   // Determine which layout to use based on user role
   const getDefaultRoute = () => {
-    if (!user) return '/guest'
+    if (!user) return '/'
     if (user.role === 'agent' || user.role === 'landlord') return '/agent'
     return '/user'
   }
 
   return (
     <Routes>
+      {/* Landing Page - Public */}
+      <Route path="/" element={!user ? <Landing /> : <Navigate to={getDefaultRoute()} replace />} />
+
       {/* Admin routes - Public, react-admin handles its own auth */}
       <Route path="/admin/*" element={<Admin />} />
 
@@ -45,7 +49,7 @@ function AppRoutes() {
       <Route path="/guest/*" element={<GuestLayout />} />
 
       {/* User routes */}
-      <Route path="/user/*" element={user ? <UserLayout /> : <Navigate to="/guest" />} />
+      <Route path="/user/*" element={user ? <UserLayout /> : <Navigate to="/" />} />
 
       {/* Agent routes */}
       <Route path="/agent/*" element={user?.role === 'agent' || user?.role === 'landlord' ? <AgentLayout /> : <Navigate to="/user" />} />
@@ -67,8 +71,7 @@ function AppRoutes() {
       <Route path="/faq" element={<FAQ />} />
       <Route path="/support" element={<Support />} />
 
-      {/* Default redirect */}
-      <Route path="/" element={<Navigate to={getDefaultRoute()} replace />} />
+      {/* Fallback redirect */}
       <Route path="*" element={<Navigate to={getDefaultRoute()} replace />} />
     </Routes>
   )
