@@ -50,6 +50,11 @@ export function initSentry() {
   Sentry.init({
     dsn,
     environment: import.meta.env.MODE || 'development',
+    ignoreErrors: [
+      // WKWebView-based in-app browsers (e.g. Facebook iOS) expose window.webkit
+      // but may not register the specific handler names third-party libs probe for.
+      /window\.webkit\.messageHandlers/,
+    ],
     integrations: [
       Sentry.browserTracingIntegration(),
       Sentry.replayIntegration({

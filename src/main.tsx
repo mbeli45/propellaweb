@@ -5,6 +5,17 @@ import App from './App.tsx'
 import './index.css'
 import { initSentry } from './lib/sentry'
 
+// In WKWebView-based browsers (e.g. Facebook iOS), window.webkit.messageHandlers
+// exists but specific handler names may not be registered. Proxy unknown handlers
+// to a no-op so third-party libraries don't throw when probing for native bridges.
+if (typeof window !== 'undefined' && window.webkit?.messageHandlers) {
+  window.webkit.messageHandlers = new Proxy(window.webkit.messageHandlers, {
+    get(target, prop) {
+      return (prop in target) ? target[prop as string] : { postMessage: () => {} };
+    },
+  });
+}
+
 // Initialize Sentry
 initSentry()
 
