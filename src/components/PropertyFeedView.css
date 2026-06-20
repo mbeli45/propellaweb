@@ -160,13 +160,6 @@
   }
 }
 
-/* Hide media counter on small screens to avoid overlap with toggle button */
-@media (max-width: 480px) {
-  .feed-media-counter {
-    display: none !important;
-  }
-}
-
 /* Navigation arrows - Show only on large screens (desktop) */
 @media (min-width: 769px) {
   .feed-nav-arrow {

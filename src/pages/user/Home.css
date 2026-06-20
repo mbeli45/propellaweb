@@ -141,7 +141,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
-  padding: 0 16px;
+  padding: 0 20px;
 }
 
 .empty-state {
@@ -153,6 +153,7 @@
   .property-grid {
     grid-template-columns: 1fr;
     gap: 16px;
+    padding: 0 16px;
   }
 
   .location-pill {
@@ -168,11 +169,31 @@
 @media (min-width: 769px) and (max-width: 1024px) {
   .property-grid {
     grid-template-columns: repeat(2, 1fr);
+    padding: 0 24px;
+    gap: 20px;
+  }
+
+  .section-header {
+    padding: 0 24px;
+  }
+
+  .horizontal-properties-scroll {
+    padding: 0 24px;
   }
 }
 
 @media (min-width: 1025px) {
   .property-grid {
     grid-template-columns: repeat(3, 1fr);
+    padding: 0 32px;
+    gap: 24px;
+  }
+
+  .section-header {
+    padding: 0 32px;
+  }
+
+  .horizontal-properties-scroll {
+    padding: 0 32px;
   }
 }

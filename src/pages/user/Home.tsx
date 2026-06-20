@@ -12,7 +12,7 @@ import FilterModal, { FilterOptions } from '@/components/FilterModal'
 import PropertyCard from '@/components/PropertyCard'
 import PropertyListSkeleton from '@/components/PropertyListSkeleton'
 import PropertyFeedView from '@/components/PropertyFeedView'
-import { MapPin, ArrowRight, Star, User as UserIcon, Grid3x3, LayoutGrid } from 'lucide-react'
+import { MapPin, ArrowRight, Star, User as UserIcon, LayoutGrid } from 'lucide-react'
 import './Home.css'
 
 export default function UserHome() {
@@ -162,7 +162,7 @@ export default function UserHome() {
   // Render feed view
   if (viewMode === 'feed') {
     return (
-      <div style={{ 
+      <div style={{
         position: 'fixed',
         top: 0,
         left: 0,
@@ -171,33 +171,10 @@ export default function UserHome() {
         height: '100dvh',
         overflow: 'hidden'
       }}>
-        {/* View Toggle Button - Only show when feed is active */}
-        <button
-          onClick={() => handleViewModeChange('grid')}
-          style={{
-            position: 'absolute',
-            top: '16px',
-            right: '16px',
-            zIndex: 100,
-            padding: '10px',
-            borderRadius: '8px',
-            border: 'none',
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            color: Colors.white,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(10px)',
-            transition: 'all 0.2s'
-          }}
-          title="Switch to Grid View"
-        >
-          <Grid3x3 size={20} />
-        </button>
-        <PropertyFeedView 
+        <PropertyFeedView
           properties={allPropertiesForFeed}
           loading={isLoading}
+          onSwitchToGrid={() => handleViewModeChange('grid')}
         />
       </div>
     )
@@ -233,37 +210,43 @@ export default function UserHome() {
       </div>
 
       {/* Search Bar and View Toggle */}
-      <div style={{ 
-        padding: '0 16px', 
-        marginBottom: '12px',
+      <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '8px'
+        paddingRight: '16px',
+        marginBottom: '12px',
+        gap: '8px',
+        maxWidth: '720px'
       }}>
-        <div style={{ flex: 1 }}>
-          <SearchBar 
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <SearchBar
             onSearch={handleSearch}
             onFilter={handleFilterOpen}
             placeholder={t('home.searchPlaceholder')}
           />
         </div>
         <button
-          onClick={() => handleViewModeChange(viewMode === 'grid' ? 'feed' : 'grid')}
+          onClick={() => handleViewModeChange('feed')}
           style={{
-            padding: '10px',
-            borderRadius: '8px',
-            border: 'none',
-            backgroundColor: Colors.neutral[100],
-            color: Colors.neutral[700],
+            padding: '0 12px',
+            height: '48px',
+            borderRadius: '10px',
+            border: `1px solid ${Colors.neutral[200]}`,
+            backgroundColor: Colors.white,
+            color: Colors.primary[700],
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            gap: '6px',
+            fontSize: '13px',
+            fontWeight: '600',
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
             transition: 'all 0.2s'
           }}
-          title={viewMode === 'grid' ? 'Switch to Feed View' : 'Switch to Grid View'}
         >
-          {viewMode === 'grid' ? <LayoutGrid size={20} /> : <Grid3x3 size={20} />}
+          <LayoutGrid size={18} />
+          Feed
         </button>
       </div>
 

@@ -6,21 +6,25 @@ import { getColors } from '@/constants/Colors'
 import { PropertyData } from './PropertyCard'
 import { formatPrice, calculateRentPrices } from '@/utils/shareUtils'
 import { isVideoUrl, separateMedia } from '@/utils/videoUtils'
-import { MapPin, BedDouble, Bath, Share2, ChevronUp, ChevronDown } from 'lucide-react'
+import { MapPin, BedDouble, Bath, Share2, Eye, ChevronUp, ChevronDown, LayoutGrid, Grid3x3 } from 'lucide-react'
 import './PropertyFeedView.css'
+
+const RENDER_WINDOW = 2 // Only render properties within ±2 of current index
 
 interface PropertyFeedViewProps {
   properties: PropertyData[]
   loading?: boolean
   onLoadMore?: () => void
   hasMore?: boolean
+  onSwitchToGrid?: () => void
 }
 
-export default function PropertyFeedView({ 
-  properties, 
+export default function PropertyFeedView({
+  properties,
   loading = false,
   onLoadMore,
-  hasMore = false
+  hasMore = false,
+  onSwitchToGrid
 }: PropertyFeedViewProps) {
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
@@ -169,7 +173,6 @@ export default function PropertyFeedView({
 
   // Touch handlers for 2D swipe detection
   const handleTouchStart = (e: React.TouchEvent) => {
-    console.log('Touch start:', e.touches[0].clientX, e.touches[0].clientY)
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
     touchEndX.current = e.touches[0].clientX
@@ -182,7 +185,6 @@ export default function PropertyFeedView({
   }
 
   const handleTouchEnd = () => {
-    console.log('Touch end - Start:', touchStartX.current, touchStartY.current, 'End:', touchEndX.current, touchEndY.current)
     handleSwipeEnd()
   }
 
@@ -223,39 +225,20 @@ export default function PropertyFeedView({
     const absDiffX = Math.abs(diffX)
     const absDiffY = Math.abs(diffY)
 
-    console.log('Swipe detected - diffX:', diffX, 'diffY:', diffY, 'absDiffX:', absDiffX, 'absDiffY:', absDiffY)
-
-    // Check if we have multiple media for current property
     const hasMultipleMedia = currentPropertyMedia.length > 1
-    console.log('Has multiple media:', hasMultipleMedia, 'Count:', currentPropertyMedia.length)
 
-    // Prioritize horizontal swipe when there are multiple media
     if (hasMultipleMedia && absDiffX > threshold && absDiffX > absDiffY) {
-      console.log('Horizontal swipe detected')
-      // Horizontal swipe - navigate media within property
       if (diffX > 0) {
-        console.log('Next media')
-        // Swipe left (startX > endX) - next media
         goToNextMedia()
       } else {
-        console.log('Previous media')
-        // Swipe right (startX < endX) - previous media
         goToPreviousMedia()
       }
     } else if (absDiffY > threshold && absDiffY > absDiffX) {
-      console.log('Vertical swipe detected')
-      // Vertical swipe - navigate between properties
       if (diffY > 0) {
-        console.log('Next property')
-        // Swipe up (startY > endY) - next property
         goToNextProperty()
       } else {
-        console.log('Previous property')
-        // Swipe down (startY < endY) - previous property
         goToPreviousProperty()
       }
-    } else {
-      console.log('No swipe detected - threshold not met or no clear direction')
     }
   }
 
@@ -429,6 +412,28 @@ export default function PropertyFeedView({
     }
   }, [currentPropertyIndex, currentProperty])
 
+  // Preload first image of adjacent properties
+  useEffect(() => {
+    const nextProp = properties[currentPropertyIndex + 1]
+    if (nextProp) {
+      const nextMedia = getPropertyMedia(nextProp)
+      const firstImage = nextMedia.find(m => !isVideoUrl(m))
+      if (firstImage) {
+        const img = new Image()
+        img.src = firstImage
+      }
+    }
+    const prevProp = properties[currentPropertyIndex - 1]
+    if (prevProp) {
+      const prevMedia = getPropertyMedia(prevProp)
+      const firstImage = prevMedia.find(m => !isVideoUrl(m))
+      if (firstImage) {
+        const img = new Image()
+        img.src = firstImage
+      }
+    }
+  }, [currentPropertyIndex, properties, getPropertyMedia])
+
   if (properties.length === 0 && !loading) {
     return (
       <div className="feed-empty-state" style={{ color: Colors.neutral[600] }}>
@@ -450,6 +455,39 @@ export default function PropertyFeedView({
       onMouseLeave={handleMouseLeave}
       style={{ backgroundColor: Colors.neutral[900] }}
     >
+      {/* Grid toggle — top-right pill button matching "Feed" button style in grid mode */}
+      {onSwitchToGrid && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onSwitchToGrid() }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            zIndex: 9999,
+            height: '40px',
+            paddingLeft: '12px',
+            paddingRight: '14px',
+            borderRadius: '20px',
+            backgroundColor: Colors.primary[600],
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+            pointerEvents: 'auto',
+            flexShrink: 0,
+            whiteSpace: 'nowrap'
+          }}
+          title="Switch to Grid View"
+        >
+          <Grid3x3 size={18} color="white" />
+          <span style={{ fontSize: '13px', fontWeight: '600', color: '#fff' }}>Grid</span>
+        </button>
+      )}
+
       {/* Vertical Swiping Container - Properties */}
       <div className="feed-properties-wrapper" style={{
         position: 'absolute',
@@ -463,11 +501,22 @@ export default function PropertyFeedView({
         transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
       }}>
         {properties.map((property, propIndex) => {
+          const isInWindow = Math.abs(propIndex - currentPropertyIndex) <= RENDER_WINDOW
+          const isActive = propIndex === currentPropertyIndex
           const media = getPropertyMedia(property)
           const mediaIdx = currentMediaIndex[property.id] || 0
           const mediaUrl = media[mediaIdx] || property.image || '/placeholder-property.jpg'
           const isVideo = isVideoUrl(mediaUrl)
-          
+
+          if (!isInWindow) {
+            return (
+              <div
+                key={property.id}
+                style={{ width: '100%', height: '100dvh', flexShrink: 0, backgroundColor: '#000' }}
+              />
+            )
+          }
+
           return (
             <div
               key={property.id}
@@ -493,7 +542,8 @@ export default function PropertyFeedView({
               }}>
                 {media.map((mediaItem, mediaItemIndex) => {
                   const isMediaVideo = isVideoUrl(mediaItem)
-                  
+                  const isCurrentMediaItem = isActive && mediaItemIndex === mediaIdx
+
                   return (
                     <div
                       key={`${property.id}-media-${mediaItemIndex}`}
@@ -521,17 +571,14 @@ export default function PropertyFeedView({
                           autoPlay
                           preload="auto"
                           onLoadedData={(e) => {
-                            // Auto-play when video is loaded and is the current one
                             if (propIndex === currentPropertyIndex && mediaItemIndex === mediaIdx) {
                               const video = e.currentTarget
                               video.play().catch(() => {
-                                // Retry if autoplay fails
                                 setTimeout(() => video.play().catch(() => {}), 100)
                               })
                             }
                           }}
                           onPlay={() => {
-                            // Ensure video stays playing when it becomes active
                             if (propIndex === currentPropertyIndex && mediaItemIndex === mediaIdx) {
                               const video = videoRefs.current[`${property.id}-${mediaItem}`]
                               if (video && video.paused) {
@@ -546,14 +593,16 @@ export default function PropertyFeedView({
                           }}
                         />
                       ) : (
-                        <div
-                          className="feed-image"
+                        <img
+                          src={mediaItem}
+                          alt={property.title || 'Property'}
+                          fetchPriority={isCurrentMediaItem ? 'high' : 'auto'}
+                          decoding="async"
                           style={{
                             width: '100%',
                             height: '100%',
-                            backgroundImage: `url(${mediaItem})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center'
+                            objectFit: 'cover',
+                            display: 'block'
                           }}
                         />
                       )}
@@ -596,8 +645,8 @@ export default function PropertyFeedView({
                       key={idx}
                       style={{
                         width: idx === mediaIdx ? '24px' : '6px',
-                        height: '6px',
-                        borderRadius: '3px',
+                        height: '3px',
+                        borderRadius: '2px',
                         backgroundColor: idx === mediaIdx ? Colors.white : 'rgba(255,255,255,0.4)',
                         transition: 'all 0.3s ease'
                       }}
@@ -693,222 +742,156 @@ export default function PropertyFeedView({
                 </>
               )}
 
-              {/* Property Content Overlay - Moves with property vertically, static during horizontal media swipe */}
+              {/* Property overlay — only rendered for the active slide */}
               {propIndex === currentPropertyIndex && (
-                <div 
-                  className="feed-content-static"
-                  key={`property-overlay-${property.id}`}
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    zIndex: 10,
-                    padding: '16px',
-                    paddingBottom: '70px',
-                    pointerEvents: 'auto',
-                    transform: 'none',
-                    willChange: 'auto'
-                  }}
-                >
-                  {/* Scroll Down Indicator - Only show on first property */}
-                  {propIndex === 0 && (
-                    <div style={{
+                <>
+                  {/* Caption: bottom-left, right: 80px leaves room for action buttons */}
+                  <div
+                    className="feed-content-static"
+                    key={`property-overlay-${property.id}`}
+                    style={{
                       position: 'absolute',
-                      top: '-60px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '8px',
-                      animation: 'pulse 2s ease-in-out infinite'
-                    }}>
-                      <span style={{
-                        fontSize: '12px',
-                        color: Colors.white,
-                        fontWeight: '600',
-                        textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '1px'
+                      bottom: 0,
+                      left: 0,
+                      right: '80px',
+                      zIndex: 10,
+                      paddingLeft: '16px',
+                      paddingRight: '16px',
+                      paddingBottom: '70px',
+                      pointerEvents: 'auto'
+                    }}
+                  >
+                    {/* Swipe Up hint on first property */}
+                    {propIndex === 0 && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '-60px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '8px',
+                        animation: 'pulse 2s ease-in-out infinite'
                       }}>
-                        Swipe Up
-                      </span>
-                      <svg 
-                        width="24" 
-                        height="24" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="white" 
-                        strokeWidth="3" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                        style={{
-                          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
-                        }}
-                      >
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                      </svg>
-                    </div>
-                  )}
-                  {/* Property Info */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <h2 style={{
-                      fontSize: '18px',
-                      fontWeight: '600',
-                      color: Colors.white,
-                      marginBottom: '6px',
-                      textShadow: '0 2px 8px rgba(0,0,0,0.5)',
-                      lineHeight: '1.3'
-                    }}>
-                      {property.title || t('property.untitledProperty')}
-                    </h2>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                      <MapPin size={14} color={Colors.white} />
-                      <span style={{
-                        fontSize: '13px',
-                        color: Colors.white,
-                        textShadow: '0 1px 4px rgba(0,0,0,0.5)'
-                      }}>
-                        {property.location || t('property.locationNotSpecified')}
-                      </span>
-                    </div>
+                        <span style={{
+                          fontSize: '12px',
+                          color: '#fff',
+                          fontWeight: '600',
+                          textShadow: '0 2px 6px rgba(0,0,0,0.9)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px'
+                        }}>
+                          Swipe Up
+                        </span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}>
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </div>
+                    )}
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                      {property.bedrooms && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <BedDouble size={14} color={Colors.white} />
-                          <span style={{ fontSize: '13px', color: Colors.white, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
-                            {property.bedrooms}
-                          </span>
+                    {/* Property info — 8px gap between rows, matching mobile */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <h2 style={{
+                        fontSize: '16px',
+                        fontWeight: '700',
+                        color: '#fff',
+                        margin: 0,
+                        textShadow: '0 2px 6px rgba(0,0,0,0.9)',
+                        lineHeight: '1.375'
+                      }}>
+                        {property.title || t('property.untitledProperty')}
+                      </h2>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <MapPin size={14} color="#fff" />
+                        <span style={{ fontSize: '14px', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                          {property.location || t('property.locationNotSpecified')}
+                        </span>
+                      </div>
+
+                      {(property.bedrooms || property.bathrooms || property.area) && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {property.bedrooms && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <BedDouble size={14} color="#fff" />
+                              <span style={{ fontSize: '13px', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                                {property.bedrooms}
+                              </span>
+                            </div>
+                          )}
+                          {property.bathrooms && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Bath size={14} color="#fff" />
+                              <span style={{ fontSize: '13px', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                                {property.bathrooms}
+                              </span>
+                            </div>
+                          )}
+                          {property.area && (
+                            <span style={{ fontSize: '13px', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                              {property.area} m²
+                            </span>
+                          )}
                         </div>
                       )}
-                      {property.bathrooms && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <Bath size={14} color={Colors.white} />
-                          <span style={{ fontSize: '13px', color: Colors.white, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
-                            {property.bathrooms}
+
+                      {property.type === 'rent' ? (() => {
+                        const { monthlyPrice } = calculateRentPrices(property.price, property.rent_period)
+                        return (
+                          <span style={{ fontSize: '18px', fontWeight: '700', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                            {formatPrice(monthlyPrice)} / {t('propertyCard.month')}
                           </span>
-                        </div>
-                      )}
-                      {property.area && (
-                        <span style={{ fontSize: '13px', color: Colors.white, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
-                          {property.area} m²
+                        )
+                      })() : (
+                        <span style={{ fontSize: '18px', fontWeight: '700', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                          {formatPrice(property.price)}
                         </span>
                       )}
                     </div>
-
-                    {property.type === 'rent' ? (() => {
-                      const { monthlyPrice, yearlyPrice } = calculateRentPrices(property.price, property.rent_period)
-                      return (
-                        <>
-                          <div style={{
-                            fontSize: '20px',
-                            fontWeight: '700',
-                            color: Colors.primary[400],
-                            textShadow: '0 2px 8px rgba(0,0,0,0.5)',
-                            marginBottom: '2px'
-                          }}>
-                            {formatPrice(monthlyPrice)} / {t('propertyCard.month')}
-                          </div>
-                          <div style={{
-                            fontSize: '12px',
-                            fontWeight: '500',
-                            color: 'rgba(255,255,255,0.8)',
-                            textShadow: '0 1px 4px rgba(0,0,0,0.5)'
-                          }}>
-                            ({formatPrice(yearlyPrice)} / {t('propertyCard.year')})
-                          </div>
-                        </>
-                      )
-                    })() : (
-                      <div style={{
-                        fontSize: '20px',
-                        fontWeight: '700',
-                        color: Colors.primary[400],
-                        textShadow: '0 2px 8px rgba(0,0,0,0.5)'
-                      }}>
-                        {formatPrice(property.price)}
-                      </div>
-                    )}
                   </div>
 
-                  {/* Action Buttons */}
+                  {/* Right-side action buttons — TikTok style, matching mobile */}
                   <div style={{
+                    position: 'absolute',
+                    right: '12px',
+                    bottom: '160px',
+                    zIndex: 10,
                     display: 'flex',
-                    gap: '8px',
-                    marginTop: '12px'
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '20px'
                   }}>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        navigate(`/property/${property.id}`)
-                      }}
-                      style={{
-                        flex: 1,
-                        padding: '10px 20px',
-                        backgroundColor: Colors.primary[600],
-                        color: Colors.white,
-                        border: 'none',
-                        borderRadius: '10px',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-                      }}
+                      onClick={(e) => { e.stopPropagation(); navigate(`/property/${property.id}`) }}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                     >
-                      {t('common.viewDetails')}
+                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'rgba(50,50,50,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Eye size={24} color="#fff" />
+                      </div>
+                      <span style={{ fontSize: '11px', color: '#fff', fontWeight: '600', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                        View
+                      </span>
                     </button>
+
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        // Share functionality
-                      }}
-                      style={{
-                        padding: '10px',
-                        backgroundColor: 'rgba(255,255,255,0.2)',
-                        color: Colors.white,
-                        border: 'none',
-                        borderRadius: '10px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backdropFilter: 'blur(10px)'
-                      }}
+                      onClick={(e) => { e.stopPropagation() }}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                     >
-                      <Share2 size={18} />
+                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'rgba(50,50,50,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Share2 size={24} color="#fff" />
+                      </div>
+                      <span style={{ fontSize: '11px', color: '#fff', fontWeight: '600', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                        Share
+                      </span>
                     </button>
                   </div>
-                </div>
+                </>
               )}
             </div>
           )
         })}
       </div>
-
-      {/* Media Counter - Shows current media position within property (only if multiple media) */}
-      {currentProperty && currentPropertyMedia.length > 1 && (
-        <div 
-          className="feed-media-counter"
-          style={{
-            position: 'absolute',
-            top: '20px',
-            right: '20px',
-            zIndex: 15,
-            padding: '6px 12px',
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            borderRadius: '16px',
-            color: Colors.white,
-            fontSize: '12px',
-            fontWeight: '600',
-            backdropFilter: 'blur(10px)'
-          }}
-        >
-          {currentMediaIdx + 1} / {currentPropertyMedia.length}
-        </div>
-      )}
 
       {/* Vertical Navigation Arrows for Large Screens - Property Navigation */}
       <div className="feed-property-nav-arrows">
@@ -922,7 +905,7 @@ export default function PropertyFeedView({
             style={{
               position: 'absolute',
               top: '30%',
-              right: '20px',
+              left: '20px',
               transform: 'translateY(-50%)',
               zIndex: 20,
               width: '48px',
@@ -962,7 +945,7 @@ export default function PropertyFeedView({
             style={{
               position: 'absolute',
               bottom: '30%',
-              right: '20px',
+              left: '20px',
               transform: 'translateY(50%)',
               zIndex: 20,
               width: '48px',

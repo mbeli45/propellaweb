@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "mcp__sentry__search_issues",
-      "mcp__sentry__get_sentry_resource"
+      "mcp__sentry__get_sentry_resource",
+      "mcp__supabase__execute_sql",
+      "Bash(xargs grep -l \"grid\\\\|flex\")"
     ]
   },
   "enableAllProjectMcpServers": true
