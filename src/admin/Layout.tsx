@@ -264,6 +264,7 @@ const SidebarContent = ({ onNavigate, collapsed }: SidebarContentProps) => {
         <NavItem to={p('/properties')} icon="lucide:building-2" label="Properties" onClick={onNavigate} collapsed={collapsed} />
         <NavItem to={p('/reservations')} icon="lucide:calendar-check" label="Reservations" badge={counts.reservations} onClick={onNavigate} collapsed={collapsed} />
         <NavItem to={p('/profiles')} icon="lucide:users" label="Users" onClick={onNavigate} collapsed={collapsed} />
+        <NavItem to={p('/signup-stats')} icon="lucide:user-plus" label="Signup stats" onClick={onNavigate} collapsed={collapsed} />
 
         <Section label="Money" />
         <NavItem to={p('/transactions')} icon="lucide:credit-card" label="Transactions" onClick={onNavigate} collapsed={collapsed} />

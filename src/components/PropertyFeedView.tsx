@@ -33,6 +33,7 @@ export default function PropertyFeedView({
   
   const [currentPropertyIndex, setCurrentPropertyIndex] = useState(0)
   const [currentMediaIndex, setCurrentMediaIndex] = useState<{ [propertyId: string]: number }>({})
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({})
   const touchStartX = useRef<number>(0)
@@ -455,7 +456,7 @@ export default function PropertyFeedView({
       onMouseLeave={handleMouseLeave}
       style={{ backgroundColor: Colors.neutral[900] }}
     >
-      {/* Grid toggle — top-right pill button matching "Feed" button style in grid mode */}
+      {/* Grid toggle — matches mobile actionButton style: circle + label below */}
       {onSwitchToGrid && (
         <button
           onClick={(e) => { e.stopPropagation(); onSwitchToGrid() }}
@@ -464,27 +465,35 @@ export default function PropertyFeedView({
           style={{
             position: 'absolute',
             top: '16px',
-            right: '16px',
+            right: '12px',
             zIndex: 9999,
-            height: '40px',
-            paddingLeft: '12px',
-            paddingRight: '14px',
-            borderRadius: '20px',
-            backgroundColor: Colors.primary[600],
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '4px',
+            background: 'none',
             border: 'none',
             cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
-            pointerEvents: 'auto',
-            flexShrink: 0,
-            whiteSpace: 'nowrap'
+            padding: 0,
+            pointerEvents: 'auto'
           }}
           title="Switch to Grid View"
         >
-          <Grid3x3 size={18} color="white" />
-          <span style={{ fontSize: '13px', fontWeight: '600', color: '#fff' }}>Grid</span>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            backgroundColor: Colors.primary[600],
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.4)'
+          }}>
+            <Grid3x3 size={24} color="#fff" />
+          </div>
+          <span style={{ fontSize: '11px', color: '#fff', fontWeight: '600', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+            Grid
+          </span>
         </button>
       )}
 
@@ -592,20 +601,45 @@ export default function PropertyFeedView({
                             objectFit: 'cover'
                           }}
                         />
-                      ) : (
-                        <img
-                          src={mediaItem}
-                          alt={property.title || 'Property'}
-                          fetchPriority={isCurrentMediaItem ? 'high' : 'auto'}
-                          decoding="async"
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            display: 'block'
-                          }}
-                        />
-                      )}
+                      ) : (() => {
+                        const imgKey = `${property.id}-${mediaItem}`
+                        const isImgLoaded = loadedImages.has(imgKey)
+                        return (
+                          <>
+                            {!isImgLoaded && (
+                              <div style={{
+                                position: 'absolute',
+                                inset: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: '#111'
+                              }}>
+                                <div className="feed-spinner" />
+                              </div>
+                            )}
+                            <img
+                              src={mediaItem}
+                              alt={property.title || 'Property'}
+                              fetchPriority={isCurrentMediaItem ? 'high' : 'auto'}
+                              decoding="async"
+                              onLoad={() => setLoadedImages(prev => {
+                                const next = new Set(prev)
+                                next.add(imgKey)
+                                return next
+                              })}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                display: 'block',
+                                opacity: isImgLoaded ? 1 : 0,
+                                transition: 'opacity 0.3s ease'
+                              }}
+                            />
+                          </>
+                        )
+                      })()}
 
                       {/* Gradient Overlay */}
                       <div 

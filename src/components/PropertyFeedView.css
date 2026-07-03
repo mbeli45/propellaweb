@@ -148,6 +148,20 @@
   transition: opacity 0.3s ease;
 }
 
+/* Image loading spinner */
+.feed-spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: rgba(255, 255, 255, 0.8);
+  animation: feed-spin 0.75s linear infinite;
+}
+
+@keyframes feed-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Pulse animation for scroll indicator */
 @keyframes pulse {
   0%, 100% {

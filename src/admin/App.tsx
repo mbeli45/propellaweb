@@ -1,4 +1,5 @@
-import { Admin, Resource } from 'react-admin';
+import { Admin, CustomRoutes, Resource } from 'react-admin';
+import { Route } from 'react-router-dom';
 import { dataProvider } from './dataProvider';
 import { authProvider } from './authProvider';
 import { adminTheme } from './theme';
@@ -22,6 +23,7 @@ import { NotificationList } from './resources/Notifications';
 import { PropertyViewList } from './resources/PropertyViews';
 // import StorageMigrationPage from './pages/StorageMigration';
 import Dashboard from './pages/Dashboard';
+import UserSignupStats from './pages/UserSignupStats';
 
 // Menu icons - Using Lucide and Heroicons for better design
 const PropertyIcon = () => <Icon icon="lucide:building-2" width={24} />;
@@ -60,6 +62,9 @@ const AdminApp = () => {
       dashboard={Dashboard}
       requireAuth
     >
+      <CustomRoutes>
+        <Route path="/signup-stats" element={<UserSignupStats />} />
+      </CustomRoutes>
       <Resource
         name="properties"
         list={PropertyList}
