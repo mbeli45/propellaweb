@@ -6,7 +6,7 @@ import { getColors } from '@/constants/Colors'
 import { PropertyData } from './PropertyCard'
 import { formatPrice, calculateRentPrices } from '@/utils/shareUtils'
 import { isVideoUrl, separateMedia } from '@/utils/videoUtils'
-import { MapPin, BedDouble, Bath, Share2, Eye, ChevronUp, ChevronDown, LayoutGrid, Grid3x3 } from 'lucide-react'
+import { MapPin, BedDouble, Bath, Share2, Eye, ChevronUp, ChevronDown, LayoutGrid, Grid3x3, Search, X } from 'lucide-react'
 import './PropertyFeedView.css'
 
 const RENDER_WINDOW = 2 // Only render properties within ±2 of current index
@@ -17,6 +17,8 @@ interface PropertyFeedViewProps {
   onLoadMore?: () => void
   hasMore?: boolean
   onSwitchToGrid?: () => void
+  onSearch?: (query: string) => void
+  searchValue?: string
 }
 
 export default function PropertyFeedView({
@@ -24,7 +26,9 @@ export default function PropertyFeedView({
   loading = false,
   onLoadMore,
   hasMore = false,
-  onSwitchToGrid
+  onSwitchToGrid,
+  onSearch,
+  searchValue = ''
 }: PropertyFeedViewProps) {
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
@@ -34,6 +38,7 @@ export default function PropertyFeedView({
   const [currentPropertyIndex, setCurrentPropertyIndex] = useState(0)
   const [currentMediaIndex, setCurrentMediaIndex] = useState<{ [propertyId: string]: number }>({})
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
+  const [feedSearchQuery, setFeedSearchQuery] = useState(searchValue)
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({})
   const touchStartX = useRef<number>(0)
@@ -43,6 +48,28 @@ export default function PropertyFeedView({
   const isTransitioning = useRef<boolean>(false)
   const isDragging = useRef<boolean>(false)
   const wheelTimeout = useRef<NodeJS.Timeout | null>(null)
+
+  // Sync search query with prop
+  useEffect(() => {
+    setFeedSearchQuery(searchValue)
+  }, [searchValue])
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value
+    setFeedSearchQuery(query)
+    if (onSearch) {
+      onSearch(query)
+    }
+  }
+
+  // Handle clear search
+  const handleClearSearch = () => {
+    setFeedSearchQuery('')
+    if (onSearch) {
+      onSearch('')
+    }
+  }
 
   // Get media for a property (videos first, then images)
   const getPropertyMedia = useCallback((property: PropertyData) => {
@@ -456,6 +483,70 @@ export default function PropertyFeedView({
       onMouseLeave={handleMouseLeave}
       style={{ backgroundColor: Colors.neutral[900] }}
     >
+      {/* Search Overlay - Top Left */}
+      {onSearch && (
+        <div style={{
+          position: 'absolute',
+          top: '16px',
+          left: '16px',
+          right: '80px',
+          zIndex: 9999,
+          pointerEvents: 'auto'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0,0,0,0.55)',
+            borderRadius: '22px',
+            border: '1px solid rgba(255,255,255,0.3)',
+            paddingLeft: '12px',
+            paddingRight: '12px',
+            height: '44px',
+            backdropFilter: 'blur(10px)'
+          }}>
+            <Search size={18} color="rgba(255,255,255,0.9)" />
+            <input
+              type="text"
+              value={feedSearchQuery}
+              onChange={handleSearchChange}
+              placeholder={t('home.searchPlaceholder') || 'Search properties...'}
+              style={{
+                flex: 1,
+                marginLeft: '8px',
+                backgroundColor: 'transparent',
+                border: 'none',
+                outline: 'none',
+                color: '#fff',
+                fontSize: '15px',
+                fontFamily: 'Inter-Medium',
+                padding: 0
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+            />
+            {feedSearchQuery.length > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleClearSearch() }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                style={{
+                  marginLeft: '8px',
+                  padding: '4px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <X size={16} color="rgba(255,255,255,0.9)" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Grid toggle — matches mobile actionButton style: circle + label below */}
       {onSwitchToGrid && (
         <button

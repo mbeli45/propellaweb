@@ -143,6 +143,8 @@ export default function GuestHome() {
             properties={allPropertiesForFeed}
             loading={isLoading}
             onSwitchToGrid={() => handleViewModeChange('grid')}
+            onSearch={handleSearch}
+            searchValue={searchTerm}
           />
         </div>
       </>

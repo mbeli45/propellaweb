@@ -175,6 +175,8 @@ export default function UserHome() {
           properties={allPropertiesForFeed}
           loading={isLoading}
           onSwitchToGrid={() => handleViewModeChange('grid')}
+          onSearch={handleSearch}
+          searchValue={searchTerm}
         />
       </div>
     )
