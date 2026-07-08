@@ -489,8 +489,9 @@ export default function PropertyFeedView({
           position: 'absolute',
           top: '16px',
           left: '16px',
-          right: '80px',
-          zIndex: 9999,
+          right: '100px',
+          maxWidth: '400px',
+          zIndex: 9998,
           pointerEvents: 'auto'
         }}>
           <div style={{
