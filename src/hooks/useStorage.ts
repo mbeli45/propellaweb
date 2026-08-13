@@ -283,15 +283,21 @@ export const useStorage = () => {
         if (fileToUpload.type) {
           contentType = fileToUpload.type
         } else {
-          // Fallback: determine from extension
+          // Fallback: determine from extension. Includes the iOS formats (.heic/.heif
+          // from the camera, .m4v/.qt from the library) that previously fell through to
+          // image/jpeg and mislabelled the stored object.
           if (fileExt === 'mp4') contentType = 'video/mp4'
-          else if (fileExt === 'mov') contentType = 'video/quicktime'
+          else if (fileExt === 'mov' || fileExt === 'qt') contentType = 'video/quicktime'
+          else if (fileExt === 'm4v') contentType = 'video/x-m4v'
           else if (fileExt === 'avi') contentType = 'video/x-msvideo'
           else if (fileExt === 'mkv') contentType = 'video/x-matroska'
           else if (fileExt === 'webm') contentType = 'video/webm'
+          else if (fileExt === '3gp') contentType = 'video/3gpp'
           else if (fileExt === 'png') contentType = 'image/png'
           else if (fileExt === 'gif') contentType = 'image/gif'
           else if (fileExt === 'webp') contentType = 'image/webp'
+          else if (fileExt === 'heic') contentType = 'image/heic'
+          else if (fileExt === 'heif') contentType = 'image/heif'
           else contentType = 'image/jpeg' // Default
         }
       }

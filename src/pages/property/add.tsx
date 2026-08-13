@@ -133,6 +133,19 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
     }) ||
     `${file.name} is ${formatFileSize(file.size)}. Files over 50MB must be uploaded using the Propella mobile app.`
 
+  // A picked file can be listed but not actually readable: on Android Chrome, items that
+  // live only in Google Photos come back with size 0 or throw NotReadableError when read.
+  // Accepting them silently means an empty gallery (or a broken upload) with no explanation.
+  const isFileReadable = async (file: File): Promise<boolean> => {
+    if (file.size === 0) return false
+    try {
+      await file.slice(0, 1).arrayBuffer()
+      return true
+    } catch {
+      return false
+    }
+  }
+
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (files.length === 0) {
@@ -147,11 +160,31 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
       return
     }
 
-    setSuccessMessage(null)
-    setError(null)
-    const maxNewImages = isEditMode ? Math.max(0, 10 - existingImages.length) : 10
-    setForm(prev => ({ ...prev, images: [...prev.images, ...files].slice(0, maxNewImages) }))
+    const readable = await Promise.all(files.map(isFileReadable))
+    const usableFiles = files.filter((_, i) => readable[i])
+    const unreadableCount = files.length - usableFiles.length
+
     e.target.value = ''
+    setSuccessMessage(null)
+
+    if (usableFiles.length === 0) {
+      setError(
+        t('propertyForm.mediaUnreadable') ||
+          "Those items couldn't be read from this device. Photos stored only in the cloud (Google Photos, iCloud) have to be downloaded to the device before they can be uploaded."
+      )
+      return
+    }
+
+    // Keep the readable files rather than failing the whole selection, but say what was dropped.
+    setError(
+      unreadableCount > 0
+        ? t('propertyForm.someMediaUnreadable', { count: unreadableCount }) ||
+            `${unreadableCount} item(s) couldn't be read and were skipped. Photos stored only in the cloud have to be downloaded to this device first.`
+        : null
+    )
+
+    const maxNewImages = isEditMode ? Math.max(0, 10 - existingImages.length) : 10
+    setForm(prev => ({ ...prev, images: [...prev.images, ...usableFiles].slice(0, maxNewImages) }))
   }
 
   const removeImage = (index: number) => {

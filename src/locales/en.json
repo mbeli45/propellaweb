@@ -279,6 +279,8 @@
     "addPhotosVideos": "Add high-quality photos and videos to showcase your property ({{count}}/10)",
     "supportedFormats": "Supported: Images (JPG, PNG) and Videos (MP4, MOV). Max 50MB per file on web — use the mobile app for larger files.",
     "fileTooLargeUseMobileApp": "{{name}} is {{size}}. Files over 50MB must be uploaded using the Propella mobile app.",
+    "mediaUnreadable": "Those items couldn't be read from this device. Photos stored only in the cloud (Google Photos, iCloud) have to be downloaded to the device before they can be uploaded.",
+    "someMediaUnreadable": "{{count}} item(s) couldn't be read and were skipped. Photos stored only in the cloud have to be downloaded to this device first.",
     "propertyAddedSuccessfully": "Property added successfully! Please upload required documents below.",
     "propertyUpdatedSuccessfully": "Property updated successfully!",
     "propertyAdded": "Property added",
