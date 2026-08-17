@@ -10,6 +10,7 @@ import UserReservations from '@/pages/user/Reservations'
 import UserProfile from '@/pages/user/Profile'
 import UserExplore from '@/pages/user/Explore'
 import UserCommissions from '@/pages/user/Commissions'
+import UserSaved from '@/pages/user/Saved'
 import ChatDetail from '@/pages/chat/[id]'
 import ProfileSettings from '@/pages/profile/Settings'
 import ProfileVerification from '@/pages/profile/Verification'
@@ -49,6 +50,7 @@ export default function UserLayout() {
             <Route path="reservations" element={<UserReservations />} />
             <Route path="explore" element={<UserExplore />} />
             <Route path="commissions" element={<UserCommissions />} />
+            <Route path="saved" element={<UserSaved />} />
             <Route path="profile" element={<UserProfile />} />
             <Route path="profile/settings" element={<ProfileSettings />} />
             <Route path="profile/verification" element={<ProfileVerification />} />

@@ -17,7 +17,8 @@ import {
   Bell,
   Lock,
   Languages,
-  LogOut
+  LogOut,
+  Bookmark
 } from 'lucide-react'
 import './Profile.css'
 
@@ -62,6 +63,12 @@ export default function UserProfile() {
       title: t('profile.settings'),
       description: 'Update your profile information',
       onClick: () => navigate('/user/profile/settings')
+    },
+    {
+      icon: <Bookmark size={20} color={Colors.primary[600]} />,
+      title: t('saved.title'),
+      description: t('saved.menuDescription'),
+      onClick: () => navigate('/user/saved')
     },
     {
       icon: <Bell size={20} color={Colors.warning[600]} />,

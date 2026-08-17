@@ -1288,7 +1288,22 @@
     "propertyType": "Type de propriété",
     "category": "Catégorie",
     "bedrooms": "Chambres",
-    "bathrooms": "Salles de bain"
+    "bathrooms": "Salles de bain",
+    "anyPrice": "Indifférent"
+  },
+  "saved": {
+    "title": "Propriétés enregistrées",
+    "menuDescription": "Propriétés que vous avez enregistrées",
+    "count": "{{count}} enregistrée(s)",
+    "empty": "Aucune propriété enregistrée",
+    "emptyHint": "Cliquez sur l'icône de signet d'une propriété pour l'enregistrer ici.",
+    "browseProperties": "Parcourir les propriétés",
+    "signIn": "Se connecter",
+    "signInHint": "Connectez-vous pour enregistrer des propriétés et les consulter ici.",
+    "remove": "Retirer",
+    "addToSaved": "Enregistrer la propriété",
+    "removeFromSaved": "Retirer des enregistrements",
+    "saveFailed": "Impossible de mettre à jour vos propriétés enregistrées. Veuillez réessayer."
   },
   "sharedProfile": {
     "accountSettings": "Paramètres du compte",

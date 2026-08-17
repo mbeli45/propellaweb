@@ -1132,7 +1132,22 @@
     "propertyType": "Property Type",
     "category": "Category",
     "bedrooms": "Bedrooms",
-    "bathrooms": "Bathrooms"
+    "bathrooms": "Bathrooms",
+    "anyPrice": "Any"
+  },
+  "saved": {
+    "title": "Saved Properties",
+    "menuDescription": "Properties you bookmarked",
+    "count": "{{count}} saved",
+    "empty": "No saved properties yet",
+    "emptyHint": "Click the bookmark icon on any property to save it here.",
+    "browseProperties": "Browse properties",
+    "signIn": "Sign in",
+    "signInHint": "Sign in to save properties and view them here.",
+    "remove": "Remove",
+    "addToSaved": "Save property",
+    "removeFromSaved": "Remove from saved",
+    "saveFailed": "Could not update your saved properties. Please try again."
   },
   "sharedProfile": {
     "accountSettings": "Account Settings",

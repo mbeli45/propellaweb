@@ -21,9 +21,20 @@ interface FilterModalProps {
   initialFilters?: FilterOptions
 }
 
+// Upper bound of the price inputs. A max equal to this means "no max".
+export const MAX_PRICE = 5000000
+
+const pricePresets: { label: string; range: [number, number] }[] = [
+  { label: '< 50K', range: [0, 50000] },
+  { label: '50K - 150K', range: [50000, 150000] },
+  { label: '150K - 300K', range: [150000, 300000] },
+  { label: '300K - 500K', range: [300000, 500000] },
+  { label: '500K+', range: [500000, MAX_PRICE] },
+]
+
 const defaultFilters: FilterOptions = {
   propertyType: [],
-  priceRange: [0, 5000000],
+  priceRange: [0, MAX_PRICE],
   bedrooms: null,
   bathrooms: null,
   category: [],
@@ -97,8 +108,29 @@ export default function FilterModal({
     })
   }
 
+  // An empty input means "unbounded" — 0 for the min, MAX_PRICE for the max.
+  const setPriceBound = (index: 0 | 1, text: string) => {
+    const digits = text.replace(/[^0-9]/g, '')
+    const fallback = index === 0 ? 0 : MAX_PRICE
+    const value = digits === '' ? fallback : Math.min(parseInt(digits, 10), MAX_PRICE)
+    const nextRange: [number, number] = [filters.priceRange[0], filters.priceRange[1]]
+    nextRange[index] = value
+    setFilters({ ...filters, priceRange: nextRange })
+  }
+
+  const togglePricePreset = (range: [number, number]) => {
+    const isActive = filters.priceRange[0] === range[0] && filters.priceRange[1] === range[1]
+    setFilters({
+      ...filters,
+      priceRange: isActive ? [0, MAX_PRICE] : [range[0], range[1]],
+    })
+  }
+
   const handleApply = () => {
-    onApply(filters)
+    // Guard against a min above the max (typed in either order).
+    const [min, max] = filters.priceRange
+    const normalized: FilterOptions = min > max ? { ...filters, priceRange: [max, min] } : filters
+    onApply(normalized)
     onClose()
   }
 
@@ -204,6 +236,80 @@ export default function FilterModal({
                       }}
                     >
                       {category}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Price */}
+            <div className="filter-section">
+              <h3
+                className="filter-section-title"
+                style={{
+                  color: Colors.neutral[800],
+                }}
+              >
+                {t('explore.priceRange')}
+              </h3>
+              <div className="filter-price-row">
+                <label className="filter-price-group">
+                  <span className="filter-price-label" style={{ color: Colors.neutral[500] }}>
+                    {t('explore.minPrice')}
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className="filter-price-input"
+                    placeholder="0"
+                    style={{
+                      backgroundColor: Colors.neutral[100],
+                      borderColor: Colors.neutral[200],
+                      color: Colors.neutral[800],
+                    }}
+                    value={filters.priceRange[0] > 0 ? String(filters.priceRange[0]) : ''}
+                    onChange={(e) => setPriceBound(0, e.target.value)}
+                  />
+                </label>
+                <span className="filter-price-separator" style={{ color: Colors.neutral[400] }}>
+                  —
+                </span>
+                <label className="filter-price-group">
+                  <span className="filter-price-label" style={{ color: Colors.neutral[500] }}>
+                    {t('explore.maxPrice')}
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className="filter-price-input"
+                    placeholder={t('filterModal.anyPrice')}
+                    style={{
+                      backgroundColor: Colors.neutral[100],
+                      borderColor: Colors.neutral[200],
+                      color: Colors.neutral[800],
+                    }}
+                    value={filters.priceRange[1] < MAX_PRICE ? String(filters.priceRange[1]) : ''}
+                    onChange={(e) => setPriceBound(1, e.target.value)}
+                  />
+                </label>
+              </div>
+              <div className="filter-options-container">
+                {pricePresets.map((preset) => {
+                  const isSelected =
+                    filters.priceRange[0] === preset.range[0] && filters.priceRange[1] === preset.range[1]
+                  return (
+                    <button
+                      key={preset.label}
+                      onClick={() => togglePricePreset(preset.range)}
+                      className={`filter-option-chip ${isSelected ? 'selected' : ''}`}
+                      style={{
+                        backgroundColor: isSelected ? Colors.primary[100] : Colors.neutral[100],
+                        borderColor: isSelected ? Colors.primary[800] : 'transparent',
+                        color: isSelected ? Colors.primary[800] : Colors.neutral[600],
+                        fontWeight: isSelected ? '600' : '500',
+                      }}
+                    >
+                      {preset.label}
                     </button>
                   )
                 })}

@@ -9,6 +9,7 @@ import UserMessages from '@/pages/user/Messages'
 import AgentWallet from '@/pages/agent/Wallet'
 import AgentProfile from '@/pages/agent/Profile'
 import AgentAnalytics from '@/pages/agent/Analytics'
+import UserSaved from '@/pages/user/Saved'
 import ChatDetail from '@/pages/chat/[id]'
 import PropertyDetail from '@/pages/property/[id]'
 import AddProperty from '@/pages/property/add'
@@ -49,6 +50,7 @@ export default function AgentLayout() {
             <Route path="messages/:id" element={<ChatDetail />} />
             <Route path="wallet" element={<AgentWallet />} />
             <Route path="analytics" element={<AgentAnalytics />} />
+            <Route path="saved" element={<UserSaved />} />
             <Route path="profile" element={<AgentProfile />} />
             <Route path="profile/settings" element={<ProfileSettings />} />
             <Route path="profile/verification" element={<ProfileVerification />} />

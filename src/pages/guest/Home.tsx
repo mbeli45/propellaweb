@@ -6,7 +6,7 @@ import { getColors } from '@/constants/Colors'
 import { useHomeProperties } from '@/hooks/useProperties'
 import { useSearch } from '@/hooks/useSearch'
 import SearchBar from '@/components/SearchBar'
-import FilterModal, { FilterOptions } from '@/components/FilterModal'
+import FilterModal, { FilterOptions, MAX_PRICE } from '@/components/FilterModal'
 import PropertyCard from '@/components/PropertyCard'
 import PropertyListSkeleton from '@/components/PropertyListSkeleton'
 import PropertyFeedView from '@/components/PropertyFeedView'
@@ -42,7 +42,7 @@ export default function GuestHome() {
   const [filterVisible, setFilterVisible] = useState(false)
   const [filters, setFilters] = useState<FilterOptions>({
     propertyType: [],
-    priceRange: [0, 5000000],
+    priceRange: [0, MAX_PRICE],
     bedrooms: null,
     bathrooms: null,
     category: [],
@@ -86,8 +86,9 @@ export default function GuestHome() {
     updateFilters({
       category: newFilters.category,
       propertyType: newFilters.propertyType,
-      minPrice: newFilters.priceRange[0],
-      maxPrice: newFilters.priceRange[1],
+      minPrice: newFilters.priceRange[0] > 0 ? newFilters.priceRange[0] : undefined,
+      // The top of the range means "no maximum", so don't constrain the query.
+      maxPrice: newFilters.priceRange[1] < MAX_PRICE ? newFilters.priceRange[1] : undefined,
       bedrooms: newFilters.bedrooms || undefined,
       bathrooms: newFilters.bathrooms || undefined,
     })

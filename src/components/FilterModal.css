@@ -116,6 +116,44 @@
   border-width: 1px;
 }
 
+.filter-price-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.filter-price-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.filter-price-label {
+  font-size: 13px;
+}
+
+.filter-price-input {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid;
+  padding: 10px 12px;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.filter-price-input:focus {
+  outline: none;
+  opacity: 0.9;
+}
+
+.filter-price-separator {
+  padding-bottom: 12px;
+}
+
 .filter-modal-footer {
   display: flex;
   justify-content: space-between;

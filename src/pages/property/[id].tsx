@@ -18,6 +18,7 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { useProperty, useSimilarProperties } from '@/hooks/useProperties'
+import { useSavedProperty } from '@/hooks/useSavedProperties'
 import { useAuth } from '@/contexts/AuthContext'
 import { useShare } from '@/hooks/useShare'
 import ModerationActions from '@/components/moderation/ModerationActions'
@@ -55,13 +56,14 @@ export default function PropertyDetail() {
     3
   )
 
-  const [isFavorite, setIsFavorite] = useState(false)
+  const { isSaved, loading: savingProperty, toggleSaved } = useSavedProperty(user?.id, id)
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0)
   const [showReservationModal, setShowReservationModal] = useState(false)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null)
   const [phoneNumber, setPhoneNumber] = useState('')
   const [waitingForPayment, setWaitingForPayment] = useState(false)
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [videoThumbnails, setVideoThumbnails] = useState<Record<string, string>>({})
   const [playingVideo, setPlayingVideo] = useState<string | null>(null)
 
@@ -133,6 +135,18 @@ export default function PropertyDetail() {
     }
     setShowReservationModal(true)
   }, [user, navigate])
+
+  const handleToggleSaved = useCallback(async () => {
+    if (!user) {
+      navigate('/auth/login')
+      return
+    }
+    const result = await toggleSaved()
+    if (!result.ok && result.error) {
+      setSaveError(t('saved.saveFailed'))
+      setTimeout(() => setSaveError(null), 4000)
+    }
+  }, [user, navigate, toggleSaved, t])
 
   const closeModal = useCallback(() => {
     setShowReservationModal(false)
@@ -1001,6 +1015,29 @@ export default function PropertyDetail() {
         )}
       </div>
 
+      {saveError && (
+        <div
+          role="alert"
+          style={{
+            position: 'fixed',
+            bottom: '96px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            maxWidth: '90vw',
+            padding: '12px 16px',
+            borderRadius: '10px',
+            backgroundColor: Colors.error[600],
+            color: Colors.white,
+            fontSize: '14px',
+            fontWeight: 500,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+            zIndex: 200
+          }}
+        >
+          {saveError}
+        </div>
+      )}
+
       {/* Bottom Action Bar */}
       <div className="property-bottom-bar" style={{
         position: 'fixed',
@@ -1017,17 +1054,21 @@ export default function PropertyDetail() {
         zIndex: 100
       }}>
         <button
-          onClick={() => setIsFavorite(!isFavorite)}
+          onClick={handleToggleSaved}
+          disabled={savingProperty}
+          title={isSaved ? t('saved.removeFromSaved') : t('saved.addToSaved')}
+          aria-label={isSaved ? t('saved.removeFromSaved') : t('saved.addToSaved')}
+          aria-pressed={isSaved}
           style={{
             width: '56px',
             height: '56px',
             borderRadius: '16px',
-            border: `1px solid ${Colors.neutral[200]}`,
+            border: `1px solid ${isSaved ? Colors.primary[800] : Colors.neutral[200]}`,
             backgroundColor: Colors.white,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            cursor: 'pointer',
+            cursor: savingProperty ? 'default' : 'pointer',
             transition: 'all 0.2s'
           }}
           onMouseEnter={(e) => {
@@ -1037,10 +1078,10 @@ export default function PropertyDetail() {
             e.currentTarget.style.backgroundColor = Colors.white
           }}
         >
-          <Bookmark 
-            size={24} 
-            color={Colors.primary[800]} 
-            fill={isFavorite ? Colors.primary[800] : 'transparent'} 
+          <Bookmark
+            size={24}
+            color={Colors.primary[800]}
+            fill={isSaved ? Colors.primary[800] : 'transparent'}
           />
         </button>
         {!isOwner && (

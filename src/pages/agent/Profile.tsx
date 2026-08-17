@@ -19,7 +19,8 @@ import {
   Lock,
   Languages,
   LogOut,
-  Trash2
+  Trash2,
+  Bookmark
 } from 'lucide-react'
 import '../user/Profile.css'
 
@@ -70,6 +71,12 @@ export default function AgentProfile() {
       title: 'Analytics',
       description: 'View your property analytics',
       onClick: () => navigate('/agent/analytics')
+    },
+    {
+      icon: <Bookmark size={20} color={Colors.primary[600]} />,
+      title: t('saved.title'),
+      description: t('saved.menuDescription'),
+      onClick: () => navigate('/agent/saved')
     },
     {
       icon: <Shield size={20} color={Colors.success[600]} />,

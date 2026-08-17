@@ -5,7 +5,7 @@ import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { useAllProperties } from '@/hooks/useProperties'
 import PropertyCard from '@/components/PropertyCard'
-import FilterModal, { FilterOptions } from '@/components/FilterModal'
+import FilterModal, { FilterOptions, MAX_PRICE } from '@/components/FilterModal'
 import MapView from '@/components/MapView'
 import { Search, Map as MapIcon, List, Filter, X } from 'lucide-react'
 import './Explore.css'
@@ -21,7 +21,7 @@ export default function UserExplore() {
   const [filterVisible, setFilterVisible] = useState(false)
   const [filters, setFilters] = useState<FilterOptions>({
     propertyType: [],
-    priceRange: [0, 5000000],
+    priceRange: [0, MAX_PRICE],
     bedrooms: null,
     bathrooms: null,
     category: [],
@@ -63,7 +63,7 @@ export default function UserExplore() {
     if (filters.priceRange[0] > 0) {
       filtered = filtered.filter(property => property.price >= filters.priceRange[0])
     }
-    if (filters.priceRange[1] < 5000000) {
+    if (filters.priceRange[1] < MAX_PRICE) {
       filtered = filtered.filter(property => property.price <= filters.priceRange[1])
     }
 
@@ -83,7 +83,7 @@ export default function UserExplore() {
   const clearFilters = () => {
     setFilters({
       propertyType: [],
-      priceRange: [0, 5000000],
+      priceRange: [0, MAX_PRICE],
       bedrooms: null,
       bathrooms: null,
       category: [],
@@ -101,7 +101,7 @@ export default function UserExplore() {
       filters.category.length > 0 ||
       filters.propertyType.length > 0 ||
       filters.priceRange[0] > 0 ||
-      filters.priceRange[1] < 5000000 ||
+      filters.priceRange[1] < MAX_PRICE ||
       filters.bedrooms !== null ||
       filters.bathrooms !== null
   }, [searchTerm, filters])
