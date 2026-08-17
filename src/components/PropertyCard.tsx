@@ -205,7 +205,8 @@ export default function PropertyCard({
             display: 'flex',
             flexWrap: 'wrap',
             gap: '6px',
-            maxWidth: 'calc(100% - 100px)',
+            // Leave room for the action row (badge + up to three buttons).
+            maxWidth: 'calc(100% - 150px)',
             zIndex: 3,
           }}
         >
@@ -265,14 +266,6 @@ export default function PropertyCard({
           </span>
         </div>
         
-        {/* Verified Badge - Only show for non-owners */}
-        {property.isVerified && !isOwner && (
-          <div className="property-card-verified-badge">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M4.5 7L6.5 9L9.5 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-        )}
         {/* Watermark */}
         <div
           style={{
@@ -303,10 +296,20 @@ export default function PropertyCard({
             top: '12px',
             right: '12px',
             display: 'flex',
+            alignItems: 'center',
             gap: '8px',
             zIndex: 3,
           }}
         >
+          {/* Verified Badge - Only show for non-owners. Lives in the action row so
+              it never overlaps the buttons, however many of them are rendered. */}
+          {property.isVerified && !isOwner && (
+            <div className="property-card-verified-badge">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M4.5 7L6.5 9L9.5 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          )}
           {isOwner && (
             <>
               {onEdit && (
