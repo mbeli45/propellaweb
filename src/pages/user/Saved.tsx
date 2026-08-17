@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Bookmark, Trash2 } from 'lucide-react'
+import { ArrowLeft, Bookmark } from 'lucide-react'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
@@ -87,18 +87,11 @@ export default function SavedProperties() {
         ) : (
           <div className="saved-properties-grid">
             {properties.map((property) => (
-              <div className="saved-card" key={property.id}>
-                <PropertyCard property={property} />
-                <button
-                  className="saved-remove-button"
-                  style={{ backgroundColor: Colors.neutral[200], color: Colors.neutral[700] }}
-                  onClick={() => removeSaved(property.id)}
-                  aria-label={t('saved.removeFromSaved')}
-                >
-                  <Trash2 size={16} color={Colors.neutral[700]} />
-                  {t('saved.remove')}
-                </button>
-              </div>
+              <PropertyCard
+                key={property.id}
+                property={property}
+                onRemoveSaved={() => removeSaved(property.id)}
+              />
             ))}
           </div>
         )}

@@ -65,25 +65,6 @@
   }
 }
 
-.saved-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.saved-remove-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
 .saved-empty {
   text-align: center;
   padding: 48px 16px;

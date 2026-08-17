@@ -50,6 +50,7 @@ interface PropertyCardProps {
   onEdit?: () => void
   onDelete?: () => void
   onShare?: () => void
+  onRemoveSaved?: () => void // Shown on the Saved properties page to unsave
   onClick?: () => void
   source?: string
 }
@@ -61,6 +62,7 @@ export default function PropertyCard({
   onEdit,
   onDelete,
   onShare,
+  onRemoveSaved,
   onClick,
 }: PropertyCardProps) {
   const { colorScheme } = useThemeMode()
@@ -361,11 +363,38 @@ export default function PropertyCard({
               )}
             </>
           )}
+          {onRemoveSaved && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onRemoveSaved()
+              }}
+              style={{
+                backgroundColor: colorScheme === 'dark'
+                  ? 'rgba(24, 24, 27, 0.9)'
+                  : 'rgba(255, 255, 255, 0.9)',
+                border: 'none',
+                borderRadius: '20px',
+                padding: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: colorScheme === 'dark'
+                  ? '0 1px 2px rgba(0, 0, 0, 0.3)'
+                  : '0 1px 2px rgba(0, 0, 0, 0.1)',
+              }}
+              title={t('saved.removeFromSaved')}
+              aria-label={t('saved.removeFromSaved')}
+            >
+              <Trash2 size={18} color={Colors.error[600]} />
+            </button>
+          )}
           <button
             onClick={handleShare}
             style={{
-              backgroundColor: colorScheme === 'dark' 
-                ? 'rgba(24, 24, 27, 0.9)' 
+              backgroundColor: colorScheme === 'dark'
+                ? 'rgba(24, 24, 27, 0.9)'
                 : 'rgba(255, 255, 255, 0.9)',
               border: 'none',
               borderRadius: '20px',
