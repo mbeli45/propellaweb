@@ -12,8 +12,9 @@ import PropertyListSkeleton from '@/components/PropertyListSkeleton'
 import PropertyFeedView from '@/components/PropertyFeedView'
 import SEO from '@/components/SEO'
 import { generateHomepageStructuredData } from '@/utils/seoUtils'
-import { MapPin, ArrowRight, LayoutGrid } from 'lucide-react'
+import { MapPin, ArrowRight, LayoutGrid, Compass } from 'lucide-react'
 import './Home.css'
+import { POPULAR_TOWNS } from '@/utils/towns'
 
 export default function GuestHome() {
   const { colorScheme } = useThemeMode()
@@ -31,10 +32,13 @@ export default function GuestHome() {
   const {
     searchTerm,
     results: searchResults,
+    totalCount: searchTotalCount,
+    hasMore: hasMoreSearchResults,
     loading: searchLoading,
     error: searchError,
     search,
     clearSearch,
+    loadMore: loadMoreSearchResults,
     updateFilters
   } = useSearch()
 
@@ -49,15 +53,7 @@ export default function GuestHome() {
   })
   const [viewMode, setViewMode] = useState<'grid' | 'feed'>('feed')
 
-  const popularLocations = useMemo(() => [
-    'Yaoundé',
-    'Douala',
-    'Bafoussam',
-    'Buea',
-    'Limbe',
-    'Kribi',
-    'Bamenda'
-  ], [])
+  const popularLocations = useMemo(() => [...POPULAR_TOWNS], [])
 
   const handleSearch = useCallback((query: string) => {
     if (query.trim()) {
@@ -195,8 +191,8 @@ export default function GuestHome() {
             transition: 'all 0.2s'
           }}
         >
-          <LayoutGrid size={18} />
-          Feed
+          <Compass size={18} />
+          {t('home.modeExplore', 'Explore')}
         </button>
       </div>
 
@@ -227,7 +223,7 @@ export default function GuestHome() {
       {/* Error State */}
       {hasError && (
         <div style={{ padding: '16px', textAlign: 'center', color: Colors.error[600] }}>
-          {t('common.errorLoading')}
+          {t('home.failedToLoadProperties')}
         </div>
       )}
 
@@ -241,7 +237,7 @@ export default function GuestHome() {
         <div className="properties-section">
           <div className="section-header">
             <h2 style={{ fontSize: '18px', fontWeight: '600', color: Colors.neutral[800] }}>
-              {t('search.results')} ({displayProperties.length})
+              {t('home.searchResults', { count: searchTotalCount || displayProperties.length })}
             </h2>
           </div>
           <div className="property-grid">
@@ -249,6 +245,30 @@ export default function GuestHome() {
               <PropertyCard key={property.id} property={property} />
             ))}
           </div>
+
+          {/* Search returns 20 rows a page; without this a location chip looked
+              like it only ever matched 20 listings. */}
+          {hasMoreSearchResults && (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
+              <button
+                onClick={loadMoreSearchResults}
+                disabled={searchLoading}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '999px',
+                  border: `1px solid ${Colors.primary[200]}`,
+                  backgroundColor: Colors.primary[50],
+                  color: Colors.primary[700],
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: searchLoading ? 'default' : 'pointer',
+                  opacity: searchLoading ? 0.6 : 1
+                }}
+              >
+                {searchLoading ? t('common.loading') : t('search.loadMore', 'Load more')}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -389,10 +409,10 @@ export default function GuestHome() {
       {!isLoading && !hasError && displayProperties.length === 0 && (
         <div className="empty-state" style={{ padding: '48px 16px', textAlign: 'center' }}>
           <p style={{ fontSize: '18px', fontWeight: '600', color: Colors.neutral[600], marginBottom: '8px' }}>
-            {searchTerm ? t('search.noResults') : t('home.noProperties')}
+            {searchTerm ? t('home.noPropertiesFound', { searchTerm }) : t('home.noPropertiesAvailable')}
           </p>
           <p style={{ fontSize: '14px', color: Colors.neutral[500] }}>
-            {searchTerm ? t('search.tryDifferentSearch') : t('home.checkBackLater')}
+            {searchTerm ? t('home.tryAdjustingSearch') : t('home.checkBackLater')}
           </p>
         </div>
       )}

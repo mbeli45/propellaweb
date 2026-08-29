@@ -11,6 +11,7 @@ import { useDialog } from '@/contexts/DialogContext'
 import PropertyCard from '@/components/PropertyCard'
 import { Plus, BarChart3, Home, Users, Calendar, RefreshCw } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { confirmPropertyAvailability } from '@/hooks/usePropertyAvailability'
 import './Listings.css'
 
 export default function AgentListings() {
@@ -30,6 +31,27 @@ export default function AgentListings() {
   const [totalViews, setTotalViews] = useState(0)
   const [activeTab, setActiveTab] = useState<'active' | 'reserved' | 'sold'>('active')
   const [deletingPropertyId, setDeletingPropertyId] = useState<string | null>(null)
+  const [confirmingAvailabilityId, setConfirmingAvailabilityId] = useState<string | null>(null)
+  // Keeps the freshly stamped date on screen without refetching the whole list.
+  const [confirmedOverrides, setConfirmedOverrides] = useState<Record<string, string>>({})
+
+  const handleConfirmAvailability = async (propertyId: string) => {
+    if (!user?.id || confirmingAvailabilityId) return
+
+    setConfirmingAvailabilityId(propertyId)
+    const result = await confirmPropertyAvailability(propertyId, user.id)
+    setConfirmingAvailabilityId(null)
+
+    if (result.ok) {
+      setConfirmedOverrides((prev) => ({ ...prev, [propertyId]: result.confirmedAt }))
+    } else {
+      alert(
+        result.reason === 'missing_media'
+          ? t('availability.confirmNeedsPhoto', 'Add at least one photo to this listing before confirming it.')
+          : t('availability.confirmFailed', 'Could not confirm availability. Please try again.')
+      )
+    }
+  }
 
   useEffect(() => {
     const fetchTotalViews = async () => {
@@ -550,15 +572,21 @@ export default function AgentListings() {
               )}
             </div>
           ))}
-          {filteredProperties.map((property) => (
-            <PropertyCard 
-              key={property.id} 
-              property={property} 
-              isOwner 
-              onEdit={() => handleEdit(property.id)}
-              onDelete={() => handleDelete(property.id)}
-            />
-          ))}
+          {filteredProperties.map((property) => {
+            const confirmedAt = confirmedOverrides[property.id] ?? property.availability_confirmed_at
+
+            return (
+              <PropertyCard
+                key={property.id}
+                property={{ ...property, availability_confirmed_at: confirmedAt }}
+                isOwner
+                onEdit={() => handleEdit(property.id)}
+                onDelete={() => handleDelete(property.id)}
+                onConfirmAvailability={() => handleConfirmAvailability(property.id)}
+                confirmingAvailability={confirmingAvailabilityId === property.id}
+              />
+            )
+          })}
         </div>
       )}
     </div>

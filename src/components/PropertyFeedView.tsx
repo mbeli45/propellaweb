@@ -6,10 +6,160 @@ import { getColors } from '@/constants/Colors'
 import { PropertyData } from './PropertyCard'
 import { formatPrice, calculateRentPrices } from '@/utils/shareUtils'
 import { isVideoUrl, separateMedia } from '@/utils/videoUtils'
-import { MapPin, BedDouble, Bath, Share2, Eye, ChevronUp, ChevronDown, LayoutGrid, Grid3x3, Search, X } from 'lucide-react'
+import { MapPin, BedDouble, Bath, Share2, Eye, ChevronUp, ChevronDown, LayoutGrid, Grid3x3, Search, X, Heart, Bookmark } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
+import { useSavedProperty } from '@/hooks/useSavedProperties'
+import { usePropertyLike } from '@/hooks/usePropertyLikes'
 import './PropertyFeedView.css'
 
 const RENDER_WINDOW = 2 // Only render properties within ±2 of current index
+
+const ACTION_BUTTON_STYLE: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '4px',
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  padding: 0
+}
+
+const ACTION_CIRCLE_STYLE: React.CSSProperties = {
+  width: '48px',
+  height: '48px',
+  borderRadius: '50%',
+  backgroundColor: 'rgba(50,50,50,0.4)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
+}
+
+const ACTION_LABEL_STYLE: React.CSSProperties = {
+  fontSize: '11px',
+  color: '#fff',
+  fontWeight: 600,
+  textShadow: '0 2px 6px rgba(0,0,0,0.9)'
+}
+
+/**
+ * Save toggle for the property currently on screen. Sits in the top-right
+ * corner, so it is a sibling of the feed rather than part of the action rail.
+ */
+function FeedSaveButton({ property }: { property?: PropertyData }) {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { t } = useLanguage()
+  const { isSaved, toggleSaved } = useSavedProperty(user?.id, property?.id)
+
+  if (!property) return null
+
+  const label = isSaved
+    ? t('saved.removeFromSaved', 'Remove from saved')
+    : t('saved.addToSaved', 'Save property')
+
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation()
+        if (!user) {
+          navigate('/auth/login')
+          return
+        }
+        toggleSaved()
+      }}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      style={{
+        position: 'absolute',
+        top: '16px',
+        right: '12px',
+        zIndex: 10000,
+        width: '44px',
+        height: '44px',
+        borderRadius: '50%',
+        backgroundColor: 'rgba(0,0,0,0.45)',
+        border: '1px solid rgba(255,255,255,0.3)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        pointerEvents: 'auto'
+      }}
+      title={label}
+      aria-label={label}
+    >
+      <Bookmark size={22} color="#fff" fill={isSaved ? '#fff' : 'transparent'} />
+    </button>
+  )
+}
+
+/** View / Like / Share for the active slide. Save lives in the top-right corner. */
+function FeedActionRail({ property }: { property: PropertyData }) {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { t } = useLanguage()
+  const { isLiked, likeCount, toggleLike } = usePropertyLike(user?.id, property.id)
+
+  const requireAuth = () => {
+    if (user) return true
+    navigate('/auth/login')
+    return false
+  }
+
+  return (
+    <div style={{
+      position: 'absolute',
+      right: '12px',
+      bottom: '160px',
+      zIndex: 10,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '20px'
+    }}>
+      <button
+        onClick={(e) => { e.stopPropagation(); navigate(`/property/${property.id}`) }}
+        style={ACTION_BUTTON_STYLE}
+      >
+        <div style={ACTION_CIRCLE_STYLE}>
+          <Eye size={24} color="#fff" />
+        </div>
+        <span style={ACTION_LABEL_STYLE}>{t('feedView.viewDetails', 'View')}</span>
+      </button>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          if (!requireAuth()) return
+          toggleLike()
+        }}
+        style={ACTION_BUTTON_STYLE}
+      >
+        <div style={ACTION_CIRCLE_STYLE}>
+          <Heart
+            size={24}
+            color={isLiked ? '#FF3B5C' : '#fff'}
+            fill={isLiked ? '#FF3B5C' : 'transparent'}
+          />
+        </div>
+        <span style={ACTION_LABEL_STYLE}>
+          {likeCount > 0 ? likeCount : t('feedView.like', 'Like')}
+        </span>
+      </button>
+
+      <button
+        onClick={(e) => { e.stopPropagation() }}
+        style={ACTION_BUTTON_STYLE}
+      >
+        <div style={ACTION_CIRCLE_STYLE}>
+          <Share2 size={24} color="#fff" />
+        </div>
+        <span style={ACTION_LABEL_STYLE}>{t('feedView.share', 'Share')}</span>
+      </button>
+    </div>
+  )
+}
 
 interface PropertyFeedViewProps {
   properties: PropertyData[]
@@ -557,7 +707,8 @@ export default function PropertyFeedView({
           style={{
             position: 'absolute',
             top: '16px',
-            right: '12px',
+            // The corner itself belongs to the save button.
+            right: '68px',
             zIndex: 9999,
             display: 'flex',
             flexDirection: 'column',
@@ -584,10 +735,13 @@ export default function PropertyFeedView({
             <Grid3x3 size={24} color="#fff" />
           </div>
           <span style={{ fontSize: '11px', color: '#fff', fontWeight: '600', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
-            Grid
+            {t('home.modeBrowse', 'Browse')}
           </span>
         </button>
       )}
+
+      {/* Save - top right corner */}
+      <FeedSaveButton property={properties[currentPropertyIndex]} />
 
       {/* Vertical Swiping Container - Properties */}
       <div className="feed-properties-wrapper" style={{
@@ -978,40 +1132,7 @@ export default function PropertyFeedView({
                   </div>
 
                   {/* Right-side action buttons — TikTok style, matching mobile */}
-                  <div style={{
-                    position: 'absolute',
-                    right: '12px',
-                    bottom: '160px',
-                    zIndex: 10,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '20px'
-                  }}>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); navigate(`/property/${property.id}`) }}
-                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                    >
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'rgba(50,50,50,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Eye size={24} color="#fff" />
-                      </div>
-                      <span style={{ fontSize: '11px', color: '#fff', fontWeight: '600', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
-                        View
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={(e) => { e.stopPropagation() }}
-                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                    >
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'rgba(50,50,50,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Share2 size={24} color="#fff" />
-                      </div>
-                      <span style={{ fontSize: '11px', color: '#fff', fontWeight: '600', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
-                        Share
-                      </span>
-                    </button>
-                  </div>
+                  <FeedActionRail property={property} />
                 </>
               )}
             </div>

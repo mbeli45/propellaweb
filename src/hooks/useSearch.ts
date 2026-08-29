@@ -4,6 +4,7 @@ import { Database } from '@/types/supabase';
 import { PropertyData } from '@/components/PropertyCard';
 import debounce from 'lodash/debounce';
 import { useBlockedUserIds } from '@/hooks/useModeration';
+import { townSearchTerms } from '@/utils/towns';
 
 type Property = Database['public']['Tables']['properties']['Row'];
 type SearchFilters = {
@@ -23,6 +24,27 @@ type SearchFilters = {
 const toCanonicalCategory = (label: string) => label.toLowerCase().trim();
 const toCanonicalPropertyType = (label: string) =>
   label.toLowerCase().trim().replace(/\s+/g, '_');
+
+/** `,` `(` `)` and `%` are structural in a PostgREST `or=` list. */
+const escapeForOr = (value: string) => value.replace(/[%,()]/g, '');
+
+/**
+ * `town.ilike` / `location.ilike` clauses for a place name and every spelling
+ * that resolves to it. A listing saved as "Yaounde", or with only its
+ * neighbourhood ("Bastos") in the address, still has to surface under the
+ * "Yaound\u00e9" chip - matching the raw string alone misses both.
+ */
+const townClauses = (place: string, alreadyMatched: string[] = []): string[] => {
+  const seen = new Set(alreadyMatched.map((value) => value.toLowerCase()));
+  const clauses: string[] = [];
+  for (const alias of townSearchTerms(place)) {
+    const safe = escapeForOr(alias);
+    if (!safe || seen.has(safe.toLowerCase())) continue;
+    seen.add(safe.toLowerCase());
+    clauses.push(`town.ilike.%${safe}%`, `location.ilike.%${safe}%`);
+  }
+  return clauses;
+};
 
 export function useSearch() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -97,9 +119,15 @@ export function useSearch() {
       // Apply search term — location can live in either the full address (`location`)
       // or the standalone town field, so match both alongside title/description.
       if (term) {
-        const safeTerm = term.replace(/[%,()]/g, '');
+        const safeTerm = escapeForOr(term);
         query = query.or(
-          `title.ilike.%${safeTerm}%,description.ilike.%${safeTerm}%,location.ilike.%${safeTerm}%,town.ilike.%${safeTerm}%`
+          [
+            `title.ilike.%${safeTerm}%`,
+            `description.ilike.%${safeTerm}%`,
+            `location.ilike.%${safeTerm}%`,
+            `town.ilike.%${safeTerm}%`,
+            ...townClauses(term, [safeTerm]),
+          ].join(',')
         );
       }
 
@@ -126,9 +154,13 @@ export function useSearch() {
         query = query.eq('bathrooms', filters.bathrooms);
       }
       if (filters.location) {
-        const safeLocation = filters.location.replace(/[%,()]/g, '');
+        const safeLocation = escapeForOr(filters.location);
         query = query.or(
-          `location.ilike.%${safeLocation}%,town.ilike.%${safeLocation}%`
+          [
+            `location.ilike.%${safeLocation}%`,
+            `town.ilike.%${safeLocation}%`,
+            ...townClauses(filters.location, [safeLocation]),
+          ].join(',')
         );
       }
       if (filters.amenities?.length) {
@@ -151,6 +183,8 @@ export function useSearch() {
         title: property.title,
         price: property.price,
         location: property.location,
+        town: property.town || undefined,
+        availability_confirmed_at: property.availability_confirmed_at ?? undefined,
         image: property.images && property.images.length > 0 
           ? property.images[0] 
           : 'https://via.placeholder.com/400x300?text=No+Image',
@@ -163,7 +197,7 @@ export function useSearch() {
         description: property.description,
         amenities: property.amenities || [],
         reservationFee: property.reservation_fee ?? undefined,
-        rent_period: property.rent_period ?? null,
+        rent_period: (property.rent_period as PropertyData['rent_period']) ?? null,
         advance_months_min: property.advance_months_min ?? undefined,
         advance_months_max: property.advance_months_max ?? undefined,
         status: property.status ?? undefined,
@@ -177,7 +211,13 @@ export function useSearch() {
         } : undefined,
       }));
 
-      setResults(currentPage === 1 ? transformedResults : [...results, ...transformedResults]);
+      // Functional update: `performSearch` is reached through a debounced
+      // callback frozen at first render, so the `results` it closes over is
+      // permanently the initial []. Reading it here made every page past the
+      // first replace the list instead of appending to it.
+      setResults((prev) =>
+        currentPage === 1 ? transformedResults : [...prev, ...transformedResults]
+      );
       setTotalCount(count || 0);
       setHasMore((count || 0) > start + itemsPerPage);
     } catch (error: any) {

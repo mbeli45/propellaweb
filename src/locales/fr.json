@@ -28,7 +28,8 @@
     "user": "Utilisateur",
     "client": "Client",
     "upload": "Télécharger",
-    "clearFilter": "Tout afficher"
+    "clearFilter": "Tout afficher",
+    "anonymous": "Anonyme"
   },
   "auth": {
     "login": "Connexion",
@@ -599,7 +600,9 @@
     "noPropertiesAvailable": "Aucune propriété disponible",
     "checkBackLater": "Revenez plus tard pour de nouvelles annonces",
     "failedToLoadProperties": "Échec du chargement des propriétés.",
-    "popularLocations": "Emplacements populaires"
+    "popularLocations": "Emplacements populaires",
+    "modeExplore": "Explorer",
+    "modeBrowse": "Parcourir"
   },
   "chat": {
     "voiceMessage": "Message vocal",
@@ -705,7 +708,8 @@
     "searchingLocations": "Recherche de lieux...",
     "noLocationsFound": "Aucun lieu trouvé",
     "detectingLocation": "Détection de la localisation...",
-    "useCurrentLocation": "Utiliser la localisation actuelle"
+    "useCurrentLocation": "Utiliser la localisation actuelle",
+    "loadMore": "Voir plus"
   },
   "image": {
     "noImageSelected": "Aucune image sélectionnée",
@@ -1435,5 +1439,24 @@
     "bankTransfer": "Virement bancaire",
     "bankTransferDescription": "Payer par virement bancaire",
     "selectPaymentMethod": "Sélectionner la méthode de paiement"
+  },
+  "feedView": {
+    "noPropertiesAvailable": "Aucun bien disponible",
+    "untitledProperty": "Bien sans titre",
+    "locationNotSpecified": "Localisation non précisée",
+    "month": "mois",
+    "viewDetails": "Voir",
+    "share": "Partager",
+    "like": "J'aime"
+  },
+  "availability": {
+    "neverVerified": "Pas encore vérifié",
+    "verifiedToday": "Vérifié aujourd'hui",
+    "verifiedYesterday": "Vérifié hier",
+    "verifiedDaysAgo": "Vérifié il y a {{days}} jours",
+    "verifiedOn": "Vérifié le {{date}}",
+    "confirmStillAvailable": "Confirmer la disponibilité",
+    "confirmFailed": "Impossible de confirmer la disponibilité. Réessayez.",
+    "confirmNeedsPhoto": "Ajoutez au moins une photo à cette annonce avant de la confirmer."
   }
 }

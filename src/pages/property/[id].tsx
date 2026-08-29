@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
   ArrowLeft, 
@@ -12,6 +12,7 @@ import {
   User as UserIcon,
   ChevronRight,
   Star,
+  ShieldCheck,
   Play
 } from 'lucide-react'
 import { useThemeMode } from '@/contexts/ThemeContext'
@@ -19,6 +20,12 @@ import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { useProperty, useSimilarProperties } from '@/hooks/useProperties'
 import { useSavedProperty } from '@/hooks/useSavedProperties'
+import { usePropertyReviews } from '@/hooks/usePropertyReviews'
+import {
+  formatLastVerified,
+  isAvailabilityStale,
+  usePropertyAvailability,
+} from '@/hooks/usePropertyAvailability'
 import { useAuth } from '@/contexts/AuthContext'
 import { useShare } from '@/hooks/useShare'
 import ModerationActions from '@/components/moderation/ModerationActions'
@@ -40,7 +47,7 @@ export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { colorScheme } = useThemeMode()
-  const { t } = useLanguage()
+  const { t, currentLanguage } = useLanguage()
   const Colors = getColors(colorScheme)
   const { user } = useAuth()
   const { isSharing, shareProperty } = useShare()
@@ -57,6 +64,14 @@ export default function PropertyDetail() {
   )
 
   const { isSaved, loading: savingProperty, toggleSaved } = useSavedProperty(user?.id, id)
+  const { reviews: propertyReviews, averageRating, totalReviews: reviewsCount, loading: reviewsLoading } =
+    usePropertyReviews(id || '')
+  const isPropertyOwner = !!user?.id && user.id === property?.owner_id
+  const {
+    confirmedAt: availabilityConfirmedAt,
+    confirming: confirmingAvailability,
+    confirmAvailability,
+  } = usePropertyAvailability(id, property?.owner_id, property?.availability_confirmed_at)
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0)
   const [showReservationModal, setShowReservationModal] = useState(false)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null)
@@ -147,6 +162,18 @@ export default function PropertyDetail() {
       setTimeout(() => setSaveError(null), 4000)
     }
   }, [user, navigate, toggleSaved, t])
+
+  const handleConfirmAvailability = useCallback(async () => {
+    const result = await confirmAvailability()
+    if (!result.ok) {
+      setSaveError(
+        result.reason === 'missing_media'
+          ? t('availability.confirmNeedsPhoto', 'Add at least one photo to this listing before confirming it.')
+          : t('availability.confirmFailed', 'Could not confirm availability. Please try again.')
+      )
+      setTimeout(() => setSaveError(null), 4000)
+    }
+  }, [confirmAvailability, t])
 
   const closeModal = useCallback(() => {
     setShowReservationModal(false)
@@ -668,6 +695,45 @@ export default function PropertyDetail() {
           <span>{property.town ? `${property.town}, ${property.location}` : property.location}</span>
         </div>
 
+        {/* Availability freshness. Clients see when the listing was last
+            confirmed; the owner gets the one-tap way to refresh it. */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '8px',
+          marginBottom: '20px'
+        }}>
+          <ShieldCheck
+            size={16}
+            color={isAvailabilityStale(availabilityConfirmedAt) ? Colors.warning[600] : Colors.success[600]}
+          />
+          <span style={{ fontSize: '13px', fontWeight: 500, color: Colors.neutral[600] }}>
+            {formatLastVerified(availabilityConfirmedAt, t, currentLanguage)}
+          </span>
+          {isPropertyOwner && (
+            <button
+              onClick={handleConfirmAvailability}
+              disabled={confirmingAvailability}
+              style={{
+                backgroundColor: Colors.primary[50],
+                border: `1px solid ${Colors.primary[200]}`,
+                borderRadius: '999px',
+                padding: '4px 10px',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: Colors.primary[700],
+                cursor: confirmingAvailability ? 'default' : 'pointer',
+                opacity: confirmingAvailability ? 0.6 : 1
+              }}
+            >
+              {confirmingAvailability
+                ? t('common.loading')
+                : t('availability.confirmStillAvailable', 'Confirm still available')}
+            </button>
+          )}
+        </div>
+
         {/* Badges */}
         <div style={{ 
           display: 'flex', 
@@ -911,6 +977,62 @@ export default function PropertyDetail() {
             </div>
           </div>
         )}
+
+        {/* Reviews */}
+        <div style={{ marginTop: '40px' }}>
+          <h3 style={{
+            fontSize: '20px',
+            fontWeight: '600',
+            color: Colors.neutral[900],
+            marginBottom: '16px'
+          }}>
+            {t('propertyDetails.reviews', 'Reviews')}
+            {reviewsCount > 0 ? ` (${reviewsCount})` : ''}
+          </h3>
+
+          {reviewsLoading ? (
+            <p style={{ color: Colors.neutral[500] }}>{t('loading.loadingReviews', 'Loading reviews...')}</p>
+          ) : propertyReviews.length === 0 ? (
+            <p style={{ color: Colors.neutral[500] }}>{t('property.noReviewsYet', 'No reviews yet')}</p>
+          ) : (
+            <>
+              {averageRating !== null && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <Star size={18} color="#F59E0B" fill="#F59E0B" />
+                  <span style={{ fontSize: '16px', fontWeight: 600, color: Colors.neutral[900] }}>
+                    {averageRating.toFixed(1)}
+                  </span>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {propertyReviews.slice(0, 5).map((review) => (
+                  <div
+                    key={review.id}
+                    style={{
+                      border: `1px solid ${Colors.neutral[200]}`,
+                      borderRadius: '12px',
+                      padding: '12px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ fontWeight: 600, color: Colors.neutral[900] }}>
+                        {review.user?.full_name || t('common.anonymous', 'Anonymous')}
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: Colors.neutral[600], fontSize: '13px' }}>
+                        <Star size={14} color="#F59E0B" fill="#F59E0B" />
+                        {review.rating}
+                      </span>
+                    </div>
+                    {review.comment && (
+                      <p style={{ color: Colors.neutral[700], fontSize: '14px', margin: 0 }}>{review.comment}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Similar Properties */}
         {similarProperties.length > 0 && (

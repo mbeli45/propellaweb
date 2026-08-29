@@ -14,6 +14,7 @@ import {
   isVideoFile,
 } from '@/utils/fileUtils'
 import './PropertyForm.css'
+import { resolveTown } from '@/utils/towns'
 
 interface PropertyFormData {
   title: string
@@ -260,7 +261,10 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
         description: form.description,
         price: parseFloat(form.price) || 0,
         location: form.location,
-        town: form.town || null,
+        // The town field is free text, and Mapbox sometimes fills it with a
+        // neighbourhood or region. Store the canonical name so the listing
+        // lands under the right town chip right away.
+        town: resolveTown(form.town, form.location) || form.town?.trim() || null,
         type: form.type,
         category,
         property_type: form.propertyType,

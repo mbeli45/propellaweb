@@ -4,7 +4,9 @@ import { v4 as uuidv4 } from 'uuid'
 
 const supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY
-const imageUploadProvider = import.meta.env.VITE_PUBLIC_IMAGE_UPLOAD_PROVIDER || 'supabase'
+// Cloudflare R2 is the storage backend for all user media. Supabase Storage is
+// only reachable by explicitly setting the provider to 'supabase'.
+const imageUploadProvider = import.meta.env.VITE_PUBLIC_IMAGE_UPLOAD_PROVIDER || 'r2_proxy'
 const r2FunctionName = import.meta.env.VITE_PUBLIC_R2_FUNCTION_NAME || 'r2-media'
 
 export type UploadResult = {
@@ -53,7 +55,12 @@ export const useStorage = () => {
   const [error, setError] = useState<string | null>(null)
   const [pendingUploads, setPendingUploads] = useState<PendingUploadItem[]>([])
 
-  const shouldUseR2Proxy = (bucket: string) => imageUploadProvider === 'r2_proxy' && bucket === 'properties'
+  // Every bucket goes to R2, not just property media. The bucket name becomes the
+  // R2 key prefix so objects stay grouped the way they were under Supabase Storage.
+  const shouldUseR2Proxy = (_bucket: string) => imageUploadProvider === 'r2_proxy'
+
+  const r2FolderFor = (bucket: string, folder: string) =>
+    [bucket, folder].filter((part) => part && part.trim().length > 0).join('/')
 
   useEffect(() => {
     const subscriber = (items: PendingUploadItem[]) => {
@@ -167,7 +174,11 @@ export const useStorage = () => {
       throw new Error('Invalid file format')
     }
 
-    const fileName = fileToUpload instanceof File ? fileToUpload.name : `image-${Date.now()}.jpg`
+    // A Blob carries its own MIME type; name it with a matching extension so
+    // documents and audio don't land in R2 as `.jpg`.
+    const extFromType = (fileToUpload.type || '').split('/')[1]?.split(';')[0] || 'jpg'
+    const fileName =
+      fileToUpload instanceof File ? fileToUpload.name : `upload-${Date.now()}.${extFromType}`
     formData.append('file', fileToUpload, fileName)
 
     const response = await fetch(endpoint, {
@@ -249,7 +260,7 @@ export const useStorage = () => {
       setError(null)
 
       if (shouldUseR2Proxy(bucket)) {
-        const result = await uploadViaR2Proxy(file, folder, fileOrBlob)
+        const result = await uploadViaR2Proxy(file, r2FolderFor(bucket, folder), fileOrBlob)
         setUploading(false)
         setProgress(100)
         return result
@@ -456,6 +467,13 @@ export const useStorage = () => {
       setProgress(0)
       setError(null)
 
+      if (shouldUseR2Proxy(bucket)) {
+        const result = await uploadViaR2Proxy(file, r2FolderFor(bucket, folder))
+        setUploading(false)
+        setProgress(100)
+        return result
+      }
+
       let fileToUpload: File | Blob
 
       if (file instanceof File) {
@@ -518,7 +536,9 @@ export const useStorage = () => {
             ...headers,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ key: path }),
+          // The function resolves either form; send a URL as `url` so it can
+        // strip the public base itself rather than treating it as a key.
+        body: JSON.stringify(/^https?:\/\//i.test(path) ? { url: path } : { key: path }),
         })
 
         const payload = await response.json().catch(() => ({}))

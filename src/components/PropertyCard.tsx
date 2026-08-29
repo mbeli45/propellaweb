@@ -1,12 +1,13 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, BedDouble, Bath, Share2, Edit, Trash2, Play } from 'lucide-react'
+import { MapPin, BedDouble, Bath, Share2, Edit, Trash2, Play, ShieldCheck } from 'lucide-react'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { calculateRentPrices, formatPrice as formatPriceUtil } from '@/utils/shareUtils'
 import { useShare } from '@/hooks/useShare'
 import { isVideoUrl } from '@/utils/videoUtils'
+import { formatLastVerified, isAvailabilityStale } from '@/hooks/usePropertyAvailability'
 import './PropertyCard.css'
 
 export interface PropertyData {
@@ -31,6 +32,8 @@ export interface PropertyData {
   advance_months_max?: number
   rent_period?: 'monthly' | 'yearly' | null
   status?: string
+  /** Last time the owner confirmed the listing is still on the market. */
+  availability_confirmed_at?: string | null
   owner_id: string
   owner?: {
     id: string
@@ -51,6 +54,9 @@ interface PropertyCardProps {
   onDelete?: () => void
   onShare?: () => void
   onRemoveSaved?: () => void // Shown on the Saved properties page to unsave
+  /** Owner-only: re-confirm the listing is still on the market. */
+  onConfirmAvailability?: () => void
+  confirmingAvailability?: boolean
   onClick?: () => void
   source?: string
 }
@@ -63,10 +69,12 @@ export default function PropertyCard({
   onDelete,
   onShare,
   onRemoveSaved,
+  onConfirmAvailability,
+  confirmingAvailability = false,
   onClick,
 }: PropertyCardProps) {
   const { colorScheme } = useThemeMode()
-  const { t } = useLanguage()
+  const { t, currentLanguage } = useLanguage()
   const Colors = getColors(colorScheme)
   const navigate = useNavigate()
   const { shareProperty } = useShare()
@@ -414,6 +422,81 @@ export default function PropertyCard({
             <Share2 size={18} color={Colors.primary[600]} />
           </button>
         </div>
+
+        {onConfirmAvailability && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onConfirmAvailability()
+            }}
+            disabled={confirmingAvailability}
+            style={{
+              position: 'absolute',
+              right: '12px',
+              bottom: '10px',
+              maxWidth: 'calc(100% - 24px)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px 8px',
+              borderRadius: '999px',
+              border: 'none',
+              backgroundColor: isAvailabilityStale(property.availability_confirmed_at)
+                ? '#B45309'
+                : 'rgba(5, 150, 105, 0.92)',
+              color: 'white',
+              fontSize: horizontal ? '10px' : '11px',
+              fontWeight: 600,
+              cursor: confirmingAvailability ? 'default' : 'pointer',
+              opacity: confirmingAvailability ? 0.6 : 1,
+              zIndex: 4,
+            }}
+          >
+            <ShieldCheck size={12} color="#fff" />
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {isAvailabilityStale(property.availability_confirmed_at)
+                ? t('availability.confirmStillAvailable', 'Confirm still available')
+                : formatLastVerified(property.availability_confirmed_at, t, currentLanguage)}
+            </span>
+          </button>
+        )}
+
+        {/* Availability freshness - clients need to know the listing has been
+            re-confirmed recently, not just that it was posted at some point. */}
+        {!onConfirmAvailability && (
+        <div
+          style={{
+            position: 'absolute',
+            left: '12px',
+            bottom: '10px',
+            maxWidth: 'calc(100% - 24px)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            padding: '3px 8px',
+            borderRadius: '999px',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            zIndex: 3,
+          }}
+        >
+          <ShieldCheck
+            size={12}
+            color={isAvailabilityStale(property.availability_confirmed_at) ? '#FCD34D' : '#6EE7B7'}
+          />
+          <span
+            style={{
+              color: 'white',
+              fontSize: horizontal ? '10px' : '11px',
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {formatLastVerified(property.availability_confirmed_at, t, currentLanguage)}
+          </span>
+        </div>
+        )}
       </div>
 
       <div

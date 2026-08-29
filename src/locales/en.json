@@ -28,7 +28,8 @@
     "user": "User",
     "client": "Client",
     "upload": "Upload",
-    "clearFilter": "Show All"
+    "clearFilter": "Show All",
+    "anonymous": "Anonymous"
   },
   "auth": {
     "login": "Login",
@@ -611,7 +612,9 @@
     "noPropertiesAvailable": "No properties available",
     "checkBackLater": "Check back later for new listings",
     "failedToLoadProperties": "Failed to load properties.",
-    "popularLocations": "Popular Locations"
+    "popularLocations": "Popular Locations",
+    "modeExplore": "Explore",
+    "modeBrowse": "Browse"
   },
   "chat": {
     "voiceMessage": "Voice Message",
@@ -717,7 +720,8 @@
     "searchingLocations": "Searching locations...",
     "noLocationsFound": "No locations found",
     "detectingLocation": "Detecting location...",
-    "useCurrentLocation": "Use current location"
+    "useCurrentLocation": "Use current location",
+    "loadMore": "Load more"
   },
   "image": {
     "noImageSelected": "No image selected",
@@ -871,9 +875,6 @@
     "businessAddress": "Your business address",
     "yearsOfExperience": "Years of Experience",
     "yearsExample": "e.g., 5",
-    "propertyTitleExample": "e.g., Modern 2BR Apartment in City Center",
-    "describeProperty": "Describe your property's features, amenities, and what makes it special...",
-    "searchPropertyLocation": "Search for property location...",
     "priceExample": "500000",
     "reservationFeeExample": "50000",
     "bedroomsExample": "2",
@@ -1451,5 +1452,24 @@
     "bankTransfer": "Bank Transfer",
     "bankTransferDescription": "Pay via bank transfer",
     "selectPaymentMethod": "Select Payment Method"
+  },
+  "feedView": {
+    "noPropertiesAvailable": "No properties available",
+    "untitledProperty": "Untitled Property",
+    "locationNotSpecified": "Location not specified",
+    "month": "month",
+    "viewDetails": "View",
+    "share": "Share",
+    "like": "Like"
+  },
+  "availability": {
+    "neverVerified": "Not yet verified",
+    "verifiedToday": "Last verified today",
+    "verifiedYesterday": "Last verified yesterday",
+    "verifiedDaysAgo": "Last verified {{days}} days ago",
+    "verifiedOn": "Last verified {{date}}",
+    "confirmStillAvailable": "Confirm still available",
+    "confirmFailed": "Could not confirm availability. Please try again.",
+    "confirmNeedsPhoto": "Add at least one photo to this listing before confirming it."
   }
 }

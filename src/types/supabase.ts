@@ -695,6 +695,8 @@ export type Database = {
           advance_months_min: number | null
           amenities: string[] | null
           area: number | null
+          availability_confirmed_at: string | null
+          availability_confirmed_by: string | null
           average_rating: number | null
           bathroom: number | null
           bathrooms: number | null
@@ -718,6 +720,7 @@ export type Database = {
           reservation_fee: number | null
           status: string | null
           title: string
+          town: string | null
           total_reviews: number | null
           type: string
           updated_at: string | null
@@ -730,6 +733,8 @@ export type Database = {
           advance_months_min?: number | null
           amenities?: string[] | null
           area?: number | null
+          availability_confirmed_at?: string | null
+          availability_confirmed_by?: string | null
           average_rating?: number | null
           bathroom?: number | null
           bathrooms?: number | null
@@ -752,6 +757,7 @@ export type Database = {
           reservation_fee?: number | null
           status?: string | null
           title: string
+          town?: string | null
           total_reviews?: number | null
           type: string
           updated_at?: string | null
@@ -764,6 +770,8 @@ export type Database = {
           advance_months_min?: number | null
           amenities?: string[] | null
           area?: number | null
+          availability_confirmed_at?: string | null
+          availability_confirmed_by?: string | null
           average_rating?: number | null
           bathroom?: number | null
           bathrooms?: number | null
@@ -786,6 +794,7 @@ export type Database = {
           reservation_fee?: number | null
           status?: string | null
           title?: string
+          town?: string | null
           total_reviews?: number | null
           type?: string
           updated_at?: string | null
@@ -886,6 +895,42 @@ export type Database = {
           {
             foreignKeyName: "property_documents_verified_by_fkey"
             columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_likes: {
+        Row: {
+          created_at: string
+          id: string
+          property_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          property_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          property_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_likes_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_likes_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
