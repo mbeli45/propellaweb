@@ -10,8 +10,12 @@
   width: 100%;
 }
 
+/* min-width:0 is load-bearing: a flex item defaults to min-width:auto, which
+   refuses to shrink below the input's intrinsic ~20ch width. Without it the
+   row overflows and pushes the filter button off the edge. */
 .search-bar-input-wrapper {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -27,6 +31,7 @@
 
 .search-bar-input {
   flex: 1;
+  min-width: 0;
   border: none;
   outline: none;
   background: transparent;

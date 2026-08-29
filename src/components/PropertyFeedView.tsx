@@ -6,7 +6,7 @@ import { getColors } from '@/constants/Colors'
 import { PropertyData } from './PropertyCard'
 import { formatPrice, calculateRentPrices } from '@/utils/shareUtils'
 import { isVideoUrl, separateMedia } from '@/utils/videoUtils'
-import { MapPin, BedDouble, Bath, Share2, Eye, ChevronUp, ChevronDown, LayoutGrid, Grid3x3, Search, X, Heart, Bookmark } from 'lucide-react'
+import { MapPin, BedDouble, Bath, Share2, Eye, ChevronUp, ChevronDown, LayoutGrid, Grid3x3, Search, X, Heart, Bookmark, CalendarCheck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSavedProperty } from '@/hooks/useSavedProperties'
 import { usePropertyLike } from '@/hooks/usePropertyLikes'
@@ -633,15 +633,24 @@ export default function PropertyFeedView({
       onMouseLeave={handleMouseLeave}
       style={{ backgroundColor: Colors.neutral[900] }}
     >
-      {/* Search Overlay - Top Left */}
+      {/* Top bar: search + grid toggle share one row. The right inset
+          reserves the corner for the save button. */}
+      <div style={{
+        position: 'absolute',
+        top: '16px',
+        left: '16px',
+        right: '68px',
+        zIndex: 9998,
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '8px',
+        pointerEvents: 'none'
+      }}>
       {onSearch && (
         <div style={{
-          position: 'absolute',
-          top: '16px',
-          left: '16px',
-          right: '100px',
+          flex: 1,
+          minWidth: 0,
           maxWidth: '400px',
-          zIndex: 9998,
           pointerEvents: 'auto'
         }}>
           <div style={{
@@ -705,10 +714,8 @@ export default function PropertyFeedView({
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
           style={{
-            position: 'absolute',
-            top: '16px',
-            // The corner itself belongs to the save button.
-            right: '68px',
+            flexShrink: 0,
+            marginLeft: 'auto',
             zIndex: 9999,
             display: 'flex',
             flexDirection: 'column',
@@ -734,11 +741,12 @@ export default function PropertyFeedView({
           }}>
             <Grid3x3 size={24} color="#fff" />
           </div>
-          <span style={{ fontSize: '11px', color: '#fff', fontWeight: '600', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+          <span style={{ fontSize: '11px', color: '#fff', fontWeight: '600', textShadow: '0 2px 6px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' }}>
             {t('home.modeBrowse', 'Browse')}
           </span>
         </button>
       )}
+      </div>
 
       {/* Save - top right corner */}
       <FeedSaveButton property={properties[currentPropertyIndex]} />
@@ -1025,7 +1033,8 @@ export default function PropertyFeedView({
               {/* Property overlay — only rendered for the active slide */}
               {propIndex === currentPropertyIndex && (
                 <>
-                  {/* Caption: bottom-left, right: 80px leaves room for action buttons */}
+                  {/* Caption: full width. The action rail sits well above this
+                      block, so only the text keeps clear of it. */}
                   <div
                     className="feed-content-static"
                     key={`property-overlay-${property.id}`}
@@ -1033,7 +1042,7 @@ export default function PropertyFeedView({
                       position: 'absolute',
                       bottom: 0,
                       left: 0,
-                      right: '80px',
+                      right: 0,
                       zIndex: 10,
                       paddingLeft: '16px',
                       paddingRight: '16px',
@@ -1070,22 +1079,22 @@ export default function PropertyFeedView({
                       </div>
                     )}
 
-                    {/* Property info — 8px gap between rows, matching mobile */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {/* Property info — matches mobile's tightened caption */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '64px' }}>
                       <h2 style={{
-                        fontSize: '16px',
+                        fontSize: '14px',
                         fontWeight: '700',
                         color: '#fff',
                         margin: 0,
                         textShadow: '0 2px 6px rgba(0,0,0,0.9)',
-                        lineHeight: '1.375'
+                        lineHeight: '1.35'
                       }}>
                         {property.title || t('property.untitledProperty')}
                       </h2>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <MapPin size={14} color="#fff" />
-                        <span style={{ fontSize: '14px', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                        <span style={{ fontSize: '12px', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
                           {property.location || t('property.locationNotSpecified')}
                         </span>
                       </div>
@@ -1095,7 +1104,7 @@ export default function PropertyFeedView({
                           {property.bedrooms && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <BedDouble size={14} color="#fff" />
-                              <span style={{ fontSize: '13px', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                              <span style={{ fontSize: '11px', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
                                 {property.bedrooms}
                               </span>
                             </div>
@@ -1103,13 +1112,13 @@ export default function PropertyFeedView({
                           {property.bathrooms && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <Bath size={14} color="#fff" />
-                              <span style={{ fontSize: '13px', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                              <span style={{ fontSize: '11px', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
                                 {property.bathrooms}
                               </span>
                             </div>
                           )}
                           {property.area && (
-                            <span style={{ fontSize: '13px', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                            <span style={{ fontSize: '11px', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
                               {property.area} m²
                             </span>
                           )}
@@ -1119,16 +1128,46 @@ export default function PropertyFeedView({
                       {property.type === 'rent' ? (() => {
                         const { monthlyPrice } = calculateRentPrices(property.price, property.rent_period)
                         return (
-                          <span style={{ fontSize: '18px', fontWeight: '700', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                          <span style={{ fontSize: '16px', fontWeight: '700', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
                             {formatPrice(monthlyPrice)} / {t('propertyCard.month')}
                           </span>
                         )
                       })() : (
-                        <span style={{ fontSize: '18px', fontWeight: '700', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                        <span style={{ fontSize: '16px', fontWeight: '700', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
                           {formatPrice(property.price)}
                         </span>
                       )}
                     </div>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate(`/property/${property.id}?action=book`)
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
+                      style={{
+                        width: '100%',
+                        marginTop: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        padding: '11px 14px',
+                        borderRadius: '999px',
+                        border: 'none',
+                        backgroundColor: '#004aad',
+                        color: '#fff',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                        cursor: 'pointer',
+                        pointerEvents: 'auto'
+                      }}
+                    >
+                      <CalendarCheck size={16} color="#fff" />
+                      {t('propertyDetails.bookSiteVisit', 'Book Site Visit')}
+                    </button>
                   </div>
 
                   {/* Right-side action buttons — TikTok style, matching mobile */}

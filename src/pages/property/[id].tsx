@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { 
   ArrowLeft, 
   MapPin, 
@@ -46,6 +46,11 @@ type PaymentMethod = 'mtn' | 'orange'
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  // The feed's "Book Site Visit" button deep-links here rather than
+  // duplicating the reservation modal inside the feed.
+  const requestedAction = searchParams.get('action')
+  const handledDeepLinkAction = useRef(false)
   const { colorScheme } = useThemeMode()
   const { t, currentLanguage } = useLanguage()
   const Colors = getColors(colorScheme)
@@ -174,6 +179,13 @@ export default function PropertyDetail() {
       setTimeout(() => setSaveError(null), 4000)
     }
   }, [confirmAvailability, t])
+
+  // Open the reservation modal once the property has loaded.
+  useEffect(() => {
+    if (handledDeepLinkAction.current || requestedAction !== 'book' || !property) return
+    handledDeepLinkAction.current = true
+    handleReserve()
+  }, [requestedAction, property, handleReserve])
 
   const closeModal = useCallback(() => {
     setShowReservationModal(false)
