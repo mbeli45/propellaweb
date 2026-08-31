@@ -150,17 +150,12 @@ export function useReservations(userId: string) {
       });
 
       // Persist property status to 'reserved' on successful reservation creation
-      try {
-        const { error: updateError } = await supabase
-          .from('properties')
-          .update({ status: 'reserved' })
-          .eq('id', propertyId);
-        if (updateError) {
-          console.error('Failed to update property status to reserved:', updateError);
-        }
-      } catch (updateErr) {
-        console.error('Unexpected error updating property status:', updateErr);
-      }
+      // Property status is maintained by the reservations trigger
+      // (sync_property_reservation_state). The client cannot write it: the
+      // properties UPDATE policy is USING (owner_id = auth.uid()) and the
+      // booker is not the owner, so the statement matched zero rows - which
+      // PostgREST reports without an error, which is why this silently did
+      // nothing for every booking ever made.
       return data;
     } catch (error: any) {
       console.error('Reservation creation failed:', error);
@@ -217,17 +212,6 @@ export function useReservations(userId: string) {
         throw error;
       }
       // Persist property status to 'reserved' in debug flow as well
-      try {
-        const { error: updateError } = await supabase
-          .from('properties')
-          .update({ status: 'reserved' })
-          .eq('id', propertyId);
-        if (updateError) {
-          console.error('Debug: Failed to update property status to reserved:', updateError);
-        }
-      } catch (updateErr) {
-        console.error('Debug: Unexpected error updating property status:', updateErr);
-      }
       console.log('Debug: Reservation created successfully:', data);
       return data;
     } catch (error: any) {
@@ -291,15 +275,8 @@ export function useReservations(userId: string) {
         return;
       }
 
-      // createReservation marks the property `reserved` optimistically — free it
-      // up again if the payment didn't go through.
-      if (outcome === 'failed') {
-        const { error: revertErr } = await supabase
-          .from('properties')
-          .update({ status: 'available' })
-          .eq('id', propertyId);
-        if (revertErr) console.error('Failed to revert property status:', revertErr);
-      }
+      // Marking the reservation `failed` releases the property: the trigger
+      // recomputes properties.status from the remaining active reservations.
     } catch (err: any) {
       console.error('Unexpected updateReservationPayment error:', err);
     }

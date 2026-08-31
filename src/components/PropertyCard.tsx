@@ -8,6 +8,8 @@ import { calculateRentPrices, formatPrice as formatPriceUtil } from '@/utils/sha
 import { useShare } from '@/hooks/useShare'
 import { isVideoUrl } from '@/utils/videoUtils'
 import { formatLastVerified, isAvailabilityStale } from '@/hooks/usePropertyAvailability'
+import { useAuth } from '@/hooks/useAuth'
+import { isReservedByViewer } from '@/lib/propertyVisibility'
 import './PropertyCard.css'
 
 export interface PropertyData {
@@ -32,6 +34,8 @@ export interface PropertyData {
   advance_months_max?: number
   rent_period?: 'monthly' | 'yearly' | null
   status?: string
+  /** Set by trigger when someone books a visit; only that user still sees the listing. */
+  reserved_by?: string
   /** Last time the owner confirmed the listing is still on the market. */
   availability_confirmed_at?: string | null
   owner_id: string
@@ -73,6 +77,7 @@ export default function PropertyCard({
   confirmingAvailability = false,
   onClick,
 }: PropertyCardProps) {
+  const { user } = useAuth()
   const { colorScheme } = useThemeMode()
   const { t, currentLanguage } = useLanguage()
   const Colors = getColors(colorScheme)
@@ -272,6 +277,24 @@ export default function PropertyCard({
           >
             {property.type === 'rent' ? t('property.forRent') : t('property.forSale')}
           </span>
+
+          {/* This listing is hidden from everyone else - say why it is still
+              here rather than leaving it looking un-booked. */}
+          {isReservedByViewer(property, user?.id) && (
+            <span
+              style={{
+                backgroundColor: Colors.success[600],
+                color: '#FFFFFF',
+                fontSize: horizontal ? '10px' : '11px',
+                fontWeight: '600',
+                padding: horizontal ? '3px 8px' : '4px 10px',
+                borderRadius: '20px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {t('propertyCard.bookedByYou', 'Booked by you')}
+            </span>
+          )}
         </div>
         
         {/* Watermark */}

@@ -5,6 +5,7 @@ import { PropertyData } from '@/components/PropertyCard';
 import debounce from 'lodash/debounce';
 import { useBlockedUserIds } from '@/hooks/useModeration';
 import { townSearchTerms } from '@/utils/towns';
+import { propertyVisibilityFilter } from '@/lib/propertyVisibility';
 
 type Property = Database['public']['Tables']['properties']['Row'];
 type SearchFilters = {
@@ -83,18 +84,6 @@ export function useSearch() {
       setLoading(true);
       setError(null);
 
-      // First, get all reserved property IDs
-      const reservedResult = await supabase
-        .from('reservations')
-        .select('property_id')
-        .in('status', ['confirmed', 'pending']);
-
-      if (reservedResult.error) {
-        throw reservedResult.error;
-      }
-
-      const reservedPropertyIds = reservedResult.data?.map(r => r.property_id) || [];
-
       let query = supabase
         .from('properties')
         .select(`
@@ -107,14 +96,8 @@ export function useSearch() {
             role
           )
         `, { count: 'exact' })
-        .eq('status', 'available');
-
-      // Only apply the not-in filter if there are reserved properties
-      if (reservedPropertyIds.length > 0) {
-        // Use the proper PostgREST syntax for UUID arrays
-        const reservedIdsString = reservedPropertyIds.map(id => `"${id}"`).join(',');
-        query = query.not('id', 'in', `(${reservedIdsString})`);
-      }
+        // Available listings, plus any listing the viewer has booked themselves.
+        .or(await propertyVisibilityFilter());
 
       // Apply search term — location can live in either the full address (`location`)
       // or the standalone town field, so match both alongside title/description.

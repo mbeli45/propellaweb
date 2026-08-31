@@ -777,7 +777,7 @@
     "totalAmount": "Total Amount:",
     "feeNote": "This fee will be deducted from your total payment when you complete the transaction.",
     "bookSiteVisit": "Book Site Visit",
-    "messageAgent": "Message",
+    "messageAgent": "Message the agent",
     "enterPhoneNumber": "Enter your phone number",
     "phoneNumberHint": "Enter MTN (6xxx) or Orange (9xxx) number without country code",
     "reservationNote": "Your reservation will be processed securely. You'll receive a confirmation once completed."
@@ -1108,7 +1108,8 @@
     "month": "month",
     "year": "year",
     "months": "months",
-    "advance": "Advance"
+    "advance": "Advance",
+    "bookedByYou": "Booked by you"
   },
   "webMap": {
     "mapNotAvailable": "Map not available on this platform",

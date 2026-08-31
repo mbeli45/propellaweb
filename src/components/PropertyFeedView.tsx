@@ -6,10 +6,12 @@ import { getColors } from '@/constants/Colors'
 import { PropertyData } from './PropertyCard'
 import { formatPrice, calculateRentPrices } from '@/utils/shareUtils'
 import { isVideoUrl, separateMedia } from '@/utils/videoUtils'
-import { MapPin, BedDouble, Bath, Share2, Eye, ChevronUp, ChevronDown, LayoutGrid, Grid3x3, Search, X, Heart, Bookmark, CalendarCheck } from 'lucide-react'
+import { MapPin, BedDouble, Bath, Share2, Eye, ChevronUp, ChevronDown, LayoutGrid, Grid3x3, Search, X, Heart, Bookmark, CalendarCheck, MessageCircle, ShieldCheck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSavedProperty } from '@/hooks/useSavedProperties'
 import { usePropertyLike } from '@/hooks/usePropertyLikes'
+import { isReservedByViewer } from '@/lib/propertyVisibility'
+import { formatLastVerified, isAvailabilityStale } from '@/hooks/usePropertyAvailability'
 import './PropertyFeedView.css'
 
 const RENDER_WINDOW = 2 // Only render properties within ±2 of current index
@@ -181,10 +183,11 @@ export default function PropertyFeedView({
   searchValue = ''
 }: PropertyFeedViewProps) {
   const { colorScheme } = useThemeMode()
-  const { t } = useLanguage()
+  const { t, currentLanguage } = useLanguage()
   const Colors = getColors(colorScheme)
   const navigate = useNavigate()
-  
+  const { user } = useAuth()
+
   const [currentPropertyIndex, setCurrentPropertyIndex] = useState(0)
   const [currentMediaIndex, setCurrentMediaIndex] = useState<{ [propertyId: string]: number }>({})
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
@@ -1081,6 +1084,32 @@ export default function PropertyFeedView({
 
                     {/* Property info — matches mobile's tightened caption */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '64px' }}>
+                      {/* Sits above the title so it reads before the listing itself. */}
+                      <span
+                        style={{
+                          alignSelf: 'flex-start',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          maxWidth: '100%',
+                          backgroundColor: 'rgba(0, 0, 0, 0.55)',
+                          borderRadius: '999px',
+                          padding: '3px 8px',
+                          color: '#fff',
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        <ShieldCheck
+                          size={12}
+                          color={isAvailabilityStale(property.availability_confirmed_at) ? '#FCD34D' : '#6EE7B7'}
+                        />
+                        {formatLastVerified(property.availability_confirmed_at, t, currentLanguage)}
+                      </span>
+
                       <h2 style={{
                         fontSize: '14px',
                         fontWeight: '700',
@@ -1139,10 +1168,17 @@ export default function PropertyFeedView({
                       )}
                     </div>
 
+                    {/* A listing the viewer has already booked only stays in
+                        their feed so they can reach the agent - booking it a
+                        second time makes no sense. */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        navigate(`/property/${property.id}?action=book`)
+                        navigate(
+                          isReservedByViewer(property, user?.id)
+                            ? `/chat/${property.owner_id}?propertyId=${property.id}`
+                            : `/property/${property.id}?action=book`
+                        )
                       }}
                       onMouseDown={(e) => e.stopPropagation()}
                       onTouchStart={(e) => e.stopPropagation()}
@@ -1165,8 +1201,14 @@ export default function PropertyFeedView({
                         pointerEvents: 'auto'
                       }}
                     >
-                      <CalendarCheck size={16} color="#fff" />
-                      {t('propertyDetails.bookSiteVisit', 'Book Site Visit')}
+                      {isReservedByViewer(property, user?.id) ? (
+                        <MessageCircle size={16} color="#fff" />
+                      ) : (
+                        <CalendarCheck size={16} color="#fff" />
+                      )}
+                      {isReservedByViewer(property, user?.id)
+                        ? t('propertyDetails.messageAgent', 'Message the agent')
+                        : t('propertyDetails.bookSiteVisit', 'Book Site Visit')}
                     </button>
                   </div>
 

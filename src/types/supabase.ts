@@ -697,6 +697,8 @@ export type Database = {
           area: number | null
           availability_confirmed_at: string | null
           availability_confirmed_by: string | null
+          reserved_at: string | null
+          reserved_by: string | null
           average_rating: number | null
           bathroom: number | null
           bathrooms: number | null
@@ -735,6 +737,8 @@ export type Database = {
           area?: number | null
           availability_confirmed_at?: string | null
           availability_confirmed_by?: string | null
+          reserved_at?: string | null
+          reserved_by?: string | null
           average_rating?: number | null
           bathroom?: number | null
           bathrooms?: number | null
@@ -772,6 +776,8 @@ export type Database = {
           area?: number | null
           availability_confirmed_at?: string | null
           availability_confirmed_by?: string | null
+          reserved_at?: string | null
+          reserved_by?: string | null
           average_rating?: number | null
           bathroom?: number | null
           bathrooms?: number | null

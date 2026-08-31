@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { PropertyData } from '@/components/PropertyCard';
 import { captureException, addBreadcrumb } from '@/lib/sentry';
 import { useBlockedUserIds } from '@/hooks/useModeration';
+import { propertyVisibilityFilter } from '@/lib/propertyVisibility';
 
 interface FilterOptions {
   category?: string[];
@@ -42,6 +43,7 @@ export function useProperties(userId: string) {
           amenities,
           images,
           status,
+          reserved_by,
           reservation_fee,
           rent_period,
           advance_months_min,
@@ -94,6 +96,7 @@ export function useProperties(userId: string) {
         // Determine status: prioritize database status, but also check for active reservations
         // If property is already marked as reserved/sold in DB, use that
         // Otherwise, if there's an active reservation, mark as reserved
+        reserved_by: property.reserved_by ?? undefined,
         status: property.status === 'reserved' || property.status === 'sold' 
           ? property.status 
           : (reservedPropertyIdSet.has(property.id) ? 'reserved' : (property.status || 'available')),
@@ -214,18 +217,6 @@ export function useAllPropertiesBase(filters?: FilterOptions) {
     setError(null);
 
     try {
-      // First, get all reserved property IDs
-      const reservedResult = await supabase
-        .from('reservations')
-        .select('property_id')
-        .in('status', ['confirmed', 'pending']);
-
-      if (reservedResult.error) {
-        throw reservedResult.error;
-      }
-
-      const reservedPropertyIds = reservedResult.data?.map(r => r.property_id) || [];
-
       let query = supabase
         .from('properties')
         .select(`
@@ -244,6 +235,7 @@ export function useAllPropertiesBase(filters?: FilterOptions) {
           amenities,
           images,
           status,
+          reserved_by,
           reservation_fee,
           rent_period,
           advance_months_min,
@@ -258,15 +250,7 @@ export function useAllPropertiesBase(filters?: FilterOptions) {
             role
           )
         `)
-        .eq('status', 'available')
         .order('created_at', { ascending: false });
-
-      // Only apply the not-in filter if there are reserved properties
-      if (reservedPropertyIds.length > 0) {
-        // Use the proper PostgREST syntax for UUID arrays
-        const reservedIdsString = reservedPropertyIds.map(id => `"${id}"`).join(',');
-        query = query.not('id', 'in', `(${reservedIdsString})`);
-      }
 
       // Apply filters using the individual values
       if (category && category.length > 0) {
@@ -278,8 +262,8 @@ export function useAllPropertiesBase(filters?: FilterOptions) {
       if (status) {
         query = query.eq('status', status);
       } else {
-        // Default to available properties only
-        query = query.eq('status', 'available');
+        // Available listings, plus any listing the viewer has booked themselves.
+        query = query.or(await propertyVisibilityFilter());
       }
       if (limit) {
         query = query.limit(limit);
@@ -307,6 +291,7 @@ export function useAllPropertiesBase(filters?: FilterOptions) {
         image: property.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image',
         images: property.images || [],
         status: property.status || undefined,
+        reserved_by: property.reserved_by ?? undefined,
         reservationFee: property.reservation_fee || undefined,
         rent_period: property.rent_period as 'monthly' | 'yearly' | null | undefined,
         advance_months_min: property.advance_months_min || undefined,
@@ -386,6 +371,7 @@ export function useProperty(propertyId: string) {
           amenities,
           images,
           status,
+          reserved_by,
           reservation_fee,
           rent_period,
           advance_months_min,
@@ -480,18 +466,6 @@ export function useSimilarProperties(currentPropertyId: string, category?: strin
     setError(null);
 
     try {
-      // First, get all reserved property IDs
-      const reservedResult = await supabase
-        .from('reservations')
-        .select('property_id')
-        .in('status', ['confirmed', 'pending']);
-
-      if (reservedResult.error) {
-        throw reservedResult.error;
-      }
-
-      const reservedPropertyIds = reservedResult.data?.map(r => r.property_id) || [];
-
       // Optimize query by selecting only essential fields and using better indexing
       let query = supabase
         .from('properties')
@@ -509,6 +483,7 @@ export function useSimilarProperties(currentPropertyId: string, category?: strin
           area,
           images,
           status,
+          reserved_by,
           rent_period,
           advance_months_min,
           advance_months_max,
@@ -521,18 +496,11 @@ export function useSimilarProperties(currentPropertyId: string, category?: strin
           )
         `)
         .neq('id', currentPropertyId) // Exclude current property
-        .eq('status', 'available')
+        .or(await propertyVisibilityFilter())
         .eq('category', category)
         .eq('type', type)
         .limit(limit)
         .order('created_at', { ascending: false }); // Most recent first
-
-      // Only apply the not-in filter if there are reserved properties
-      if (reservedPropertyIds.length > 0) {
-        // Use the proper PostgREST syntax for UUID arrays
-        const reservedIdsString = reservedPropertyIds.map(id => `"${id}"`).join(',');
-        query = query.not('id', 'in', `(${reservedIdsString})`);
-      }
 
       const { data, error } = await query;
 
@@ -555,6 +523,7 @@ export function useSimilarProperties(currentPropertyId: string, category?: strin
         image: property.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image',
         images: property.images || [],
         status: property.status || undefined,
+        reserved_by: property.reserved_by ?? undefined,
         reservationFee: undefined, // Skip for similar properties
         rent_period: property.rent_period as 'monthly' | 'yearly' | null | undefined,
         advance_months_min: property.advance_months_min || undefined,
@@ -628,21 +597,12 @@ export function useHomeProperties() {
     setError(null);
 
     try {
-      // First, get all reserved property IDs
-      const reservedResult = await supabase
-        .from('reservations')
-        .select('property_id')
-        .in('status', ['confirmed', 'pending']);
-
-      if (reservedResult.error) {
-        throw reservedResult.error;
-      }
-
-      const reservedPropertyIds = reservedResult.data?.map(r => r.property_id) || [];
-
       // OPTIMIZATION: Use separate queries for better performance
+      // Available listings, plus any listing this viewer has booked.
+      const visibility = await propertyVisibilityFilter();
+
       // Query 1: Featured properties (premium/luxury) - limit to 5
-      let featuredQuery = supabase
+      const featuredQuery = supabase
         .from('properties')
         .select(`
           id,
@@ -661,6 +621,7 @@ export function useHomeProperties() {
           amenities,
           images,
           status,
+          reserved_by,
           reservation_fee,
           rent_period,
           advance_months_min,
@@ -675,13 +636,13 @@ export function useHomeProperties() {
             role
           )
         `)
-        .eq('status', 'available')
+        .or(visibility)
         .in('category', ['premium', 'luxury'])
         .order('created_at', { ascending: false })
         .limit(5);
 
       // Query 2: Recent properties - limit to 10
-      let recentQuery = supabase
+      const recentQuery = supabase
         .from('properties')
         .select(`
           id,
@@ -700,6 +661,7 @@ export function useHomeProperties() {
           amenities,
           images,
           status,
+          reserved_by,
           reservation_fee,
           rent_period,
           advance_months_min,
@@ -714,17 +676,9 @@ export function useHomeProperties() {
             role
           )
         `)
-        .eq('status', 'available')
+        .or(visibility)
         .order('created_at', { ascending: false })
         .limit(10);
-
-      // Only apply the not-in filter if there are reserved properties
-      if (reservedPropertyIds.length > 0) {
-        // Use the proper PostgREST syntax for UUID arrays
-        const reservedIdsString = reservedPropertyIds.map(id => `"${id}"`).join(',');
-        featuredQuery = featuredQuery.not('id', 'in', `(${reservedIdsString})`);
-        recentQuery = recentQuery.not('id', 'in', `(${reservedIdsString})`);
-      }
 
       // Execute both queries in parallel
       const [featuredResult, recentResult] = await Promise.all([
@@ -759,6 +713,7 @@ export function useHomeProperties() {
         image: property.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image',
         images: property.images || [],
         status: property.status || undefined,
+        reserved_by: property.reserved_by ?? undefined,
         reservationFee: property.reservation_fee || undefined,
         rent_period: property.rent_period as 'monthly' | 'yearly' | null | undefined,
         advance_months_min: property.advance_months_min || undefined,
@@ -793,6 +748,7 @@ export function useHomeProperties() {
         image: property.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image',
         images: property.images || [],
         status: property.status || undefined,
+        reserved_by: property.reserved_by ?? undefined,
         reservationFee: property.reservation_fee || undefined,
         rent_period: property.rent_period as 'monthly' | 'yearly' | null | undefined,
         advance_months_min: property.advance_months_min || undefined,
