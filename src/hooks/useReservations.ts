@@ -240,6 +240,36 @@ export function useReservations(userId: string) {
     }
   };
 
+  // Mark a visit as done. This is not cosmetic: the owner's 70% share of the
+  // reservation fee is credited on booking but held back by
+  // locked_visitation_amount until the reservation reaches 'completed', so
+  // without this the agent's wallet shows a balance it can never withdraw.
+  // Scoped to the visitor's own confirmed rows so it cannot complete someone
+  // else's booking, or resurrect a cancelled one.
+  const completeReservation = async (reservationId: string) => {
+    try {
+      const updateData: ReservationUpdate = {
+        status: 'completed',
+      };
+      const { data, error } = await supabase
+        .from('reservations')
+        .update(updateData)
+        .eq('id', reservationId)
+        .eq('user_id', userId)
+        .eq('status', 'confirmed')
+        .select('id');
+      if (error) throw error;
+      // An UPDATE that matches nothing - a stale row, or one RLS hides - comes
+      // back without an error, so check before telling the visitor it worked.
+      if (!data || data.length === 0) {
+        throw new Error('Reservation could not be confirmed');
+      }
+    } catch (error: any) {
+      setError(error.message);
+      throw error;
+    }
+  };
+
   // Apply a payment-outcome update to an existing pending reservation row.
   // The booking flow pre-inserts a `pending` reservation before initiating MeSomb;
   // this finalises it once the polling loop sees a definitive status. Filtered to
@@ -333,6 +363,7 @@ export function useReservations(userId: string) {
     createReservation,
     debugCreateReservation,
     cancelReservation,
+    completeReservation,
     updateReservationPayment,
     requestRefund,
     refreshReservations: fetchReservations,

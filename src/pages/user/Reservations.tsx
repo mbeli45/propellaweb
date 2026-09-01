@@ -26,6 +26,7 @@ export default function UserReservations() {
     loading,
     error,
     cancelReservation,
+    completeReservation,
     requestRefund,
     refreshReservations,
   } = useReservations(user?.id || '')
@@ -34,6 +35,14 @@ export default function UserReservations() {
   const { isMonitoring, monitoringProgress, currentStatus, timeRemaining } = useFapshiPayment()
 
   const [requestingRefund, setRequestingRefund] = useState<string | null>(null)
+  const [confirmingVisit, setConfirmingVisit] = useState<string | null>(null)
+
+  // Mirrors the mobile gate: a paid, confirmed booking whose visit day has
+  // arrived. reservation_date is a DATE, so it parses as UTC midnight - the
+  // button appears from the start of the visit day rather than after it.
+  const canConfirmVisit = (reservation: any) =>
+    reservation.status === 'confirmed' &&
+    new Date() >= new Date(reservation.reservation_date)
 
   useEffect(() => {
     if (user?.id) {
@@ -97,6 +106,32 @@ export default function UserReservations() {
       alert(error.message || t('reservations.failedToRequestRefundMessage') || 'Failed to request refund', 'error')
     } finally {
       setRequestingRefund(null)
+    }
+  }
+
+  const handleConfirmVisit = async (reservationId: string) => {
+    const confirmed = await confirm({
+      title: t('reservations.confirmVisitTitle'),
+      message: t('reservations.confirmVisitMessage'),
+      variant: 'info',
+    })
+
+    if (!confirmed) return
+
+    setConfirmingVisit(reservationId)
+    try {
+      await completeReservation(reservationId)
+      // Not visitConfirmedMessage - that one says the reviews were submitted,
+      // which is true on mobile but not here; web collects no review yet.
+      alert(t('reservations.confirmVisitSuccessMessage'), 'success', t('reservations.visitConfirmedTitle'))
+      refreshReservations()
+    } catch (error: any) {
+      // The thrown message is a Postgres/PostgREST string, not something to
+      // put in front of a visitor in either language.
+      console.error('[Reservations] Failed to confirm visit', error)
+      alert(t('reservations.failedToConfirmVisitMessage'), 'error', t('reservations.errorTitle'))
+    } finally {
+      setConfirmingVisit(null)
     }
   }
 
@@ -391,6 +426,31 @@ export default function UserReservations() {
                     >
                       <X size={16} />
                       {t('reservations.cancel')}
+                    </button>
+                  )}
+                  {canConfirmVisit(reservation) && (
+                    <button
+                      onClick={() => handleConfirmVisit(reservation.id)}
+                      disabled={confirmingVisit === reservation.id}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: Colors.success[600],
+                        color: Colors.white,
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: confirmingVisit === reservation.id ? 'not-allowed' : 'pointer',
+                        opacity: confirmingVisit === reservation.id ? 0.6 : 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <CheckCircle2 size={16} />
+                      {confirmingVisit === reservation.id
+                        ? t('common.loading')
+                        : t('reservations.confirmVisit')}
                     </button>
                   )}
                   {reservation.status === 'cancelled' && reservation.payment_status === 'paid' && (

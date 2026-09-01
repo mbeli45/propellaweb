@@ -4,6 +4,7 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { useBottomSheet } from '@/contexts/BottomSheetContext'
 import { getColors } from '@/constants/Colors'
+import { supabase } from '@/lib/supabase'
 import { useWallet } from '@/hooks/useWallet'
 import { useFapshiWithdrawal } from '@/hooks/useFapshiWithdrawal'
 import { Wallet, ArrowDown, ArrowUp, CreditCard, TrendingUp, X, AlertCircle } from 'lucide-react'
@@ -33,8 +34,39 @@ export default function AgentWallet() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'mtn' | 'orange' | null>(null)
   const [withdrawalMessage, setWithdrawalMessage] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(false)
+  // Null while unknown - never 0, which would read as "nothing to withdraw".
+  const [availableBalance, setAvailableBalance] = useState<number | null>(null)
 
   const balance = wallet?.balance || 0
+  // Reservation income stays locked until the visitor confirms the visit, so
+  // this is usually smaller than the balance. The page used to show `balance`
+  // everywhere it said "Available", then the server guard rejected the
+  // withdrawal with "Available: 0" and nothing on screen explained why.
+  const withdrawable = availableBalance ?? balance
+  const hasLockedFunds = availableBalance !== null && availableBalance < balance
+
+  useEffect(() => {
+    if (!user?.id) {
+      setAvailableBalance(null)
+      return
+    }
+    let cancelled = false
+    const loadAvailableBalance = async () => {
+      const { data, error } = await supabase
+        .rpc('available_withdrawable_balance', { p_user_id: user.id })
+      if (cancelled) return
+      if (error) {
+        console.error('[Wallet] Failed to load available balance', error)
+        setAvailableBalance(null)
+        return
+      }
+      // numeric can arrive as a string over PostgREST, and Number(null) is 0.
+      const parsed = data === null || data === undefined ? NaN : Number(data)
+      setAvailableBalance(Number.isFinite(parsed) ? parsed : null)
+    }
+    loadAvailableBalance()
+    return () => { cancelled = true }
+  }, [user?.id, wallet?.balance])
 
   useEffect(() => {
     const checkMobile = () => {
@@ -71,8 +103,12 @@ export default function AgentWallet() {
       return
     }
 
-    if (amount > balance) {
-      setWithdrawalMessage(t('wallet.insufficientBalance') || 'Insufficient balance')
+    if (amount > withdrawable) {
+      setWithdrawalMessage(
+        hasLockedFunds
+          ? t('wallet.withdrawalLockedUntilCompleted')
+          : t('wallet.insufficientBalance') || 'Insufficient balance'
+      )
       return
     }
 
@@ -145,8 +181,31 @@ export default function AgentWallet() {
             gap: '6px'
           }}>
             <TrendingUp size={16} />
-            {t('wallet.availableForWithdrawal')}
+            {hasLockedFunds
+              ? `${t('wallet.availableForWithdrawal')}: ${formatPrice(availableBalance!)} FCFA`
+              : t('wallet.availableForWithdrawal')}
           </div>
+
+          {hasLockedFunds && (
+            <div style={{
+              marginTop: '12px',
+              padding: '10px 12px',
+              borderRadius: '8px',
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              fontSize: '12px',
+              lineHeight: 1.4,
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '8px'
+            }}>
+              <AlertCircle size={14} style={{ flexShrink: 0, marginTop: '1px' }} />
+              <span>
+                {availableBalance === 0
+                  ? t('wallet.allFundsLocked')
+                  : t('wallet.someFundsLocked')}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Quick Actions */}
@@ -364,8 +423,13 @@ export default function AgentWallet() {
                 }}
               />
               <p style={{ fontSize: '12px', color: Colors.neutral[500], marginTop: '4px' }}>
-                {t('wallet.availableBalance') || 'Available'}: {formatPrice(balance)} FCFA
+                {t('wallet.availableBalance') || 'Available'}: {formatPrice(withdrawable)} FCFA
               </p>
+              {hasLockedFunds && (
+                <p style={{ fontSize: '12px', color: Colors.warning[700], marginTop: '4px' }}>
+                  {t('wallet.totalBalance')}: {formatPrice(balance)} FCFA &middot; {t('wallet.someFundsLocked')}
+                </p>
+              )}
             </div>
 
             {/* Payment Method */}
