@@ -9,6 +9,7 @@ type Reservation = Database['public']['Tables']['reservations']['Row'];
 type ReservationWithProperty = Reservation & {
   property?: {
     id: string;
+    owner_id: string;
     title: string;
     location: string;
     images: string[] | null;
@@ -42,6 +43,7 @@ export function useReservations(userId: string) {
           *,
           property:properties(
             id,
+            owner_id,
             title,
             location,
             images,

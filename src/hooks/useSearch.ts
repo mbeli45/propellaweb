@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Database } from '@/types/supabase';
 import { PropertyData } from '@/components/PropertyCard';
@@ -57,6 +57,12 @@ export function useSearch() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const itemsPerPage = 20;
+  // Highest page already merged into `results`. `loading` is not enough of a
+  // guard on its own: performSearch is debounced by 300ms, so it stays false
+  // for the whole window after a page bump, and a scroll handler firing every
+  // 200ms would walk the counter forward several times - each bump cancelling
+  // the request the previous one had queued - so the list never actually grew.
+  const fetchedPageRef = useRef(0);
   const { blockedIds } = useBlockedUserIds();
   const blockedSet = useMemo(() => new Set(blockedIds), [blockedIds]);
   const visibleResults = useMemo(
@@ -201,6 +207,7 @@ export function useSearch() {
       setResults((prev) =>
         currentPage === 1 ? transformedResults : [...prev, ...transformedResults]
       );
+      fetchedPageRef.current = currentPage;
       setTotalCount(count || 0);
       setHasMore((count || 0) > start + itemsPerPage);
     } catch (error: any) {
@@ -214,18 +221,21 @@ export function useSearch() {
     setSearchTerm(term);
     setPage(1);
     setResults([]);
+    fetchedPageRef.current = 0;
   };
 
   const updateFilters = (newFilters: Partial<SearchFilters>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
     setPage(1);
     setResults([]);
+    fetchedPageRef.current = 0;
   };
 
   const loadMore = () => {
-    if (!loading && hasMore) {
-      setPage(prev => prev + 1);
-    }
+    if (loading || !hasMore) return;
+    // A page is already queued or in flight; wait for it to land.
+    if (page > fetchedPageRef.current) return;
+    setPage(prev => prev + 1);
   };
 
   const clearSearch = () => {
@@ -233,6 +243,7 @@ export function useSearch() {
     setFilters({});
     setPage(1);
     setResults([]);
+    fetchedPageRef.current = 0;
   };
 
   return {

@@ -8,7 +8,7 @@ import { getColors } from '@/constants/Colors'
 import { useReservations } from '@/hooks/useReservations'
 import { useFapshiPayment } from '@/hooks/useFapshiPayment'
 import { useBadgeCounts } from '@/hooks/useBadgeCounts'
-import { Calendar, Clock, MapPin, AlertCircle, CreditCard, CheckCircle2, X } from 'lucide-react'
+import { Calendar, Clock, MapPin, AlertCircle, CreditCard, CheckCircle2, X, MessageCircle } from 'lucide-react'
 import { formatPrice } from '@/utils/shareUtils'
 import PropertyCard from '@/components/PropertyCard'
 import './Reservations.css'
@@ -98,6 +98,18 @@ export default function UserReservations() {
     } finally {
       setRequestingRefund(null)
     }
+  }
+
+  // A booked listing is hidden from the public feed, so this row is the only
+  // route back to it - and to the agent holding the visit.
+  const handleMessageAgent = (reservation: any) => {
+    const ownerId = reservation.property?.owner_id
+    if (!ownerId) {
+      alert(t('reservations.agentUnavailable'), 'error', t('reservations.errorTitle'))
+      return
+    }
+    const propertyId = reservation.property?.id || reservation.property_id
+    navigate(propertyId ? `/chat/${ownerId}?propertyId=${propertyId}` : `/chat/${ownerId}`)
   }
 
   const formatDate = (dateString: string) => {
@@ -261,7 +273,7 @@ export default function UserReservations() {
                         bedrooms: property.bedrooms || undefined,
                         bathrooms: property.bathrooms || undefined,
                         area: property.area || undefined,
-                        owner_id: '',
+                        owner_id: property.owner_id,
                       }}
                       horizontal
                     />
@@ -403,21 +415,44 @@ export default function UserReservations() {
                       }
                     </button>
                   )}
-                  <button
-                    onClick={() => navigate(`/property/${property.id}`)}
-                    style={{
-                      padding: '10px 16px',
-                      backgroundColor: Colors.primary[600],
-                      color: Colors.white,
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {t('property.viewOnMap') || 'View Property'}
-                  </button>
+                  {property?.owner_id && (
+                    <button
+                      onClick={() => handleMessageAgent(reservation)}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: Colors.primary[50],
+                        color: Colors.primary[600],
+                        border: `1px solid ${Colors.primary[100]}`,
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <MessageCircle size={16} />
+                      {t('reservations.messageAgent')}
+                    </button>
+                  )}
+                  {property?.id && (
+                    <button
+                      onClick={() => navigate(`/property/${property.id}`)}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: Colors.primary[600],
+                        color: Colors.white,
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {t('reservations.viewProperty')}
+                    </button>
+                  )}
                 </div>
               </div>
             )

@@ -446,7 +446,10 @@
     "booking": "réservation",
     "bookings": "réservations",
     "showingBookingsFor": "Affichage des réservations pour la propriété sélectionnée",
-    "bookingDetails": "Détails des réservations"
+    "bookingDetails": "Détails des réservations",
+    "messageAgent": "Contacter l'agent",
+    "viewProperty": "Voir le bien",
+    "agentUnavailable": "Les informations de l'agent sont introuvables pour cette réservation."
   },
   "wallet": {
     "title": "Portefeuille",

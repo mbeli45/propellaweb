@@ -458,7 +458,10 @@
     "booking": "booking",
     "bookings": "bookings",
     "showingBookingsFor": "Showing bookings for selected property",
-    "bookingDetails": "Booking Details"
+    "bookingDetails": "Booking Details",
+    "messageAgent": "Message agent",
+    "viewProperty": "View property",
+    "agentUnavailable": "Agent information is missing for this booking."
   },
   "wallet": {
     "title": "Wallet",
