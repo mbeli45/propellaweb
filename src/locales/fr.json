@@ -436,6 +436,7 @@
     "confirmVisit": "Confirmer la visite",
     "confirmVisitTitle": "Confirmer votre visite",
     "confirmVisitMessage": "Avez-vous visité ce bien ? La confirmation libère les frais de visite au profit de l'agent et est irréversible.",
+    "confirmAvailableOnVisitDay": "Vous pourrez confirmer cette visite le jour où elle a lieu.",
     "confirmVisitSuccessMessage": "Votre visite a été confirmée.",
     "failedToConfirmVisitMessage": "Impossible de confirmer la visite. Veuillez réessayer.",
     "noReservationsYetTitle": "Aucune réservation pour le moment",

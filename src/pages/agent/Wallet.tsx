@@ -171,7 +171,7 @@ export default function AgentWallet() {
             fontWeight: '700',
             marginBottom: '8px'
           }}>
-            {formatPrice(balance)} FCFA
+            {formatPrice(balance)}
           </div>
           <div style={{
             fontSize: '14px',
@@ -182,7 +182,7 @@ export default function AgentWallet() {
           }}>
             <TrendingUp size={16} />
             {hasLockedFunds
-              ? `${t('wallet.availableForWithdrawal')}: ${formatPrice(availableBalance!)} FCFA`
+              ? `${t('wallet.availableForWithdrawal')}: ${formatPrice(availableBalance!)}`
               : t('wallet.availableForWithdrawal')}
           </div>
 
@@ -368,7 +368,7 @@ export default function AgentWallet() {
                       : Colors.error[600]
                   }}>
                     {(transaction.type === 'deposit' || transaction.type === 'payment') ? '+' : '-'}
-                    {formatPrice(Math.abs(transaction.amount))} FCFA
+                    {formatPrice(Math.abs(transaction.amount))}
                   </div>
                 </div>
               ))}
@@ -423,11 +423,11 @@ export default function AgentWallet() {
                 }}
               />
               <p style={{ fontSize: '12px', color: Colors.neutral[500], marginTop: '4px' }}>
-                {t('wallet.availableBalance') || 'Available'}: {formatPrice(withdrawable)} FCFA
+                {t('wallet.availableBalance') || 'Available'}: {formatPrice(withdrawable)}
               </p>
               {hasLockedFunds && (
                 <p style={{ fontSize: '12px', color: Colors.warning[700], marginTop: '4px' }}>
-                  {t('wallet.totalBalance')}: {formatPrice(balance)} FCFA &middot; {t('wallet.someFundsLocked')}
+                  {t('wallet.totalBalance')}: {formatPrice(balance)} &middot; {t('wallet.someFundsLocked')}
                 </p>
               )}
             </div>

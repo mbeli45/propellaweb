@@ -448,6 +448,7 @@
     "confirmVisit": "Confirm visit",
     "confirmVisitTitle": "Confirm your visit",
     "confirmVisitMessage": "Did you visit this property? Confirming releases the visit fee to the agent and cannot be undone.",
+    "confirmAvailableOnVisitDay": "You can confirm this visit on the day it takes place.",
     "confirmVisitSuccessMessage": "Your visit has been confirmed.",
     "failedToConfirmVisitMessage": "Failed to confirm the visit. Please try again.",
     "noReservationsYetTitle": "No Site Visits Yet",

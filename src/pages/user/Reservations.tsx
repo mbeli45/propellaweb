@@ -8,15 +8,29 @@ import { getColors } from '@/constants/Colors'
 import { useReservations } from '@/hooks/useReservations'
 import { useFapshiPayment } from '@/hooks/useFapshiPayment'
 import { useBadgeCounts } from '@/hooks/useBadgeCounts'
-import { Calendar, Clock, MapPin, AlertCircle, CreditCard, CheckCircle2, X, MessageCircle } from 'lucide-react'
+import { Calendar, Clock, MapPin, CheckCircle2, X, MessageCircle, Home, ChevronRight } from 'lucide-react'
 import { formatPrice } from '@/utils/shareUtils'
-import PropertyCard from '@/components/PropertyCard'
 import './Reservations.css'
+
+// Shared button shapes, so the row reads as one control group rather than four
+// unrelated pills.
+const actionBase: React.CSSProperties = {
+  padding: '9px 14px',
+  borderRadius: '8px',
+  fontSize: '13px',
+  fontWeight: 500,
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '6px',
+  border: 'none',
+  whiteSpace: 'nowrap',
+}
 
 export default function UserReservations() {
   const { user } = useAuth()
   const { colorScheme } = useThemeMode()
-  const { t } = useLanguage()
+  const { t, currentLanguage } = useLanguage()
   const { confirm, alert } = useDialog()
   const Colors = getColors(colorScheme)
   const navigate = useNavigate()
@@ -147,20 +161,37 @@ export default function UserReservations() {
     navigate(propertyId ? `/chat/${ownerId}?propertyId=${propertyId}` : `/chat/${ownerId}`)
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+  // Date and time were two separate labelled rows; they are one fact.
+  const formatVisitSlot = (reservation: any) => {
+    const locale = currentLanguage === 'fr' ? 'fr-FR' : 'en-US'
+    const date = new Date(reservation.reservation_date).toLocaleDateString(locale, {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
     })
+    if (!reservation.reservation_time) return date
+    const time = new Date(`2000-01-01T${reservation.reservation_time}`).toLocaleTimeString(
+      locale,
+      { hour: '2-digit', minute: '2-digit' },
+    )
+    return `${date} · ${time}`
   }
 
-  const formatTime = (timeString: string | null) => {
-    if (!timeString) return ''
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+  const secondaryAction: React.CSSProperties = {
+    ...actionBase,
+    backgroundColor: Colors.primary[50],
+    border: `1px solid ${Colors.primary[100]}`,
+  }
+
+  const primaryAction: React.CSSProperties = {
+    ...actionBase,
+    color: Colors.white,
+  }
+
+  const ghostAction: React.CSSProperties = {
+    ...actionBase,
+    backgroundColor: 'transparent',
+    border: `1px solid ${Colors.neutral[200]}`,
   }
 
   return (
@@ -292,228 +323,230 @@ export default function UserReservations() {
                   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
                 }}
               >
-                {/* Property Info */}
-                {property && (
-                  <div style={{ marginBottom: '16px' }}>
-                    <PropertyCard 
-                      property={{
-                        id: property.id,
-                        title: property.title,
-                        price: property.price,
-                        location: property.location,
-                        image: property.images?.[0] || '',
-                        images: property.images || [],
-                        type: 'rent',
-                        category: 'standard',
-                        bedrooms: property.bedrooms || undefined,
-                        bathrooms: property.bathrooms || undefined,
-                        area: property.area || undefined,
-                        owner_id: property.owner_id,
+                {/* Header: thumbnail, status, title, location. Tapping it
+                    opens the listing - a booked property is out of the public
+                    feed, so this row is the only route back to it. */}
+                <div
+                  onClick={() => property?.id && navigate(`/property/${property.id}`)}
+                  style={{
+                    display: 'flex',
+                    gap: '12px',
+                    cursor: property?.id ? 'pointer' : 'default'
+                  }}
+                >
+                  {property?.images?.[0] ? (
+                    <img
+                      src={property.images[0]}
+                      alt={property.title || ''}
+                      loading="lazy"
+                      style={{
+                        width: '92px',
+                        height: '92px',
+                        flexShrink: 0,
+                        objectFit: 'cover',
+                        borderRadius: '10px',
+                        backgroundColor: Colors.neutral[100]
                       }}
-                      horizontal
                     />
-                  </div>
-                )}
-
-                {/* Reservation Details */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '16px',
-                  marginBottom: '16px',
-                  padding: '16px',
-                  backgroundColor: Colors.neutral[50],
-                  borderRadius: '8px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Calendar size={18} color={Colors.primary[600]} />
-                    <div>
-                      <div style={{ fontSize: '12px', color: Colors.neutral[600] }}>
-                        {t('reservations.reservationDate')}
-                      </div>
-                      <div style={{ fontSize: '14px', fontWeight: '600', color: Colors.neutral[900] }}>
-                        {formatDate(reservation.reservation_date)}
-                      </div>
-                    </div>
-                  </div>
-                  {reservation.reservation_time && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Clock size={18} color={Colors.primary[600]} />
-                      <div>
-                        <div style={{ fontSize: '12px', color: Colors.neutral[600] }}>
-                          Time
-                        </div>
-                        <div style={{ fontSize: '14px', fontWeight: '600', color: Colors.neutral[900] }}>
-                          {formatTime(reservation.reservation_time)}
-                        </div>
-                      </div>
+                  ) : (
+                    <div style={{
+                      width: '92px',
+                      height: '92px',
+                      flexShrink: 0,
+                      borderRadius: '10px',
+                      backgroundColor: Colors.neutral[100],
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Home size={26} color={Colors.neutral[400]} />
                     </div>
                   )}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <CreditCard size={18} color={Colors.primary[600]} />
-                    <div>
-                      <div style={{ fontSize: '12px', color: Colors.neutral[600] }}>
-                        {t('wallet.amount')}
-                      </div>
-                      <div style={{ fontSize: '14px', fontWeight: '600', color: Colors.neutral[900] }}>
-                        {formatPrice(reservation.amount || 0)} FCFA
-                      </div>
+
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '3px 10px',
+                      borderRadius: '20px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      backgroundColor: `${getStatusColor(reservation.status)}1A`,
+                      color: getStatusColor(reservation.status)
+                    }}>
+                      <span style={{
+                        width: '6px',
+                        height: '6px',
+                        borderRadius: '50%',
+                        backgroundColor: getStatusColor(reservation.status)
+                      }} />
+                      {getStatusLabel(reservation.status)}
+                    </span>
+
+                    <div style={{
+                      marginTop: '6px',
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: Colors.neutral[900],
+                      lineHeight: 1.3,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden'
+                    }}>
+                      {property?.title || t('reservations.propertyLabel')}
+                    </div>
+
+                    <div style={{
+                      marginTop: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '12px',
+                      color: Colors.neutral[500],
+                      minWidth: 0
+                    }}>
+                      <MapPin size={12} style={{ flexShrink: 0 }} />
+                      <span style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {property?.location || t('reservations.locationNotAvailable')}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Status */}
+                {/* Date, time and amount were three separate rows of pills. */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '16px',
-                  padding: '12px',
-                  backgroundColor: Colors.neutral[50],
-                  borderRadius: '8px'
+                  marginTop: '12px',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  backgroundColor: Colors.neutral[100]
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{
-                      padding: '6px 12px',
-                      borderRadius: '20px',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      backgroundColor: `${getStatusColor(reservation.status)}20`,
-                      color: getStatusColor(reservation.status)
-                    }}>
-                      {getStatusLabel(reservation.status)}
-                    </span>
-                  </div>
-                  {reservation.payment_status && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      {reservation.payment_status === 'paid' ? (
-                        <CheckCircle2 size={16} color={Colors.success[600]} />
-                      ) : (
-                        <AlertCircle size={16} color={Colors.warning[600]} />
-                      )}
-                      <span style={{
-                        fontSize: '12px',
-                        color: Colors.neutral[600]
-                      }}>
-                        {reservation.payment_status === 'paid' ? t('reservations.confirmed') : t('reservations.pending')}
-                      </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '11px', color: Colors.neutral[500] }}>
+                      {t('reservations.reservationDate')}
                     </div>
-                  )}
+                    <div style={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: Colors.neutral[900],
+                      marginTop: '2px'
+                    }}>
+                      {formatVisitSlot(reservation)}
+                    </div>
+                  </div>
+                  <div style={{
+                    width: '1px',
+                    alignSelf: 'stretch',
+                    backgroundColor: Colors.neutral[200],
+                    margin: '0 12px'
+                  }} />
+                  <div style={{ flex: 1, minWidth: 0, textAlign: 'right' }}>
+                    <div style={{ fontSize: '11px', color: Colors.neutral[500] }}>
+                      {t('reservations.paid')}
+                    </div>
+                    <div style={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: Colors.neutral[900],
+                      marginTop: '2px'
+                    }}>
+                      {/* formatPrice already appends FCFA */}
+                      {formatPrice(reservation.amount || 0)}
+                    </div>
+                  </div>
                 </div>
 
-                {/* Actions */}
+                {/* At most two actions: reaching the agent, and whatever this
+                    reservation's status actually allows next. */}
                 <div style={{
                   display: 'flex',
                   gap: '8px',
+                  marginTop: '12px',
                   flexWrap: 'wrap'
                 }}>
-                  {reservation.status === 'pending' && (
+                  {property?.owner_id && (
                     <button
-                      onClick={() => handleCancel(reservation.id)}
-                      style={{
-                        padding: '10px 16px',
-                        backgroundColor: Colors.error[50],
-                        color: Colors.error[700],
-                        border: `1px solid ${Colors.error[200]}`,
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
+                      onClick={() => handleMessageAgent(reservation)}
+                      style={{ ...secondaryAction, color: Colors.primary[600] }}
                     >
-                      <X size={16} />
-                      {t('reservations.cancel')}
+                      <MessageCircle size={15} />
+                      {t('reservations.messageAgent')}
                     </button>
                   )}
-                  {canConfirmVisit(reservation) && (
+
+                  {canConfirmVisit(reservation) ? (
                     <button
                       onClick={() => handleConfirmVisit(reservation.id)}
                       disabled={confirmingVisit === reservation.id}
                       style={{
-                        padding: '10px 16px',
+                        ...primaryAction,
                         backgroundColor: Colors.success[600],
-                        color: Colors.white,
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        fontWeight: '500',
                         cursor: confirmingVisit === reservation.id ? 'not-allowed' : 'pointer',
-                        opacity: confirmingVisit === reservation.id ? 0.6 : 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
+                        opacity: confirmingVisit === reservation.id ? 0.6 : 1
                       }}
                     >
-                      <CheckCircle2 size={16} />
+                      <CheckCircle2 size={15} />
                       {confirmingVisit === reservation.id
                         ? t('common.loading')
                         : t('reservations.confirmVisit')}
                     </button>
-                  )}
-                  {reservation.status === 'cancelled' && reservation.payment_status === 'paid' && (
+                  ) : reservation.status === 'pending' ? (
+                    <button
+                      onClick={() => handleCancel(reservation.id)}
+                      style={{ ...ghostAction, color: Colors.error[700] }}
+                    >
+                      <X size={15} />
+                      {t('reservations.cancel')}
+                    </button>
+                  ) : reservation.status === 'cancelled' && reservation.payment_status === 'paid' ? (
                     <button
                       onClick={() => handleRequestRefund(reservation.id)}
                       disabled={requestingRefund === reservation.id}
                       style={{
-                        padding: '10px 16px',
-                        backgroundColor: Colors.warning[50],
+                        ...ghostAction,
                         color: Colors.warning[700],
-                        border: `1px solid ${Colors.warning[200]}`,
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        fontWeight: '500',
                         cursor: requestingRefund === reservation.id ? 'not-allowed' : 'pointer',
                         opacity: requestingRefund === reservation.id ? 0.6 : 1
                       }}
                     >
-                      {requestingRefund === reservation.id 
-                        ? t('common.loading') 
-                        : t('reservations.requestRefund')
-                      }
+                      {requestingRefund === reservation.id
+                        ? t('common.loading')
+                        : t('reservations.requestRefund')}
                     </button>
-                  )}
-                  {property?.owner_id && (
-                    <button
-                      onClick={() => handleMessageAgent(reservation)}
-                      style={{
-                        padding: '10px 16px',
-                        backgroundColor: Colors.primary[50],
-                        color: Colors.primary[600],
-                        border: `1px solid ${Colors.primary[100]}`,
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <MessageCircle size={16} />
-                      {t('reservations.messageAgent')}
-                    </button>
-                  )}
-                  {property?.id && (
+                  ) : property?.id ? (
                     <button
                       onClick={() => navigate(`/property/${property.id}`)}
-                      style={{
-                        padding: '10px 16px',
-                        backgroundColor: Colors.primary[600],
-                        color: Colors.white,
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: 'pointer'
-                      }}
+                      style={{ ...ghostAction, color: Colors.neutral[700] }}
                     >
                       {t('reservations.viewProperty')}
+                      <ChevronRight size={14} />
                     </button>
-                  )}
+                  ) : null}
                 </div>
+
+                {/* The visit day has not arrived, so confirming is not yet
+                    possible. Say so - the agent's fee stays locked until this
+                    happens, and silence here reads as a missing button. */}
+                {reservation.status === 'confirmed' && !canConfirmVisit(reservation) && (
+                  <div style={{
+                    marginTop: '10px',
+                    fontSize: '12px',
+                    color: Colors.neutral[500],
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '6px'
+                  }}>
+                    <Clock size={13} style={{ flexShrink: 0, marginTop: '1px' }} />
+                    <span>{t('reservations.confirmAvailableOnVisitDay')}</span>
+                  </div>
+                )}
               </div>
             )
           })}
