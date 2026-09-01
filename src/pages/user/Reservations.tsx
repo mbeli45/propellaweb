@@ -10,6 +10,8 @@ import { useFapshiPayment } from '@/hooks/useFapshiPayment'
 import { useBadgeCounts } from '@/hooks/useBadgeCounts'
 import { Calendar, Clock, MapPin, CheckCircle2, X, MessageCircle, Home, ChevronRight } from 'lucide-react'
 import { formatPrice } from '@/utils/shareUtils'
+import ReviewModal from '@/components/ReviewModal'
+import CommissionPaymentModal from '@/components/CommissionPaymentModal'
 import './Reservations.css'
 
 // Shared button shapes, so the row reads as one control group rather than four
@@ -49,12 +51,15 @@ export default function UserReservations() {
   const { isMonitoring, monitoringProgress, currentStatus, timeRemaining } = useFapshiPayment()
 
   const [requestingRefund, setRequestingRefund] = useState<string | null>(null)
-  const [confirmingVisit, setConfirmingVisit] = useState<string | null>(null)
+  const [completingVisit, setCompletingVisit] = useState<string | null>(null)
+  const [reviewReservation, setReviewReservation] = useState<any>(null)
+  const [commissionReservation, setCommissionReservation] = useState<any>(null)
 
   // Mirrors the mobile gate: a paid, confirmed booking whose visit day has
   // arrived. reservation_date is a DATE, so it parses as UTC midnight - the
   // button appears from the start of the visit day rather than after it.
-  const canConfirmVisit = (reservation: any) =>
+  // "confirmed" is the booking status; completing is what ends the visit.
+  const canCompleteVisit = (reservation: any) =>
     reservation.status === 'confirmed' &&
     new Date() >= new Date(reservation.reservation_date)
 
@@ -123,30 +128,38 @@ export default function UserReservations() {
     }
   }
 
-  const handleConfirmVisit = async (reservationId: string) => {
+  // Completing is the action; rating is what you are offered afterwards. The
+  // review must never gate completion - that is what kept agents' funds locked.
+  const handleCompleteVisit = async (reservation: any) => {
     const confirmed = await confirm({
-      title: t('reservations.confirmVisitTitle'),
-      message: t('reservations.confirmVisitMessage'),
+      title: t('reservations.completeVisitTitle'),
+      message: t('reservations.completeVisitMessage'),
       variant: 'info',
     })
 
     if (!confirmed) return
 
-    setConfirmingVisit(reservationId)
+    setCompletingVisit(reservation.id)
     try {
-      await completeReservation(reservationId)
-      // Not visitConfirmedMessage - that one says the reviews were submitted,
-      // which is true on mobile but not here; web collects no review yet.
-      alert(t('reservations.confirmVisitSuccessMessage'), 'success', t('reservations.visitConfirmedTitle'))
+      await completeReservation(reservation.id)
       refreshReservations()
+      // Offer the rating. Declining leaves the visit completed.
+      setReviewReservation(reservation)
     } catch (error: any) {
       // The thrown message is a Postgres/PostgREST string, not something to
       // put in front of a visitor in either language.
-      console.error('[Reservations] Failed to confirm visit', error)
-      alert(t('reservations.failedToConfirmVisitMessage'), 'error', t('reservations.errorTitle'))
+      console.error('[Reservations] Failed to complete visit', error)
+      alert(t('reservations.failedToCompleteVisitMessage'), 'error', t('reservations.errorTitle'))
     } finally {
-      setConfirmingVisit(null)
+      setCompletingVisit(null)
     }
+  }
+
+  // Submitted or declined, the next step is the same: the commission prompt.
+  const handleReviewClosed = () => {
+    const reviewed = reviewReservation
+    setReviewReservation(null)
+    if (reviewed) setCommissionReservation(reviewed)
   }
 
   // A booked listing is hidden from the public feed, so this row is the only
@@ -481,21 +494,21 @@ export default function UserReservations() {
                     </button>
                   )}
 
-                  {canConfirmVisit(reservation) ? (
+                  {canCompleteVisit(reservation) ? (
                     <button
-                      onClick={() => handleConfirmVisit(reservation.id)}
-                      disabled={confirmingVisit === reservation.id}
+                      onClick={() => handleCompleteVisit(reservation)}
+                      disabled={completingVisit === reservation.id}
                       style={{
                         ...primaryAction,
                         backgroundColor: Colors.success[600],
-                        cursor: confirmingVisit === reservation.id ? 'not-allowed' : 'pointer',
-                        opacity: confirmingVisit === reservation.id ? 0.6 : 1
+                        cursor: completingVisit === reservation.id ? 'not-allowed' : 'pointer',
+                        opacity: completingVisit === reservation.id ? 0.6 : 1
                       }}
                     >
                       <CheckCircle2 size={15} />
-                      {confirmingVisit === reservation.id
+                      {completingVisit === reservation.id
                         ? t('common.loading')
-                        : t('reservations.confirmVisit')}
+                        : t('reservations.completeVisit')}
                     </button>
                   ) : reservation.status === 'pending' ? (
                     <button
@@ -531,10 +544,10 @@ export default function UserReservations() {
                   ) : null}
                 </div>
 
-                {/* The visit day has not arrived, so confirming is not yet
+                {/* The visit day has not arrived, so completing is not yet
                     possible. Say so - the agent's fee stays locked until this
                     happens, and silence here reads as a missing button. */}
-                {reservation.status === 'confirmed' && !canConfirmVisit(reservation) && (
+                {reservation.status === 'confirmed' && !canCompleteVisit(reservation) && (
                   <div style={{
                     marginTop: '10px',
                     fontSize: '12px',
@@ -544,13 +557,34 @@ export default function UserReservations() {
                     gap: '6px'
                   }}>
                     <Clock size={13} style={{ flexShrink: 0, marginTop: '1px' }} />
-                    <span>{t('reservations.confirmAvailableOnVisitDay')}</span>
+                    <span>{t('reservations.completeAvailableOnVisitDay')}</span>
                   </div>
                 )}
               </div>
             )
           })}
         </div>
+      )}
+
+      <ReviewModal
+        visible={!!reviewReservation}
+        reservation={reviewReservation}
+        userId={user?.id || ''}
+        onClose={handleReviewClosed}
+      />
+
+      {commissionReservation && (
+        <CommissionPaymentModal
+          visible={!!commissionReservation}
+          onClose={() => setCommissionReservation(null)}
+          reservation={commissionReservation}
+          agentName={commissionReservation.property?.owner?.full_name || t('reservations.agent')}
+          propertyTitle={commissionReservation.property?.title || t('reservations.propertyLabel')}
+          onPaymentSuccess={() => {
+            setCommissionReservation(null)
+            refreshReservations()
+          }}
+        />
       )}
     </div>
   )
