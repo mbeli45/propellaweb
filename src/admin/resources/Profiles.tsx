@@ -16,7 +16,7 @@ import {
 } from 'react-admin';
 import { Avatar, Box, Stack, Typography, Chip, Divider } from '@mui/material';
 import { Colors } from '@/constants/Colors';
-import { DeleteButtonWithConfirm } from '../components/DeleteButtonWithConfirm';
+import { DeleteUserButton } from '../components/DeleteUserButton';
 import { EditToolbar } from '../components/EditToolbar';
 import StatusChip from '../components/StatusChip';
 import {
@@ -105,10 +105,10 @@ const ProfileFilter = (props: any) => (
         { id: 'normal', name: 'User' },
         { id: 'agent', name: 'Agent' },
         { id: 'landlord', name: 'Landlord' },
-        { id: 'admin', name: 'Admin' },
       ]}
       alwaysOn
     />
+    <BooleanInput source="is_admin" label="Admin" />
     <BooleanInput source="verified" label="Verified" />
     <BooleanInput source="is_verified_agent" label="Verified agent" />
   </Filter>
@@ -164,8 +164,9 @@ const ProfileDatagrid = () => (
     <FunctionField label="Role" render={() => <RoleChip />} />
     <BooleanField source="verified" />
     <BooleanField source="is_verified_agent" label="Verified agent" />
+    <BooleanField source="is_admin" label="Admin" />
     <DateField source="created_at" />
-    <DeleteButtonWithConfirm />
+    <DeleteUserButton />
   </Datagrid>
 );
 
@@ -256,7 +257,6 @@ const ProfileDetail = () => {
                 { id: 'normal', name: 'User' },
                 { id: 'agent', name: 'Agent' },
                 { id: 'landlord', name: 'Landlord' },
-                { id: 'admin', name: 'Admin' },
               ]}
             />
             <TextInput source="avatar_url" label="Avatar URL" />
@@ -265,6 +265,11 @@ const ProfileDetail = () => {
             <BooleanInput source="verified" />
             <BooleanInput source="is_verified_agent" label="Verified Agent" />
           </Box>
+          <BooleanInput
+            source="is_admin"
+            label="Back-office admin"
+            helperText="Grants admin panel access. Independent of role — an agent can also be an admin."
+          />
         </SimpleForm>
       </DetailSection>
     </DetailPage>

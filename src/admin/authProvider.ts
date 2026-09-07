@@ -56,20 +56,20 @@ export const authProvider: RAuthProvider = {
       // Check if user email matches any admin email from .env
       const isAdminEmail = ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(userEmail || '');
 
-      // Check if user has admin, agent, or landlord role
+      // Admin is a capability, not a role — an agent or landlord can also be an admin.
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, is_admin')
         .eq('id', data.user.id)
         .single();
 
       // Allow access if:
       // 1. Email matches admin email from .env, OR
-      // 2. User has admin role, OR
+      // 2. Profile carries the is_admin capability, OR
       // 3. User has agent/landlord role (for agency management)
-      const hasAccess = isAdminEmail || 
-                        profile?.role === 'admin' || 
-                        profile?.role === 'agent' || 
+      const hasAccess = isAdminEmail ||
+                        profile?.is_admin === true ||
+                        profile?.role === 'agent' ||
                         profile?.role === 'landlord';
 
       if (!hasAccess) {
@@ -107,13 +107,13 @@ export const authProvider: RAuthProvider = {
       // Verify user still has admin access
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, is_admin')
         .eq('id', session.user.id)
         .single();
 
       const hasAccess = isAdminEmail || 
-                        profile?.role === 'admin' || 
-                        profile?.role === 'agent' || 
+                        profile?.is_admin === true ||
+                        profile?.role === 'agent' ||
                         profile?.role === 'landlord';
 
       if (!hasAccess) {
@@ -144,7 +144,7 @@ export const authProvider: RAuthProvider = {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, full_name, email, avatar_url, role')
+        .select('id, full_name, email, avatar_url, role, is_admin')
         .eq('id', user.id)
         .single();
 
@@ -157,6 +157,7 @@ export const authProvider: RAuthProvider = {
         fullName: profile.full_name || profile.email || 'Admin',
         avatar: profile.avatar_url,
         role: profile.role,
+        isAdmin: profile.is_admin === true,
       };
     } catch (error) {
       throw error;
@@ -167,18 +168,23 @@ export const authProvider: RAuthProvider = {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        return Promise.resolve('');
+        return Promise.resolve({ role: '', isAdmin: false });
       }
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, is_admin')
         .eq('id', user.id)
         .single();
 
-      return Promise.resolve(profile?.role || '');
+      // Admin is orthogonal to role — an agent who is also an admin must keep
+      // reporting as an agent, so carry both rather than collapsing to one value.
+      return Promise.resolve({
+        role: profile?.role || '',
+        isAdmin: profile?.is_admin === true,
+      });
     } catch {
-      return Promise.resolve('');
+      return Promise.resolve({ role: '', isAdmin: false });
     }
   },
 };

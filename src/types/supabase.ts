@@ -604,6 +604,7 @@ export type Database = {
           gender: string | null
           id: string
           is_public: boolean | null
+          is_admin: boolean
           is_verified_agent: boolean | null
           last_seen: string | null
           location: string | null
@@ -637,6 +638,7 @@ export type Database = {
           gender?: string | null
           id?: string
           is_public?: boolean | null
+          is_admin?: boolean
           is_verified_agent?: boolean | null
           last_seen?: string | null
           location?: string | null
@@ -670,6 +672,7 @@ export type Database = {
           gender?: string | null
           id?: string
           is_public?: boolean | null
+          is_admin?: boolean
           is_verified_agent?: boolean | null
           last_seen?: string | null
           location?: string | null
