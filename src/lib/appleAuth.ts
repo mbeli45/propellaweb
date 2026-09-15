@@ -51,12 +51,14 @@ export async function handleAppleCallback() {
     if (error) throw error
 
     if (session?.user) {
-      // Check if profile exists
-      const { data: existingProfile } = await supabase
+      // The auth trigger may still be creating the profile when Apple redirects back.
+      const { data: existingProfile, error: profileLookupError } = await supabase
         .from('profiles')
         .select('id, role')
         .eq('id', session.user.id)
-        .single()
+        .maybeSingle()
+
+      if (profileLookupError) throw profileLookupError
 
       // If profile doesn't exist, create it
       if (!existingProfile) {
@@ -70,17 +72,15 @@ export async function handleAppleCallback() {
         
         const { error: profileError } = await supabase
           .from('profiles')
-          .insert({
+          .upsert({
             id: session.user.id,
             email: session.user.email,
             full_name: fullName,
             role: pendingRole as 'normal' | 'agent' | 'landlord',
             avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture,
-          })
+          }, { onConflict: 'id' })
 
-        if (profileError) {
-          console.error('Failed to create profile:', profileError)
-        }
+        if (profileError) throw profileError
         
         localStorage.removeItem('pendingAppleRole')
       } else {
