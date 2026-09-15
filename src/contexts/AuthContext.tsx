@@ -14,7 +14,7 @@ interface AuthContextProps {
   signUp: (email: string, password: string, fullName: string, role: string, eulaAccepted?: boolean) => Promise<void>
   acceptEula: () => Promise<void>
   signOut: () => Promise<void>
-  refreshUser: () => Promise<void>
+  refreshUser: (userId?: string) => Promise<void>
   forgotPassword: (email: string) => Promise<void>
   resetPassword: (newPassword: string, token?: string) => Promise<void>
   verifyEmail: (email: string, code: string) => Promise<void>
@@ -232,9 +232,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [navigate])
 
-  const refreshUser = useCallback(async () => {
-    if (user?.id) {
-      await fetchProfile(user.id, true)
+  const refreshUser = useCallback(async (userId?: string) => {
+    const id = userId || user?.id
+    if (id) {
+      await fetchProfile(id, true)
     }
   }, [user?.id, fetchProfile])
 

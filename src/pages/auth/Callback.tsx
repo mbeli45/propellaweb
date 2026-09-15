@@ -4,11 +4,21 @@ import { handleGoogleCallback } from '@/lib/googleAuth'
 import { handleAppleCallback } from '@/lib/appleAuth'
 import { supabase } from '@/lib/supabase'
 import Loader from '@/components/ui/Loader'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
+  const { user, loading, refreshUser } = useAuth()
   const [error, setError] = useState<string | null>(null)
+  const [callbackComplete, setCallbackComplete] = useState(false)
   const hasHandledRef = useRef(false)
+
+  useEffect(() => {
+    if (callbackComplete && !loading && user) {
+      const targetRoute = user.role === 'agent' || user.role === 'landlord' ? '/agent' : '/user'
+      navigate(targetRoute, { replace: true })
+    }
+  }, [callbackComplete, loading, navigate, user])
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -78,22 +88,9 @@ export default function AuthCallback() {
         if (user) {
           console.log('✅ User authenticated:', user.email)
           
-          // Fetch user profile to determine role
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single()
-
-          // Navigate based on role
-          const userRole = profile?.role || 'normal'
-          console.log('🔐 Navigating to dashboard for role:', userRole)
-          
-          if (userRole === 'agent' || userRole === 'landlord') {
-            navigate('/agent', { replace: true })
-          } else {
-            navigate('/user', { replace: true })
-          }
+          // Ensure first-time OAuth users have a profile before routing.
+          await refreshUser(user.id)
+          setCallbackComplete(true)
         } else {
           console.log('❌ No user found, redirecting to login')
           navigate('/auth/login', { replace: true })
@@ -106,7 +103,7 @@ export default function AuthCallback() {
     }
 
     handleCallback()
-  }, [navigate])
+  }, [navigate, refreshUser])
 
   return (
     <div style={{
