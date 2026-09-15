@@ -1,5 +1,6 @@
 import React from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Navigate, Routes, Route, useLocation } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 import Login from '@/pages/auth/Login'
 import Signup from '@/pages/auth/Signup'
 import ForgotPassword from '@/pages/auth/ForgotPassword'
@@ -8,6 +9,14 @@ import Verify from '@/pages/auth/Verify'
 import Callback from '@/pages/auth/Callback'
 
 export default function AuthLayout() {
+  const { user, loading } = useAuth()
+  const location = useLocation()
+
+  if (!loading && user && (location.pathname === '/auth' || location.pathname === '/auth/login')) {
+    const targetRoute = user.role === 'agent' || user.role === 'landlord' ? '/agent' : '/user'
+    return <Navigate to={targetRoute} replace />
+  }
+
   return (
     <Routes>
       <Route path="login" element={<Login />} />

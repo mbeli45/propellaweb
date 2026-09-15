@@ -71,12 +71,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let isMounted = true
+
+    const loadSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+
       if (session?.user) {
-        fetchProfile(session.user.id)
+        await fetchProfile(session.user.id)
       }
-      setLoading(false)
+
+      if (isMounted) setLoading(false)
+    }
+
+    // Check for an existing session before rendering protected routes.
+    loadSession().catch((sessionError) => {
+      console.error('Error restoring auth session:', sessionError)
+      if (isMounted) {
+        setUser(null)
+        setLoading(false)
+      }
     })
 
     // Listen for auth changes
@@ -84,24 +97,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
-        // Only fetch if profile is not already cached (prevents race conditions during signIn)
-        // Check cache to avoid unnecessary refetch when signIn has already set the user
         const cached = profileCache.get(session.user.id)
         if (!cached || Date.now() - cached.timestamp > 1000) {
+          setLoading(true)
           fetchProfile(session.user.id, true)
+            .catch((profileError) => {
+              console.error('Error loading auth profile:', profileError)
+              if (isMounted) setUser(null)
+            })
+            .finally(() => {
+              if (isMounted) setLoading(false)
+            })
         } else {
-          // Use cached data if available and recent
           setUser(cached.data)
+          setLoading(false)
         }
       } else {
         setUser(null)
         profileCache.clear()
         setSentryUser(null)
+        setLoading(false)
       }
-      setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [fetchProfile])
 
   const signIn = useCallback(async (email: string, password: string) => {
@@ -173,7 +195,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             })
         }
         await fetchProfile(data.user.id, true)
-        navigate('/auth/verify')
       }
     } catch (err: any) {
       setError(err.message)
