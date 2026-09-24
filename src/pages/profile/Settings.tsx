@@ -6,7 +6,7 @@ import { useLanguage } from '@/contexts/I18nContext'
 import { useDialog } from '@/contexts/DialogContext'
 import { getColors } from '@/constants/Colors'
 import { useStorage } from '@/hooks/useStorage'
-import { ArrowLeft, Camera, User as UserIcon, Save, CheckCircle } from 'lucide-react'
+import { ChevronLeft, Camera, User as UserIcon, Save, CheckCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import './Settings.css'
 
@@ -95,7 +95,7 @@ export default function ProfileSettings() {
           onClick={() => navigate(-1)}
           className="back-button"
         >
-          <ArrowLeft size={24} color={Colors.neutral[700]} />
+          <ChevronLeft size={24} color={Colors.neutral[700]} />
         </button>
         <h1 className="settings-header-title" style={{ color: Colors.neutral[900] }}>
           {t('profile.settings')}

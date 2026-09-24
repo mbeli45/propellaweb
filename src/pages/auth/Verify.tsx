@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
-import { ArrowLeft, Mail, Shield } from 'lucide-react'
+import { ChevronLeft, Mail, Shield } from 'lucide-react'
 import './Auth.css'
 
 export default function Verify() {
@@ -136,7 +136,7 @@ export default function Verify() {
               backgroundColor: Colors.neutral[100],
             }}
           >
-            <ArrowLeft size={20} color={Colors.neutral[700]} />
+            <ChevronLeft size={20} color={Colors.neutral[700]} />
           </button>
           <h2
             style={{

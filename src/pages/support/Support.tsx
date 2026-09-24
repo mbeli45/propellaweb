@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
-import { ArrowLeft, Mail, MessageCircle, Phone, ExternalLink, ChevronRight } from 'lucide-react'
+import { ChevronLeft, Mail, MessageCircle, Phone, ExternalLink, ChevronRight } from 'lucide-react'
 import SEO from '@/components/SEO'
 
 const SUPPORT_EMAIL = 'Propellacm@gmail.com'
@@ -99,7 +99,7 @@ export default function Support() {
             alignItems: 'center',
           }}
         >
-          <ArrowLeft size={24} color={Colors.neutral[700]} />
+          <ChevronLeft size={24} color={Colors.neutral[700]} />
         </button>
         <h1
           style={{

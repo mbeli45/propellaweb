@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
-import { ArrowLeft, MessageCircle, Phone, Mail, FileText, Globe, ChevronRight } from 'lucide-react'
+import { ChevronLeft, MessageCircle, Phone, Mail, FileText, Globe, ChevronRight } from 'lucide-react'
 import './Help.css'
 
 export default function ProfileHelp() {
@@ -81,7 +81,7 @@ export default function ProfileHelp() {
           onClick={() => navigate(-1)}
           className="back-button"
         >
-          <ArrowLeft size={24} color={Colors.neutral[700]} />
+          <ChevronLeft size={24} color={Colors.neutral[700]} />
         </button>
         <h1 className="help-header-title" style={{ color: Colors.neutral[900] }}>
           {t('profile.help')}

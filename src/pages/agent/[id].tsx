@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { AlertCircle, ArrowLeft, BadgeCheck, Home as HomeIcon, Star, UserX } from 'lucide-react'
+import { AlertCircle, ChevronLeft, BadgeCheck, Home as HomeIcon, Star, UserX } from 'lucide-react'
 import { useLanguage } from '@/contexts/I18nContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAgentProfile } from '@/hooks/useAgentProfile'
@@ -74,7 +74,7 @@ export default function AgentProfile() {
   const header = (
     <header className="ap-header">
       <button type="button" className="ap-icon-btn" onClick={() => navigate(-1)} aria-label={t('common.back')}>
-        <ArrowLeft size={22} />
+        <ChevronLeft size={22} />
       </button>
       <h1 className="ap-header-title">{t('agentProfile.title')}</h1>
       {agent && !isSelf && (

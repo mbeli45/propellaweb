@@ -1,6 +1,6 @@
 import React from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Home, Map, User, MessageCircle, CalendarDays, Wallet, List } from 'lucide-react'
+import { Home, Map, User, CalendarDays, Wallet, List } from 'lucide-react'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { useBottomSheet } from '@/contexts/BottomSheetContext'
@@ -15,6 +15,8 @@ interface NavItem {
   badge?: number
   /** Extra routes that should keep this tab highlighted */
   activePaths?: string[]
+  /** Desktop sidebar only; the phone bottom bar keeps to 4 items */
+  sidebarOnly?: boolean
 }
 
 interface BottomNavigationProps {
@@ -80,7 +82,7 @@ export default function BottomNavigation({ items, transparent = false }: BottomN
         WebkitBackdropFilter: isFeedMode ? 'blur(10px)' : 'none',
       }}
     >
-      {items.map((item) => {
+      {items.filter((item) => !item.sidebarOnly).map((item) => {
         const matchesExtra = item.activePaths?.some((p) => location.pathname.startsWith(p)) ?? false
         return (
         <NavLink

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
-import { ArrowLeft, Lock, Eye, Shield, Bell, Key, Smartphone } from 'lucide-react'
+import { ChevronLeft, Lock, Eye, Shield, Bell, Key, Smartphone } from 'lucide-react'
 import './Security.css'
 
 export default function ProfileSecurity() {
@@ -82,7 +82,7 @@ export default function ProfileSecurity() {
             alignItems: 'center'
           }}
         >
-          <ArrowLeft size={24} color={Colors.neutral[700]} />
+          <ChevronLeft size={24} color={Colors.neutral[700]} />
         </button>
         <h1 style={{
           fontSize: '20px',

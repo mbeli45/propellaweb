@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
+import { supabase } from '@/lib/supabase'
 import { 
   Settings, 
   Shield, 
@@ -20,7 +21,8 @@ import {
   Languages,
   LogOut,
   Trash2,
-  Bookmark
+  Bookmark,
+  Wallet
 } from 'lucide-react'
 import '../user/Profile.css'
 
@@ -34,6 +36,24 @@ export default function AgentProfile() {
   const [showLanguageModal, setShowLanguageModal] = useState(false)
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  // Wallet isn't in the phone bottom bar; this card is its entry point.
+  const [walletBalance, setWalletBalance] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (!user?.id) return
+    let active = true
+    supabase
+      .from('wallets')
+      .select('balance')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (active) setWalletBalance(data ? Number((data as any).balance) || 0 : 0)
+      })
+    return () => {
+      active = false
+    }
+  }, [user?.id])
 
   const handleLanguageSelect = async (language: 'en' | 'fr') => {
     try {
@@ -174,6 +194,38 @@ export default function AgentProfile() {
                 </div>
               </div>
             </div>
+
+            {/* Wallet */}
+            <button
+              type="button"
+              onClick={() => navigate('/agent/wallet')}
+              aria-label={t('wallet.title')}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '16px',
+                marginBottom: '20px',
+                borderRadius: '16px',
+                border: `1px solid ${Colors.primary[100]}`,
+                backgroundColor: Colors.primary[50],
+                cursor: 'pointer',
+                textAlign: 'left',
+                font: 'inherit',
+              }}
+            >
+              <span style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: Colors.white, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Wallet size={22} color={Colors.primary[700]} />
+              </span>
+              <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: Colors.neutral[600] }}>{t('wallet.title')}</span>
+                <span style={{ fontSize: '20px', fontWeight: 800, color: Colors.neutral[900] }}>
+                  {walletBalance === null ? '—' : `${walletBalance.toLocaleString()} FCFA`}
+                </span>
+              </span>
+              <ChevronRight size={18} color={Colors.neutral[400]} />
+            </button>
 
             {/* Theme Section */}
             <div className="theme-section">

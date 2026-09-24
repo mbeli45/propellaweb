@@ -11,7 +11,7 @@ import SearchBar from '@/components/SearchBar'
 import FilterModal, { FilterOptions, MAX_PRICE } from '@/components/FilterModal'
 import PropertyCard from '@/components/PropertyCard'
 import PropertyFeedView from '@/components/PropertyFeedView'
-import { MapPin, ArrowRight, Star, User as UserIcon, LayoutGrid, Compass } from 'lucide-react'
+import { MapPin, ArrowRight, Star, User as UserIcon, LayoutGrid, Compass, Map as MapIcon } from 'lucide-react'
 import './Home.css'
 import '../HomeBrowse.css'
 import { POPULAR_TOWNS } from '@/utils/towns'
@@ -249,6 +249,27 @@ export default function UserHome() {
         >
           <Compass size={18} />
           {t('home.modeExplore', 'Explore')}
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/user/map')}
+          aria-label={t('navigation.map')}
+          title={t('navigation.map')}
+          style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '10px',
+            border: `1px solid ${Colors.neutral[200]}`,
+            backgroundColor: Colors.white,
+            color: Colors.primary[700],
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <MapIcon size={20} />
         </button>
       </div>
 

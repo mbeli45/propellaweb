@@ -7,7 +7,8 @@ import { getColors } from '@/constants/Colors'
 import { supabase } from '@/lib/supabase'
 import { useWallet } from '@/hooks/useWallet'
 import { useFapshiWithdrawal } from '@/hooks/useFapshiWithdrawal'
-import { Wallet, ArrowDown, ArrowUp, CreditCard, TrendingUp, X, AlertCircle } from 'lucide-react'
+import { Wallet, ArrowDown, ArrowUp, CreditCard, TrendingUp, X, AlertCircle, ChevronLeft } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { formatPrice } from '@/utils/shareUtils'
 import './Wallet.css'
 import { ListItemSkeleton } from '@/components/skeletons'
@@ -16,6 +17,7 @@ export default function AgentWallet() {
   const { user } = useAuth()
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
+  const navigate = useNavigate()
   const { setBottomSheetOpen } = useBottomSheet()
   const Colors = getColors(colorScheme)
 
@@ -138,14 +140,19 @@ export default function AgentWallet() {
   return (
     <div className="wallet-container" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh' }}>
       <div style={{ padding: '20px 16px' }}>
-        <h1 style={{ 
-          fontSize: '24px', 
-          fontWeight: '700', 
-          color: Colors.neutral[900],
-          marginBottom: '20px'
-        }}>
-          {t('wallet.title')}
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+          <button
+            type="button"
+            onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/agent/profile'))}
+            aria-label={t('common.back')}
+            style={{ width: '40px', height: '40px', borderRadius: '50%', border: 0, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: Colors.neutral[900], flexShrink: 0 }}
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <h1 style={{ fontSize: '24px', fontWeight: '700', color: Colors.neutral[900], margin: 0 }}>
+            {t('wallet.title')}
+          </h1>
+        </div>
 
         {/* Balance Card */}
         <div style={{

@@ -6,7 +6,7 @@ import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { supabase } from '@/lib/supabase'
 import { useStorage } from '@/hooks/useStorage'
-import { ArrowLeft, Plus, X, Star, DollarSign, Square, Home, MapPin } from 'lucide-react'
+import { ChevronLeft, Plus, X, Star, DollarSign, Square, Home, MapPin } from 'lucide-react'
 import LocationSearchInput from '@/components/LocationSearchInput'
 import {
   formatFileSize,
@@ -355,7 +355,7 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
             e.currentTarget.style.backgroundColor = 'transparent'
           }}
         >
-          <ArrowLeft size={24} color={Colors.neutral[900]} />
+          <ChevronLeft size={24} color={Colors.neutral[900]} />
         </button>
         <div style={{ flex: 1, textAlign: 'center' }}>
           <h1 style={{ fontSize: '20px', fontWeight: '600', color: Colors.neutral[900], margin: 0 }}>

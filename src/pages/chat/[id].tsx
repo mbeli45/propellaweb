@@ -9,7 +9,7 @@ import { useMessages } from '@/hooks/useMessages'
 import { usePresence } from '@/hooks/usePresence'
 import { useStorage } from '@/hooks/useStorage'
 import { useProperty } from '@/hooks/useProperties'
-import { Send, Paperclip, ArrowLeft, Check, CheckCheck, Clock, AlertCircle } from 'lucide-react'
+import { Send, Paperclip, ChevronLeft, Check, CheckCheck, Clock, AlertCircle } from 'lucide-react'
 import ModerationActions from '@/components/moderation/ModerationActions'
 import { supabase } from '@/lib/supabase'
 import './Chat.css'
@@ -223,7 +223,7 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
               alignItems: 'center'
             }}
           >
-            <ArrowLeft size={24} color={Colors.neutral[700]} />
+            <ChevronLeft size={24} color={Colors.neutral[700]} />
           </button>
         )}
 

@@ -1,11 +1,11 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import { 
-  ArrowLeft, 
-  MapPin, 
-  BedDouble, 
-  Bath, 
-  Share2, 
+import {
+  ChevronLeft,
+  MapPin,
+  BedDouble,
+  Bath,
+  Share2,
   Bookmark,
   X,
   CheckCircle2,
@@ -21,7 +21,7 @@ import {
   CalendarClock,
   Navigation,
   Phone,
-  MessageCircle
+  MessageCircle,
 } from 'lucide-react'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
@@ -486,7 +486,7 @@ export default function PropertyDetail() {
             e.currentTarget.style.backgroundColor = 'transparent'
           }}
         >
-          <ArrowLeft size={24} color={Colors.neutral[700]} />
+          <ChevronLeft size={24} color={Colors.neutral[700]} />
         </button>
         <h1 style={{ 
           flex: 1,

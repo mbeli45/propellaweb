@@ -9,7 +9,7 @@ import { usePropertyViews } from '@/hooks/usePropertyViews'
 import { useStorage } from '@/hooks/useStorage'
 import { useDialog } from '@/contexts/DialogContext'
 import PropertyCard from '@/components/PropertyCard'
-import { Plus, BarChart3, Home, Users, Calendar, RefreshCw } from 'lucide-react'
+import { Plus, BarChart3, Home, Users, Calendar, RefreshCw, Wallet } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { confirmPropertyAvailability } from '@/hooks/usePropertyAvailability'
 import './Listings.css'
@@ -218,6 +218,25 @@ export default function AgentListings() {
               }}
             >
               <BarChart3 size={20} color={Colors.neutral[700]} />
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/agent/wallet')}
+              aria-label={t('navigation.wallet')}
+              title={t('navigation.wallet')}
+              style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '22px',
+                backgroundColor: Colors.neutral[200],
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              <Wallet size={20} color={Colors.neutral[700]} />
             </button>
             <button
               onClick={() => navigate('/property/add')}

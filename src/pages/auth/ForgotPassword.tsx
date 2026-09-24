@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
-import { ArrowLeft, Lock, Mail } from 'lucide-react'
+import { ChevronLeft, Lock, Mail } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import Loader from '@/components/ui/Loader'
 import './Auth.css'
@@ -73,7 +73,7 @@ export default function ForgotPassword() {
               backgroundColor: Colors.neutral[100],
             }}
           >
-            <ArrowLeft size={20} color={Colors.neutral[700]} />
+            <ChevronLeft size={20} color={Colors.neutral[700]} />
           </button>
           <h2
             style={{

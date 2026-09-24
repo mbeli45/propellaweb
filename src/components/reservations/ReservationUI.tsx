@@ -1,6 +1,6 @@
 import React from 'react'
 import {
-  ArrowLeft,
+  ChevronLeft,
   BadgeCheck,
   CalendarClock,
   ChevronRight,
@@ -142,7 +142,7 @@ export function ReservationsHeader({
         <div className="rsv-title-row">
           {onBack && (
             <button type="button" className="rsv-back" onClick={onBack} aria-label={backLabel}>
-              <ArrowLeft size={20} />
+              <ChevronLeft size={20} />
             </button>
           )}
           <h1 className="rsv-title">{title}</h1>

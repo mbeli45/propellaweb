@@ -5,7 +5,7 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { useAgentVerification } from '@/hooks/useAgentVerification'
-import { ArrowLeft, Shield, CheckCircle, Clock, XCircle, Upload, Eye, Trash2, CreditCard } from 'lucide-react'
+import { ChevronLeft, Shield, CheckCircle, Clock, XCircle, Upload, Eye, Trash2, CreditCard } from 'lucide-react'
 import { useStorage } from '@/hooks/useStorage'
 import './Verification.css'
 import { FormSkeleton } from '@/components/skeletons'
@@ -142,7 +142,7 @@ export default function ProfileVerification() {
             alignItems: 'center'
           }}
         >
-          <ArrowLeft size={24} color={Colors.neutral[700]} />
+          <ChevronLeft size={24} color={Colors.neutral[700]} />
         </button>
         <h1 style={{
           fontSize: '20px',

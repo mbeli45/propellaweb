@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
-import { ArrowLeft, Eye, EyeOff, Mail, Lock, LogIn, UserPlus, CheckCircle, XCircle } from 'lucide-react'
+import { ChevronLeft, Eye, EyeOff, Mail, Lock, LogIn, UserPlus, CheckCircle, XCircle } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { IconButton } from '@mui/material'
 import { Icon } from '@iconify/react'
@@ -116,7 +116,7 @@ export default function Login() {
               backgroundColor: Colors.neutral[100],
             }}
           >
-            <ArrowLeft size={20} color={Colors.neutral[700]} />
+            <ChevronLeft size={20} color={Colors.neutral[700]} />
           </button>
 
           <div className="auth-logo-container">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Home, Map, User, MessageCircle, CalendarDays, Wallet, List, LogOut, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Home, Map, User, CalendarDays, Wallet, List, LogOut, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { useAuth } from '@/contexts/AuthContext'
@@ -9,6 +9,7 @@ import Badge from './Badge'
 import './Sidebar.css'
 
 interface NavItem {
+  sidebarOnly?: boolean
   path: string
   icon: React.ComponentType<{ size?: number; color?: string }>
   label: string

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Bookmark } from 'lucide-react'
+import { ChevronLeft, Bookmark } from 'lucide-react'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
@@ -46,7 +46,7 @@ export default function SavedProperties() {
           onClick={() => navigate(-1)}
           aria-label={t('common.back')}
         >
-          <ArrowLeft size={22} color={Colors.neutral[800]} />
+          <ChevronLeft size={22} color={Colors.neutral[800]} />
         </button>
         <h1 className="saved-title" style={{ color: Colors.neutral[900] }}>
           {t('saved.title')}

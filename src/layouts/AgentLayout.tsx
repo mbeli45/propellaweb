@@ -2,7 +2,8 @@ import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 import BottomNavigation from '@/components/BottomNavigation'
 import Sidebar from '@/components/Sidebar'
-import { List, CalendarDays, MessageCircle, Wallet, User } from 'lucide-react'
+import { List, CalendarDays, Wallet, User } from 'lucide-react'
+import MessageSquareText from '@/components/icons/MessageSquareText'
 import AgentListings from '@/pages/agent/Listings'
 import AgentReservations from '@/pages/agent/Reservations'
 import UserMessages from '@/pages/user/Messages'
@@ -34,10 +35,11 @@ export default function AgentLayout() {
 
   const navItems = [
     { path: '/agent', icon: List, label: 'navigation.listings' },
-    // Deals live under the Bookings tab (switch inside the page) to keep the mobile nav to 5 items
+    // Deals live under the Bookings tab (switch inside the page); Wallet is sidebar-only, reached on phones
+    // from Profile and Listings. The phone bottom bar keeps to 4 items.
     { path: '/agent/reservations', icon: CalendarDays, label: 'navigation.bookings', badge: reservationBadgeCount > 0 ? reservationBadgeCount : undefined, activePaths: ['/agent/deals'] },
-    { path: '/agent/messages', icon: MessageCircle, label: 'navigation.messages', badge: messageBadgeCount > 0 ? messageBadgeCount : undefined },
-    { path: '/agent/wallet', icon: Wallet, label: 'navigation.wallet' },
+    { path: '/agent/messages', icon: MessageSquareText, label: 'navigation.messages', badge: messageBadgeCount > 0 ? messageBadgeCount : undefined },
+    { path: '/agent/wallet', icon: Wallet, label: 'navigation.wallet', sidebarOnly: true },
     { path: '/agent/profile', icon: User, label: 'navigation.profile' },
   ]
   return (

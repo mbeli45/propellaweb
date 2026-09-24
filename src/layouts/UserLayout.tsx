@@ -2,7 +2,8 @@ import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 import BottomNavigation from '@/components/BottomNavigation'
 import Sidebar from '@/components/Sidebar'
-import { Home, Map, User, MessageCircle, CalendarDays } from 'lucide-react'
+import { Home, Map, User, CalendarDays, HeartHandshake } from 'lucide-react'
+import MessageSquareText from '@/components/icons/MessageSquareText'
 import UserHome from '@/pages/user/Home'
 import UserMap from '@/pages/user/Map'
 import UserMessages from '@/pages/user/Messages'
@@ -32,10 +33,10 @@ export default function UserLayout() {
 
   const navItems = [
     { path: '/user', icon: Home as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.home' },
-    { path: '/user/deals', icon: CalendarDays, label: 'My deals' },
-    { path: '/user/map', icon: Map as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.map' },
+    { path: '/user/deals', icon: HeartHandshake, label: 'reservations.myDeals', sidebarOnly: true },
+    { path: '/user/map', icon: Map as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.map', sidebarOnly: true },
     { path: '/user/reservations', icon: CalendarDays as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.reservations', badge: reservationBadgeCount > 0 ? reservationBadgeCount : undefined },
-    { path: '/user/messages', icon: MessageCircle as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.messages', badge: messageBadgeCount > 0 ? messageBadgeCount : undefined },
+    { path: '/user/messages', icon: MessageSquareText as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.messages', badge: messageBadgeCount > 0 ? messageBadgeCount : undefined },
     { path: '/user/profile', icon: User as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.profile' },
   ]
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
-import { ArrowLeft } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import '../Help.css'
 
 export default function Terms() {
@@ -37,7 +37,7 @@ export default function Terms() {
             alignItems: 'center'
           }}
         >
-          <ArrowLeft size={24} color={Colors.neutral[700]} />
+          <ChevronLeft size={24} color={Colors.neutral[700]} />
         </button>
         <h1 style={{
           fontSize: '20px',

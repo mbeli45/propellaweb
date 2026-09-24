@@ -4,7 +4,7 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { usePropertyViews } from '@/hooks/usePropertyViews'
-import { BarChart3, Eye, TrendingUp, Users, Calendar, Star, ArrowLeft } from 'lucide-react'
+import { BarChart3, Eye, TrendingUp, Users, Calendar, Star, ChevronLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import './Analytics.css'
 import { DashboardSkeleton } from '@/components/skeletons'
@@ -64,7 +64,7 @@ export default function AgentAnalytics() {
             aria-label={t('common.back')}
             style={{ width: '40px', height: '40px', borderRadius: '50%', border: 0, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: Colors.neutral[900], flexShrink: 0 }}
           >
-            <ArrowLeft size={22} />
+            <ChevronLeft size={22} />
           </button>
           <h1 style={{ margin: 0,
           fontSize: '24px',

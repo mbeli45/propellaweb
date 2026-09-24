@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { ChevronLeft } from 'lucide-react'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
@@ -161,6 +162,14 @@ export default function UserMap() {
           zIndex: 20
         }}>
           <div style={{ display: 'flex', gap: 8, flexDirection: 'row' }}>
+            <button
+              type="button"
+              onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/user'))}
+              aria-label={t('common.back')}
+              style={{ width: 42, height: 42, flexShrink: 0, borderRadius: 10, border: `1px solid ${Colors.neutral[300]}`, background: Colors.white, color: Colors.neutral[900], display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            >
+              <ChevronLeft size={22} />
+            </button>
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
