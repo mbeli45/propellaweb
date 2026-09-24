@@ -275,3 +275,16 @@ button.ds-stat:focus-visible { outline: 3px solid var(--color-primary-300, #66a5
 .ds-stat-label { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--rsv-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 .ds-shortcuts { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .ds-section-title { margin: 28px 0 4px; font-size: 17px; font-weight: 700; color: var(--rsv-ink); }
+
+/* Action menu (⋯) */
+.ds-menu { position: relative; flex-shrink: 0; }
+.ds-menu--wide { flex: 1; }
+.ds-menu-trigger { width: 48px; padding: 0; }
+.ds-menu--wide .ds-menu-trigger { width: 100%; padding: 0 14px; }
+.ds-menu-pop { position: absolute; right: 0; bottom: calc(100% + 6px); z-index: 30; min-width: 240px; max-width: min(320px, calc(100vw - 32px)); padding: 6px; background: var(--rsv-surface); border: 1px solid var(--rsv-line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0, 0, 0, .16); }
+.ds-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 6px 10px; border: 0; border-radius: 10px; background: transparent; color: var(--rsv-ink); font: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer; }
+.ds-menu-item:hover, .ds-menu-item:focus-visible { background: var(--rsv-ground); outline: none; }
+.ds-menu-icon { width: 28px; height: 28px; flex-shrink: 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--rsv-line-soft); color: var(--rsv-ink-2); }
+.ds-menu-item--danger { color: var(--rsv-error); }
+.ds-menu-item--danger .ds-menu-icon { background: rgba(239, 68, 68, .10); color: var(--rsv-error); }
+.ds-menu-sep { height: 1px; margin: 6px 4px; background: var(--rsv-line); }

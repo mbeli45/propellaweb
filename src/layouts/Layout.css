@@ -26,7 +26,7 @@
 @media (min-width: 1025px) {
   .app-content {
   min-width: 0;
-    margin-left: var(--sidebar-width, 260px);
+    margin-left: var(--sidebar-width, 248px);
     padding-left: 0;
     transition: margin-left 0.3s ease;
   }

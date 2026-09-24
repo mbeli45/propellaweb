@@ -9,7 +9,7 @@ import { usePropertyViews } from '@/hooks/usePropertyViews'
 import { useStorage } from '@/hooks/useStorage'
 import { useDialog } from '@/contexts/DialogContext'
 import PropertyCard from '@/components/PropertyCard'
-import { Plus, BarChart3, Home, RefreshCw, Wallet, AlertCircle } from 'lucide-react'
+import { Plus, BarChart3, Home, RefreshCw, Wallet, AlertCircle, HeartHandshake } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { confirmPropertyAvailability } from '@/hooks/usePropertyAvailability'
 import './Listings.css'
@@ -182,6 +182,7 @@ export default function AgentListings() {
       />
 
       <div className="ds-shortcuts">
+        <CardButton label={t('reservations.dealsButton')} icon={HeartHandshake} tone="neutral" onClick={() => navigate('/agent/deals')} />
         <CardButton label={t('profileMenu.analytics')} icon={BarChart3} tone="neutral" onClick={() => navigate('/agent/analytics')} />
         <CardButton label={t('navigation.wallet')} icon={Wallet} tone="neutral" onClick={() => navigate('/agent/wallet')} />
       </div>

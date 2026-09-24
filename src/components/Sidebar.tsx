@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Home, Map, User, CalendarDays, Wallet, List, LogOut, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useThemeMode } from '@/contexts/ThemeContext'
+import { LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useLanguage } from '@/contexts/I18nContext'
 import { useAuth } from '@/contexts/AuthContext'
-import { getColors } from '@/constants/Colors'
-import Badge from './Badge'
+import { useDialog } from '@/contexts/DialogContext'
 import './Sidebar.css'
 
 interface NavItem {
@@ -23,15 +21,42 @@ interface SidebarProps {
   userRole?: 'user' | 'agent' | 'guest'
 }
 
+const COLLAPSED_KEY = 'propella.sidebarCollapsed'
+
+function readCollapsed() {
+  try {
+    return localStorage.getItem(COLLAPSED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+/** Desktop navigation on the design language: quiet surface, 44 px rows, one tint for "you are here". */
 export default function Sidebar({ items, userRole = 'user' }: SidebarProps) {
-  const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
   const { signOut, user } = useAuth()
-  const Colors = getColors(colorScheme)
+  const { confirm } = useDialog()
   const location = useLocation()
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(readCollapsed)
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--sidebar-width', isCollapsed ? '76px' : '248px')
+    try {
+      localStorage.setItem(COLLAPSED_KEY, isCollapsed ? '1' : '0')
+    } catch {
+      // Per-viewer convenience only.
+    }
+  }, [isCollapsed])
 
   const handleSignOut = async () => {
+    const ok = await confirm({
+      title: t('auth.signOut'),
+      message: t('auth.confirmSignOut'),
+      confirmText: t('auth.signOut'),
+      cancelText: t('common.cancel'),
+      variant: 'danger',
+    })
+    if (!ok) return
     try {
       await signOut()
     } catch (error) {
@@ -39,171 +64,61 @@ export default function Sidebar({ items, userRole = 'user' }: SidebarProps) {
     }
   }
 
-  // Update CSS variable for sidebar width
-  useEffect(() => {
-    document.documentElement.style.setProperty('--sidebar-width', isCollapsed ? '80px' : '260px')
-  }, [isCollapsed])
+  const name = user?.full_name || t('common.user')
+  const profilePath = userRole === 'guest' ? null : `/${userRole}/profile`
+  const collapseLabel = isCollapsed ? t('sidebar.expand', 'Expand sidebar') : t('sidebar.collapse', 'Collapse sidebar')
 
   return (
-    <aside
-      className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}
-      style={{
-        backgroundColor: Colors.white,
-        borderRight: `1px solid ${Colors.neutral[200]}`,
-      }}
-    >
+    <aside className={`sidebar${isCollapsed ? ' collapsed' : ''}`} aria-label={t('sidebar.navigation', 'Main navigation')}>
       <div className="sidebar-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {!isCollapsed && (
-            <img 
-              src="/app-icon.png" 
-              alt="Propella" 
-              style={{ 
-                width: '32px', 
-                height: '32px', 
-                borderRadius: '8px',
-                objectFit: 'cover'
-              }}
+        {!isCollapsed && (
+          <div className="sidebar-brand">
+            <img
+              src="/app-icon.png"
+              alt=""
               onError={(e) => {
-                // Hide image if not found
                 e.currentTarget.style.display = 'none'
               }}
             />
-          )}
-          {!isCollapsed && (
-            <h2 style={{ color: Colors.neutral[900], fontSize: '20px', fontWeight: '700', margin: 0 }}>
-              Propella
-            </h2>
-          )}
-        </div>
+            <span>Propella</span>
+          </div>
+        )}
         <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="sidebar-toggle"
-          style={{
-            position: 'absolute',
-            right: '8px',
-            top: '24px',
-            background: Colors.neutral[100],
-            border: 'none',
-            borderRadius: '6px',
-            padding: '6px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'background 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = Colors.neutral[200]
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = Colors.neutral[100]
-          }}
+          type="button"
+          className="sidebar-icon-btn"
+          onClick={() => setIsCollapsed((value) => !value)}
+          aria-label={collapseLabel}
+          aria-expanded={!isCollapsed}
+          title={collapseLabel}
         >
-          {isCollapsed ? (
-            <ChevronRight size={16} color={Colors.neutral[700]} />
-          ) : (
-            <ChevronLeft size={16} color={Colors.neutral[700]} />
-          )}
+          {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
         </button>
-        {user && !isCollapsed && (
-          <div className="sidebar-user-info">
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                backgroundColor: Colors.primary[100],
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: Colors.primary[700],
-                fontWeight: '600',
-                fontSize: '14px',
-              }}
-            >
-              {user.full_name?.charAt(0).toUpperCase() || 'U'}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: Colors.neutral[900],
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {user.full_name}
-              </p>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: '12px',
-                  color: Colors.neutral[500],
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {user.email}
-              </p>
-            </div>
-          </div>
-        )}
-        {user && isCollapsed && (
-          <div 
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              backgroundColor: Colors.primary[100],
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: Colors.primary[700],
-              fontWeight: '600',
-              fontSize: '16px',
-              margin: '16px auto 0',
-            }}
-            title={user.full_name || ''}
-          >
-            {user.full_name?.charAt(0).toUpperCase() || 'U'}
-          </div>
-        )}
       </div>
 
       <nav className="sidebar-nav">
         {items.map((item) => {
-          // Determine if this is a parent route that should only match exactly
           const isParentRoute = item.path === '/user' || item.path === '/agent'
           const matchesExtra = item.activePaths?.some((p) => location.pathname.startsWith(p)) ?? false
-          
+          const label = t(item.label)
+          const badge = item.badge && item.badge > 0 ? item.badge : 0
           return (
             <NavLink
               key={item.path}
               to={item.path}
               end={isParentRoute}
-              className="sidebar-nav-item"
-              style={({ isActive }) => ({
-                color: isActive || matchesExtra ? Colors.primary[800] : Colors.neutral[600],
-                backgroundColor: isActive || matchesExtra ? Colors.primary[50] : 'transparent',
-                justifyContent: isCollapsed ? 'center' : 'flex-start',
-              })}
-              title={isCollapsed ? t(item.label) : ''}
+              className={({ isActive }) => `sidebar-nav-item${isActive || matchesExtra ? ' is-active' : ''}`}
+              title={isCollapsed ? label : undefined}
+              aria-label={badge ? `${label}, ${badge}` : isCollapsed ? label : undefined}
             >
-              {({ isActive }) => (
-                <>
-                  <div className="sidebar-nav-icon-wrapper">
-                    <item.icon size={20} color="currentColor" />
-                    {item.badge && item.badge > 0 && (
-                      <Badge count={item.badge} size="small" />
-                    )}
-                  </div>
-                  {!isCollapsed && <span className="sidebar-nav-label">{t(item.label)}</span>}
-                </>
+              <span className="sidebar-nav-icon" aria-hidden="true">
+                <item.icon size={20} color="currentColor" />
+                {isCollapsed && badge > 0 && <span className="sidebar-dot" />}
+              </span>
+              {!isCollapsed && <span className="sidebar-nav-label">{label}</span>}
+              {!isCollapsed && badge > 0 && (
+                <span className="sidebar-count" aria-hidden="true">
+                  {badge > 99 ? '99+' : badge}
+                </span>
               )}
             </NavLink>
           )
@@ -212,16 +127,32 @@ export default function Sidebar({ items, userRole = 'user' }: SidebarProps) {
 
       {user && (
         <div className="sidebar-footer">
+          {profilePath && (
+            <NavLink
+              to={profilePath}
+              className={({ isActive }) => `sidebar-user${isActive ? ' is-active' : ''}`}
+              title={isCollapsed ? name : undefined}
+              aria-label={isCollapsed ? name : undefined}
+            >
+              <span className="sidebar-avatar" aria-hidden="true">
+                {user.avatar_url ? <img src={user.avatar_url} alt="" /> : name.charAt(0).toUpperCase()}
+              </span>
+              {!isCollapsed && (
+                <span className="sidebar-user-text">
+                  <span className="sidebar-user-name">{name}</span>
+                  <span className="sidebar-user-email">{user.email}</span>
+                </span>
+              )}
+            </NavLink>
+          )}
           <button
+            type="button"
             onClick={handleSignOut}
             className="sidebar-signout"
-            style={{
-              color: Colors.error[600],
-              justifyContent: isCollapsed ? 'center' : 'flex-start',
-            }}
-            title={isCollapsed ? t('auth.signOut') : ''}
+            title={isCollapsed ? t('auth.signOut') : undefined}
+            aria-label={isCollapsed ? t('auth.signOut') : undefined}
           >
-            <LogOut size={20} />
+            <LogOut size={18} aria-hidden="true" />
             {!isCollapsed && <span>{t('auth.signOut')}</span>}
           </button>
         </div>

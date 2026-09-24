@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   ChevronLeft,
   BadgeCheck,
@@ -8,6 +8,7 @@ import {
   Info,
   Loader2,
   MapPin,
+  MoreHorizontal,
   Search,
   ShieldCheck,
 } from 'lucide-react'
@@ -790,5 +791,105 @@ export function StatStrip({ items }: { items: { label: string; value: string | n
         )
       })}
     </dl>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Action menu: secondary actions behind a ⋯ button (cards)
+// ---------------------------------------------------------------------------
+
+export interface MenuAction {
+  key: string
+  label: string
+  icon?: LucideIcon
+  tone?: 'default' | 'danger'
+  onClick: () => void
+}
+
+/** ⋯ button with a popover menu. Destructive actions are grouped last, in red. */
+export function ActionMenu({
+  label,
+  actions,
+  disabled,
+  wide,
+}: {
+  label: string
+  actions: MenuAction[]
+  disabled?: boolean
+  /** Show the label next to the icon (when it is the only secondary button). */
+  wide?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false)
+        triggerRef.current?.focus()
+      }
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    rootRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  const regular = actions.filter((a) => a.tone !== 'danger')
+  const danger = actions.filter((a) => a.tone === 'danger')
+  const item = (action: MenuAction) => {
+    const Icon = action.icon
+    return (
+      <button
+        key={action.key}
+        type="button"
+        role="menuitem"
+        className={`ds-menu-item${action.tone === 'danger' ? ' ds-menu-item--danger' : ''}`}
+        onClick={() => {
+          setOpen(false)
+          action.onClick()
+        }}
+      >
+        {Icon && (
+          <span className="ds-menu-icon" aria-hidden="true">
+            <Icon size={16} />
+          </span>
+        )}
+        {action.label}
+      </button>
+    )
+  }
+
+  return (
+    <div className={`ds-menu${wide ? ' ds-menu--wide' : ''}`} ref={rootRef}>
+      <button
+        ref={triggerRef}
+        type="button"
+        className={`rsv-btn rsv-btn--neutral ds-menu-trigger${wide ? ' rsv-btn--block' : ''}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={wide ? undefined : label}
+        onClick={() => setOpen((v) => !v)}
+        disabled={disabled}
+      >
+        <MoreHorizontal size={18} aria-hidden="true" />
+        {wide && label}
+      </button>
+      {open && (
+        <div className="ds-menu-pop" role="menu" aria-label={label}>
+          {regular.map(item)}
+          {regular.length > 0 && danger.length > 0 && <div className="ds-menu-sep" role="separator" />}
+          {danger.map(item)}
+        </div>
+      )}
+    </div>
   )
 }

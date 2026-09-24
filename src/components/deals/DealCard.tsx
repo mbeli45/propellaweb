@@ -1,7 +1,13 @@
 import React, { useState } from 'react'
 import {
   AlertTriangle,
+  Ban,
   BadgeCheck,
+  CalendarClock,
+  CheckCircle,
+  ThumbsUp,
+  Wallet,
+  XCircle,
   ChevronDown,
   ChevronUp,
   CircleDollarSign,
@@ -18,7 +24,7 @@ import type { LucideIcon } from 'lucide-react'
 import { useLanguage } from '@/contexts/I18nContext'
 import type { Deal, DealEvent, DealForm, DealReport, Partner, PropertyRequest } from '@/lib/deals'
 import { configurePartner, dealForms, money, requestActions, resolveReport, statusLabel } from '@/lib/deals'
-import { CardButton, Hint, StatusPill, Tone } from '@/components/reservations/ReservationUI'
+import { ActionMenu, CardButton, Hint, StatusPill, Tone } from '@/components/reservations/ReservationUI'
 import './DealCard.css'
 
 /*
@@ -60,14 +66,25 @@ export function dealTone(status: string): Tone {
   }
 }
 
-const actionIcon = (action: string): LucideIcon | undefined =>
-  action === 'pay'
-    ? CircleDollarSign
-    : action === 'accept_quote' || action === 'accept_referral'
-      ? Handshake
-      : action === 'check_payment'
-        ? Receipt
-        : undefined
+/** One icon per deal action, used on the primary button and in the ⋯ menu. */
+const ACTION_ICONS: Record<string, LucideIcon> = {
+  pay: CircleDollarSign,
+  accept_quote: Handshake,
+  accept_referral: Handshake,
+  check_payment: Receipt,
+  confirm_closing: CheckCircle,
+  request_closing: CheckCircle,
+  settle: Wallet,
+  propose: HomeIcon,
+  quote: Receipt,
+  interest: ThumbsUp,
+  follow_up: CalendarClock,
+  decline_referral: XCircle,
+  report: Flag,
+  cancel: Ban,
+}
+const actionIcon = (action: string): LucideIcon | undefined => ACTION_ICONS[action]
+const DANGER_ACTIONS = ['cancel', 'decline_referral', 'report']
 
 interface DealCardProps {
   deal: Deal
@@ -101,7 +118,6 @@ export function DealCard({
   onViewProperty,
 }: DealCardProps) {
   const { t, currentLanguage } = useLanguage()
-  const [showMore, setShowMore] = useState(false)
   const [showDetails, setShowDetails] = useState(!!highlighted)
   const locale = currentLanguage === 'fr' ? 'fr-FR' : 'en-US'
   const formatDate = (value: string) => new Date(value).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })
@@ -244,59 +260,60 @@ export function DealCard({
             <Hint text={notice.text} />
           ))}
 
-        {(primaryForms.length > 0 || counterpartId) && (
-          <div className="dc-actions">
-            {primaryForms.map((form) => (
-              <CardButton
-                key={form.action}
-                label={form.title}
-                icon={actionIcon(form.action)}
-                tone="primary"
-                onClick={() => onForm(form)}
-                disabled={busy}
-                block
-              />
-            ))}
-            {counterpartId && (
-              <CardButton
-                label={isCustomer ? t('deals.messageAgency') : t('deals.messageCustomer')}
-                icon={MessageCircle}
-                tone="secondary"
-                onClick={() => onMessage(counterpartId)}
-                block
-              />
-            )}
-          </div>
-        )}
+        {/* Actions: the one next step, then Message + ⋯ (everything else in a menu) */}
+        {(() => {
+          const [next, ...otherPrimary] = primaryForms
+          const menuActions = [...otherPrimary, ...secondaryForms].map((form) => ({
+            key: form.action,
+            label: form.title,
+            icon: actionIcon(form.action),
+            tone: DANGER_ACTIONS.includes(form.action) ? ('danger' as const) : ('default' as const),
+            onClick: () => onForm(form),
+          }))
+          const closed = ['settled', 'cancelled'].includes(deal.status)
+          const waitingOn =
+            !next && !closed && !notice
+              ? deal.status === 'payment_pending'
+                ? t('deals.waitingOnPropella')
+                : isCustomer
+                  ? t('deals.waitingOnAgency')
+                  : isAgent
+                    ? t('deals.waitingOnCustomer')
+                    : null
+              : null
+          return (
+            <>
+              {waitingOn && <Hint text={waitingOn} />}
+              {next && (
+                <div className="dc-actions">
+                  <CardButton label={next.title} icon={actionIcon(next.action)} tone="primary" onClick={() => onForm(next)} disabled={busy} busy={busy} block />
+                </div>
+              )}
+              {(counterpartId || menuActions.length > 0) && (
+                <div className="rsv-actions dc-row" style={{ marginTop: next ? 8 : 14 }}>
+                  {counterpartId && (
+                    <CardButton
+                      label={isCustomer ? t('deals.messageAgency') : t('deals.messageCustomer')}
+                      icon={MessageCircle}
+                      tone="secondary"
+                      onClick={() => onMessage(counterpartId)}
+                    />
+                  )}
+                  {menuActions.length > 0 && (
+                    <ActionMenu label={t('deals.moreActions')} actions={menuActions} disabled={busy} wide={!counterpartId} />
+                  )}
+                </div>
+              )}
+            </>
+          )
+        })()}
 
         <div className="dc-links">
-          {secondaryForms.length > 0 && (
-            <button type="button" className="rsv-toggle" aria-expanded={showMore} onClick={() => setShowMore((value) => !value)}>
-              <MoreHorizontal size={16} aria-hidden="true" />
-              {showMore ? t('deals.fewerActions') : t('deals.moreActions')}
-            </button>
-          )}
           <button type="button" className="rsv-toggle" aria-expanded={showDetails} onClick={() => setShowDetails((value) => !value)}>
             {showDetails ? t('deals.hideDetails') : t('deals.showDetails')}
             {showDetails ? <ChevronUp size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}
           </button>
         </div>
-
-        {showMore && secondaryForms.length > 0 && (
-          <div className="rsv-more">
-            {secondaryForms.map((form) => (
-              <CardButton
-                key={form.action}
-                label={form.title}
-                icon={form.action === 'report' ? Flag : undefined}
-                tone={['cancel', 'decline_referral', 'report'].includes(form.action) ? 'danger' : 'neutral'}
-                onClick={() => onForm(form)}
-                disabled={busy}
-                block
-              />
-            ))}
-          </div>
-        )}
 
         {showDetails && (
           <div className="rsv-details">
