@@ -11,6 +11,7 @@ import { Icon } from '@iconify/react'
 import { signInWithGoogle } from '@/lib/googleAuth'
 import { signInWithApple } from '@/lib/appleAuth'
 import './Auth.css'
+import { SegmentedControl } from '@/components/reservations/ReservationUI'
 
 type UserType = 'normal' | 'agent' | 'landlord'
 
@@ -146,11 +147,6 @@ export default function Signup() {
     }
   }, [userType])
 
-  const getUserTypeIcon = useCallback((type: UserType, selected: boolean) => {
-    const color = selected ? Colors.primary[600] : Colors.neutral[400]
-    return <CheckCircle size={24} color={color} />
-  }, [Colors])
-
   const togglePasswordVisibility = useCallback(() => {
     setHidePassword(!hidePassword)
   }, [hidePassword])
@@ -215,105 +211,26 @@ export default function Signup() {
 
         {/* Form */}
         <form className="auth-form-container" onSubmit={handleSignUp}>
-          {/* User Type Selection */}
+          {/* Role: a segmented control with the choice explained underneath */}
           <div className="auth-user-type-container">
-            <h2 className="auth-section-title" style={{ color: Colors.neutral[900] }}>
-              {t('signup.iAmA')}
-            </h2>
-            <div className="auth-user-type-grid">
-              <button
-                type="button"
-                onClick={() => setUserType('normal')}
-                className="auth-user-type-card"
-                style={{
-                  backgroundColor: userType === 'normal' ? Colors.primary[50] : Colors.neutral[50],
-                  borderColor: userType === 'normal' ? Colors.primary[500] : Colors.neutral[200],
-                  boxShadow: userType === 'normal' ? `0 2px 8px rgba(0, 0, 0, 0.15)` : 'none',
-                }}
-              >
-                <div className="auth-user-type-icon">
-                  {getUserTypeIcon('normal', userType === 'normal')}
-                </div>
-                <span
-                  className="auth-user-type-title"
-                  style={{
-                    color: userType === 'normal' ? Colors.primary[700] : Colors.neutral[700],
-                  }}
-                >
-                  {t('signup.tenant')}
-                </span>
-                <span
-                  className="auth-user-type-description"
-                  style={{
-                    color: userType === 'normal' ? Colors.primary[600] : Colors.neutral[500],
-                  }}
-                >
-                  {t('signup.lookingForProperties')}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setUserType('agent')}
-                className="auth-user-type-card"
-                style={{
-                  backgroundColor: userType === 'agent' ? Colors.primary[50] : Colors.neutral[50],
-                  borderColor: userType === 'agent' ? Colors.primary[500] : Colors.neutral[200],
-                  boxShadow: userType === 'agent' ? `0 2px 8px rgba(0, 0, 0, 0.15)` : 'none',
-                }}
-              >
-                <div className="auth-user-type-icon">
-                  {getUserTypeIcon('agent', userType === 'agent')}
-                </div>
-                <span
-                  className="auth-user-type-title"
-                  style={{
-                    color: userType === 'agent' ? Colors.primary[700] : Colors.neutral[700],
-                  }}
-                >
-                  {t('signup.agent')}
-                </span>
-                <span
-                  className="auth-user-type-description"
-                  style={{
-                    color: userType === 'agent' ? Colors.primary[600] : Colors.neutral[500],
-                  }}
-                >
-                  {t('signup.realEstateProfessional')}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setUserType('landlord')}
-                className="auth-user-type-card"
-                style={{
-                  backgroundColor: userType === 'landlord' ? Colors.primary[50] : Colors.neutral[50],
-                  borderColor: userType === 'landlord' ? Colors.primary[500] : Colors.neutral[200],
-                  boxShadow: userType === 'landlord' ? `0 2px 8px rgba(0, 0, 0, 0.15)` : 'none',
-                }}
-              >
-                <div className="auth-user-type-icon">
-                  {getUserTypeIcon('landlord', userType === 'landlord')}
-                </div>
-                <span
-                  className="auth-user-type-title"
-                  style={{
-                    color: userType === 'landlord' ? Colors.primary[700] : Colors.neutral[700],
-                  }}
-                >
-                  {t('signup.landlord')}
-                </span>
-                <span
-                  className="auth-user-type-description"
-                  style={{
-                    color: userType === 'landlord' ? Colors.primary[600] : Colors.neutral[500],
-                  }}
-                >
-                  {t('signup.propertyOwner')}
-                </span>
-              </button>
-            </div>
+            <h2 className="auth-section-title" id="signup-role-label">{t('signup.iAmA')}</h2>
+            <SegmentedControl<UserType>
+              label={t('signup.iAmA')}
+              options={[
+                { value: 'normal', label: t('signup.tenant') },
+                { value: 'agent', label: t('signup.agent') },
+                { value: 'landlord', label: t('signup.landlord') },
+              ]}
+              value={userType}
+              onChange={setUserType}
+            />
+            <p className="auth-role-hint">
+              {userType === 'agent'
+                ? t('signup.realEstateProfessional')
+                : userType === 'landlord'
+                  ? t('signup.propertyOwner')
+                  : t('signup.lookingForProperties')}
+            </p>
           </div>
 
           {/* Full Name Input */}

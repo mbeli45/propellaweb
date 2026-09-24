@@ -140,7 +140,6 @@ const ProcessRefundButton = () => {
         return;
       }
 
-      console.log('mesomb-refund response', data);
 
       if (data?.success) {
         notify(

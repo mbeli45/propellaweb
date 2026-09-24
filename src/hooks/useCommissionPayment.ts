@@ -110,7 +110,6 @@ export function useCommissionPayment() {
   };
 
   const startPaymentMonitoring = async (commissionPaymentId: string, transId: string) => {
-    console.log('[useCommissionPayment] Starting payment monitoring', { commissionPaymentId, transId });
     
     // Poll every 10 seconds for up to 5 minutes
     const pollInterval = setInterval(async () => {
@@ -121,7 +120,6 @@ export function useCommissionPayment() {
           timeout: 8000,
         });
         
-        console.log('[useCommissionPayment] Payment status:', status.status);
         
         if (status.status === 'SUCCESSFUL') {
           // Update commission payment status
@@ -143,7 +141,6 @@ export function useCommissionPayment() {
     // Stop polling after 5 minutes
     setTimeout(() => {
       clearInterval(pollInterval);
-      console.log('[useCommissionPayment] Payment monitoring timed out');
     }, 300000);
   };
 

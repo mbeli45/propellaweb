@@ -31,7 +31,6 @@ export default function AgentLayout() {
   const { user } = useAuth()
   const { reservationBadgeCount, messageBadgeCount } = useBadgeCounts(user?.id || '', user?.role)
 
-  console.log('🏢 [AgentLayout] Rendering with user:', user?.email, '| Role:', user?.role)
 
   const navItems = [
     { path: '/agent', icon: List, label: 'navigation.listings' },

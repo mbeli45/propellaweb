@@ -133,7 +133,6 @@ export function useReservations(userId: string) {
         paid_at: options?.paid_at || null,
       };
       
-      console.log('Creating reservation with data:', insertData);
       
       const { data, error } = await supabase
         .from('reservations')
@@ -176,10 +175,6 @@ export function useReservations(userId: string) {
   // Debug function to test reservation creation
   const debugCreateReservation = async (propertyId: string, amount: number, transactionId?: string) => {
     try {
-      console.log('Debug: Testing reservation creation...');
-      console.log('Debug: User ID:', userId);
-      console.log('Debug: Property ID:', propertyId);
-      console.log('Debug: Amount:', amount);
       
       // Format date correctly
       const today = new Date();
@@ -202,7 +197,6 @@ export function useReservations(userId: string) {
         paid_at: new Date().toISOString(),
       };
       
-      console.log('Debug: Insert data:', insertData);
       
       const { data, error } = await supabase
         .from('reservations')
@@ -215,7 +209,6 @@ export function useReservations(userId: string) {
         throw error;
       }
       // Persist property status to 'reserved' in debug flow as well
-      console.log('Debug: Reservation created successfully:', data);
       return data;
     } catch (error: any) {
       console.error('Debug: Reservation creation failed:', error);
@@ -331,7 +324,6 @@ export function useReservations(userId: string) {
       if (updateError) throw updateError;
 
       // Then call the edge function to process the actual refund
-      console.log('[useReservations] Calling process-refund edge function');
       const { data, error: refundError } = await supabase.functions.invoke('process-refund', {
         body: { reservation_id: reservationId },
         headers: {
@@ -348,7 +340,6 @@ export function useReservations(userId: string) {
         throw new Error((data as any)?.error || 'Refund failed');
       }
 
-      console.log('[useReservations] Refund processed successfully:', data);
       return data;
     } catch (error: any) {
       console.error('[useReservations] requestRefund error:', error);

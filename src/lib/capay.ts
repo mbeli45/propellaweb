@@ -75,7 +75,6 @@ export const generatePaymentLink = async (
 ): Promise<CapayPaymentResponse> => {
   try {
     const transId = options?.externalId || `txn_${Date.now()}`
-    console.log('[Payment] Payment prepared', { amount, transId, options })
     
     return {
       link: '',
@@ -108,7 +107,6 @@ export const getPaymentStatus = async (
       console.error('[Payment] Status check error:', error)
       throw new Error(error.message || 'Failed to get payment status')
     }
-    console.log('[Payment] Status response:', data)
     return data as CapayPaymentStatusResponse
   } catch (error: any) {
     console.error('[Payment] getPaymentStatus error:', error)
@@ -146,7 +144,6 @@ export const initiateDirectPayment = async (
   }
 ): Promise<{ transId: string; raw?: any }> => {
   try {
-    console.log('[Payment] Initiating direct payment:', { amount, phone, options })
     
     const { data, error } = await supabase.functions.invoke('mesomb-collect', {
       body: {
@@ -172,7 +169,6 @@ export const initiateDirectPayment = async (
       throw new Error(error.message || 'Failed to process payment')
     }
     
-    console.log('[Payment] Edge Function response:', data)
     
     const transId = (data as any)?.transId
     if (!transId) {
@@ -206,7 +202,6 @@ export const initiateWithdrawal = async (
   }
 ): Promise<{ transId: string; raw?: any }> => {
   try {
-    console.log('[Payment] Initiating withdrawal:', { amount, phone, options })
     
     const { data, error } = await supabase.functions.invoke('mesomb-withdraw', {
       body: {
@@ -232,7 +227,6 @@ export const initiateWithdrawal = async (
       throw new Error(error.message || 'Failed to process withdrawal')
     }
     
-    console.log('[Payment] Edge Function response:', data)
     
     const transId = (data as any)?.transId
     if (!transId) {
@@ -281,7 +275,6 @@ export const pollPaymentStatus = async (
     }
     try {
       const status = await getPaymentStatus(transId)
-      console.log(`[Payment] Poll attempt ${attempts + 1}:`, status)
       if (
         status.status === 'SUCCESSFUL' ||
         status.status === 'FAILED' ||
@@ -319,7 +312,6 @@ export const pollWithdrawalStatus = async (
     }
     try {
       const status = await getWithdrawalStatus(transId)
-      console.log(`[Payment] Withdrawal poll attempt ${attempts + 1}:`, status)
       if (
         status.status === 'SUCCESSFUL' ||
         status.status === 'FAILED' ||
@@ -343,7 +335,6 @@ export const processRefund = async (
   reservationId: string
 ): Promise<{ success: boolean; payout?: any; error?: string }> => {
   try {
-    console.log('[Payment] Processing refund for reservation:', reservationId)
     
     const { data, error } = await supabase.functions.invoke('process-refund', {
       body: { reservation_id: reservationId },
@@ -357,7 +348,6 @@ export const processRefund = async (
       throw new Error(error.message || 'Failed to process refund')
     }
     
-    console.log('[Payment] Refund response:', data)
     
     if (!(data as any)?.success) {
       throw new Error((data as any)?.error || 'Refund failed')

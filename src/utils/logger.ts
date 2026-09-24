@@ -4,7 +4,6 @@ const isDevelopment = __DEV__;
 export const logger = {
   log: (...args: any[]) => {
     if (isDevelopment) {
-      console.log(...args);
     }
   },
   warn: (...args: any[]) => {

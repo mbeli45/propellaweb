@@ -32,11 +32,6 @@ export function useFapshiWithdrawal(userId: string) {
     setLoading(true);
     setError(null);
     try {
-      console.log('[useFapshiWithdrawal] Starting withdrawal process', { 
-        userId, 
-        amount, 
-        phoneNumber 
-      });
 
       // 0. Check available withdrawable balance (server computes locked visitation funds)
       const { data: availableArr, error: availErr } = await supabase
@@ -59,7 +54,6 @@ export function useFapshiWithdrawal(userId: string) {
         userId,
       });
 
-      console.log('[useFapshiWithdrawal] Fapshi withdrawal initiated', withdrawalResult);
 
       const transId = withdrawalResult.transId;
 
@@ -76,7 +70,6 @@ export function useFapshiWithdrawal(userId: string) {
         fapshi_reference: transId,
       };
 
-      console.log('[useFapshiWithdrawal] Creating withdrawal request in database', withdrawalInsert);
 
       const { data: withdrawalRequest, error: withdrawalError } = await supabase
         .from('withdrawal_requests')
@@ -89,7 +82,6 @@ export function useFapshiWithdrawal(userId: string) {
         throw new Error(`Database error: ${withdrawalError.message}`);
       }
 
-      console.log('[useFapshiWithdrawal] Withdrawal request created in database', withdrawalRequest);
 
       // 3. Log transaction in Supabase
       const transactionData = {
@@ -101,7 +93,6 @@ export function useFapshiWithdrawal(userId: string) {
         status: 'pending',
       };
 
-      console.log('[useFapshiWithdrawal] Creating transaction record', transactionData);
 
       const { error: transactionError } = await supabase
         .from('transactions')
@@ -112,24 +103,15 @@ export function useFapshiWithdrawal(userId: string) {
         throw new Error(`Transaction error: ${transactionError.message}`);
       }
 
-      console.log('[useFapshiWithdrawal] Transaction record created successfully');
 
       // 4. Check immediate status first before starting monitoring
       try {
-        console.log('[useFapshiWithdrawal] Checking immediate withdrawal status for transId:', transId);
         // Wait a moment for MeSomb to process the transaction
         await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
         const immediateStatus = await getWithdrawalStatus(transId);
-        console.log('[useFapshiWithdrawal] Immediate withdrawal status received:', {
-          status: immediateStatus.status,
-          transactionId: immediateStatus.transactionId,
-          amount: immediateStatus.amount,
-          fullResponse: immediateStatus
-        });
         
         if (immediateStatus.status === 'SUCCESSFUL') {
           // Withdrawal completed immediately, no need for monitoring
-          console.log('[useFapshiWithdrawal] Withdrawal completed immediately - updating database');
           await updateWithdrawalStatus(transId, withdrawalRequest.id, immediateStatus);
           
           // Update wallet balance (deduct withdrawal amount)
@@ -142,7 +124,6 @@ export function useFapshiWithdrawal(userId: string) {
             if (walletError) {
               console.error('[useFapshiWithdrawal] Failed to update wallet balance:', walletError);
             } else {
-              console.log('[useFapshiWithdrawal] Wallet balance updated successfully');
             }
           } catch (walletUpdateError) {
             console.error('[useFapshiWithdrawal] Error updating wallet:', walletUpdateError);
@@ -151,13 +132,11 @@ export function useFapshiWithdrawal(userId: string) {
           alert('Withdrawal Successful! Your withdrawal has been processed successfully.');
         } else if (immediateStatus.status === 'FAILED' || immediateStatus.status === 'EXPIRED') {
           // Withdrawal failed immediately
-          console.log('[useFapshiWithdrawal] Withdrawal failed immediately');
           await updateWithdrawalStatus(transId, withdrawalRequest.id, immediateStatus);
           
           alert('Withdrawal Failed: Your withdrawal could not be processed. Please try again.');
         } else {
           // Status is PENDING/VALIDATING, start monitoring
-          console.log('[useFapshiWithdrawal] Withdrawal needs monitoring, status:', immediateStatus.status);
           startWithdrawalMonitoring(transId, withdrawalRequest.id);
         }
       } catch (statusError) {
@@ -171,7 +150,6 @@ export function useFapshiWithdrawal(userId: string) {
         withdrawalRequest,
       });
 
-      console.log('[useFapshiWithdrawal] Withdrawal process completed successfully');
 
       return { fapshi: withdrawalResult, withdrawalRequest };
     } catch (err: any) {
@@ -202,11 +180,9 @@ export function useFapshiWithdrawal(userId: string) {
       setCurrentStatus('PENDING');
       setTimeRemaining(60); // 1 minute for anti-fraud validation
 
-      console.log('[useFapshiWithdrawal] Starting automatic withdrawal monitoring', { transId, withdrawalRequestId });
 
       // Set up 1-minute timeout for anti-fraud validation
       monitoringRef.current.timeout = setTimeout(async () => {
-        console.log('[useFapshiWithdrawal] Withdrawal monitoring timed out after 1 minute');
         
         // Update database with timeout status
         try {
@@ -256,7 +232,6 @@ export function useFapshiWithdrawal(userId: string) {
       // Set up polling interval (check every 5 seconds for faster response)
       monitoringRef.current.interval = setInterval(async () => {
         try {
-          console.log('[useFapshiWithdrawal] Checking withdrawal status...');
           
           // Use getPaymentStatus directly instead of pollWithdrawalStatus
           // since we're already polling via the interval
@@ -264,14 +239,12 @@ export function useFapshiWithdrawal(userId: string) {
 
           try {
             setCurrentStatus(status.status);
-            console.log('[useFapshiWithdrawal] Withdrawal status:', status.status);
           } catch (stateError) {
             console.error('[useFapshiWithdrawal] Error updating status state:', stateError);
           }
           
           // Provide more specific feedback for validation status
           if (status.status === 'PENDING') {
-            console.log('[useFapshiWithdrawal] Transaction is being validated by MeSomb (anti-fraud check)');
             
             // Update database periodically even during validation to show it's still active
             const now = new Date().toISOString();
@@ -292,7 +265,6 @@ export function useFapshiWithdrawal(userId: string) {
 
           // Check if we have a final status
           if (status.status === 'SUCCESSFUL' || status.status === 'FAILED' || status.status === 'EXPIRED') {
-            console.log('[useFapshiWithdrawal] Final status reached:', status.status);
             
             // Update database
             await updateWithdrawalStatus(transId, withdrawalRequestId, status);
@@ -320,7 +292,6 @@ export function useFapshiWithdrawal(userId: string) {
   }, [updateProgress]);
 
   const stopWithdrawalMonitoring = () => {
-    console.log('[useFapshiWithdrawal] Stopping withdrawal monitoring');
     
     if (monitoringRef.current.interval) {
       clearInterval(monitoringRef.current.interval);
@@ -344,11 +315,6 @@ export function useFapshiWithdrawal(userId: string) {
 
   const updateWithdrawalStatus = async (transId: string, withdrawalRequestId: string, status: any) => {
     try {
-      console.log('[useFapshiWithdrawal] Updating withdrawal status in database', { 
-        transId, 
-        withdrawalRequestId, 
-        status 
-      });
 
       // Update withdrawal request with final status
       const { error: updateError } = await supabase
@@ -362,7 +328,6 @@ export function useFapshiWithdrawal(userId: string) {
       if (updateError) {
         console.error('[useFapshiWithdrawal] Failed to update withdrawal request:', updateError);
       } else {
-        console.log('[useFapshiWithdrawal] Withdrawal request status updated successfully');
       }
 
       // Update transaction with final status (use mapped status)
@@ -378,12 +343,10 @@ export function useFapshiWithdrawal(userId: string) {
         })
         .eq('reference', transId);
         
-      console.log('[useFapshiWithdrawal] Updating transaction status from', status.status, 'to', mappedStatus);
 
       if (transactionUpdateError) {
         console.error('[useFapshiWithdrawal] Failed to update transaction:', transactionUpdateError);
       } else {
-        console.log('[useFapshiWithdrawal] Transaction status updated successfully');
       }
     } catch (error) {
       console.error('[useFapshiWithdrawal] Error updating withdrawal status:', error);

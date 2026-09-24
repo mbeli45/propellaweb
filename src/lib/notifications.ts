@@ -24,7 +24,6 @@ export async function registerForPushNotifications() {
   try {
     const hasPermission = await requestWebNotificationPermission()
     if (hasPermission) {
-      console.log('Web notification permission granted')
       return 'web-notification-token'
     }
     return null

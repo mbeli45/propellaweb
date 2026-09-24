@@ -21,7 +21,6 @@ function AppRoutes() {
   const { user, loading } = useAuth()
 
   // Debug logging
-  console.log('🔐 [AppRoutes] User:', user?.email, '| Role:', user?.role, '| Loading:', loading)
 
   if (loading) {
     return <LoadingScreen />

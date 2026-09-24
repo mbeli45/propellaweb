@@ -68,11 +68,9 @@ export function useAgentProfile(agentId: string): UseAgentProfileReturn {
 
   const fetchAgentData = useCallback(async () => {
     if (!agentId) {
-      console.log('useAgentProfile: No agentId provided');
       return null;
     }
 
-    console.log('useAgentProfile: Fetching agent data for:', agentId);
     
     try {
       const { data, error } = await supabase
@@ -97,7 +95,6 @@ export function useAgentProfile(agentId: string): UseAgentProfileReturn {
   const fetchReviews = useCallback(async () => {
     if (!agentId) return [];
     
-    console.log('useAgentProfile: Fetching reviews for:', agentId);
     
     try {
       const { data, error } = await supabase
@@ -118,7 +115,6 @@ export function useAgentProfile(agentId: string): UseAgentProfileReturn {
         throw error;
       }
       
-      console.log('useAgentProfile: Reviews fetched:', data?.length || 0);
       return data || [];
     } catch (err: any) {
       console.error('useAgentProfile: Error fetching reviews:', err);
@@ -129,7 +125,6 @@ export function useAgentProfile(agentId: string): UseAgentProfileReturn {
   const fetchProperties = useCallback(async () => {
     if (!agentId) return [];
     
-    console.log('useAgentProfile: Fetching properties for:', agentId);
     
     try {
       const { data, error } = await supabase
@@ -150,7 +145,6 @@ export function useAgentProfile(agentId: string): UseAgentProfileReturn {
         throw error;
       }
       
-      console.log('useAgentProfile: Properties fetched:', data?.length || 0);
       return data || [];
     } catch (err: any) {
       console.error('useAgentProfile: Error fetching properties:', err);
@@ -164,7 +158,6 @@ export function useAgentProfile(agentId: string): UseAgentProfileReturn {
       return;
     }
 
-    console.log('useAgentProfile: Starting to fetch all data for:', agentId);
     setLoading(true);
     setError(null);
     
@@ -191,7 +184,6 @@ export function useAgentProfile(agentId: string): UseAgentProfileReturn {
       // Process properties
       setProperties(propertiesData);
       
-      console.log('useAgentProfile: All data fetched successfully');
       
     } catch (err: any) {
       console.error('useAgentProfile: Error fetching agent data:', err);
@@ -202,12 +194,10 @@ export function useAgentProfile(agentId: string): UseAgentProfileReturn {
   }, [agentId, fetchAgentData, fetchReviews, fetchProperties]);
 
   useEffect(() => {
-    console.log('useAgentProfile: useEffect triggered with agentId:', agentId);
     fetchAllData();
   }, [fetchAllData]);
 
   const refetch = useCallback(async () => {
-    console.log('useAgentProfile: Refetching data for:', agentId);
     await fetchAllData();
   }, [agentId, fetchAllData]);
 

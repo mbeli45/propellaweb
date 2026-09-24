@@ -19,7 +19,6 @@ export async function signInWithApple(options?: AppleSignInOptions) {
     // Always use the current origin so PKCE verifier storage and callback origin match.
     const redirectUrl = `${window.location.origin}/auth/callback`
 
-    console.log('🍎 Apple Sign-In redirect URL:', redirectUrl)
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'apple',

@@ -211,7 +211,6 @@ export const useLocalMessages = (currentUserId: string, counterpartId: string) =
     // Native: Try to send directly to server if online
     if (isOnline) {
       try {
-        console.log('Sending message directly to server...');
         
         // Send to server first
         const serverMessage = await serverSendMessage(
@@ -243,7 +242,6 @@ export const useLocalMessages = (currentUserId: string, counterpartId: string) =
         // Update local state
         setLocalMessages(prev => [...prev, fullMessage]);
 
-        console.log('✅ Message sent directly to server');
         return fullMessage;
       } catch (serverError) {
         console.warn('Failed to send to server, falling back to local storage:', serverError);
@@ -253,7 +251,6 @@ export const useLocalMessages = (currentUserId: string, counterpartId: string) =
 
     // Native fallback to local storage (offline or server failed)
     try {
-      console.log('Storing message locally for later sync...');
       
       // Add to local database
       await localMessageDB.addMessage(newMessage);
@@ -278,7 +275,6 @@ export const useLocalMessages = (currentUserId: string, counterpartId: string) =
         }, 2000); // Increased from 500ms to 2 seconds
       }
 
-      console.log('✅ Message stored locally');
       return fullMessage;
     } catch (error) {
       console.error('Error sending message:', error);

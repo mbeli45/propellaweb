@@ -43,7 +43,6 @@ export function useAuth() {
 
     const fetchPromise = (async () => {
       try {
-        console.log('🔍 Fetching profile for user:', userId);
         // OPTIMIZATION: Use essential fields only for faster initial load
         const profilePromise = supabase
           .from('profiles')
@@ -72,7 +71,6 @@ export function useAuth() {
           throw new Error('Profile not found. Please try signing in again.');
         }
 
-        console.log('✅ Profile fetched successfully:', profile);
 
         // OPTIMIZATION: Create minimal profile object for faster processing
         const minimalProfile = {
@@ -114,7 +112,6 @@ export function useAuth() {
         profileCache.set(userId, { data: minimalProfile, timestamp: Date.now() });
         setUser(minimalProfile);
         
-        console.log('Profile fetched - Avatar URL:', minimalProfile.avatar_url);
         
         // OPTIMIZATION: Defer full profile fetch and push notifications
         // Web: Push notifications not available
@@ -241,7 +238,6 @@ export function useAuth() {
       const trimmedEmail = email.toLowerCase().trim();
       
       // Check if email already exists
-      console.log('🔍 Checking if email already exists:', trimmedEmail);
       
       // Check if user exists in profiles table
       const { data: existingProfile, error: profileError } = await supabase
@@ -251,7 +247,6 @@ export function useAuth() {
         .single();
       
       if (existingProfile && !profileError) {
-        console.log('❌ Email already exists in profiles:', existingProfile);
         throw new Error('An account with this email already exists. Please use a different email or try signing in.');
       }
       
@@ -283,9 +278,6 @@ export function useAuth() {
         timeoutPromise
       ]) as any;
       
-      console.log('🔍 Signup response:', { data, error });
-      console.log('🔍 User data:', data?.user);
-      console.log('🔍 Email confirmed at:', data?.user?.email_confirmed_at);
       
       if (error) {
         console.error('❌ Signup error:', error);
@@ -294,15 +286,12 @@ export function useAuth() {
       
       // Check if email confirmation is required
       if (data.user && !data.user.email_confirmed_at) {
-        console.log('📧 Email confirmation required - user not confirmed');
         setMessage({ 
           type: 'success', 
           text: 'Account created! Please check your email (including spam folder) for verification.' 
         });
         navigate('/auth/verify');
       } else {
-        console.log('✅ User already confirmed or no confirmation needed');
-        console.log('🔍 User email_confirmed_at:', data?.user?.email_confirmed_at);
         setMessage({ 
           type: 'success', 
           text: 'Account created successfully! You can now sign in.' 

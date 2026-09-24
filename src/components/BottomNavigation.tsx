@@ -43,7 +43,6 @@ export default function BottomNavigation({ items, transparent = false }: BottomN
   React.useEffect(() => {
     if (isHomePage) {
       const mode = localStorage.getItem('homeViewMode')
-      console.log('BottomNav: Current view mode:', mode, 'Path:', location.pathname)
       setViewMode(mode)
     } else {
       setViewMode(null)
@@ -55,7 +54,6 @@ export default function BottomNavigation({ items, transparent = false }: BottomN
     const handleViewModeChange = () => {
       if (isHomePage) {
         const mode = localStorage.getItem('homeViewMode')
-        console.log('BottomNav: View mode changed to:', mode)
         setViewMode(mode)
       }
     }
@@ -70,7 +68,6 @@ export default function BottomNavigation({ items, transparent = false }: BottomN
   }
 
   const isFeedMode = viewMode === 'feed'
-  console.log('BottomNav: Rendering with isFeedMode:', isFeedMode, 'viewMode:', viewMode)
 
   return (
     <nav

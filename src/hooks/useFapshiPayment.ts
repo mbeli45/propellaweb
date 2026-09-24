@@ -39,7 +39,6 @@ export function useFapshiPayment() {
       setLoading(true);
       setError(null);
 
-      console.log('[useFapshiPayment] processPayment called', { reservationId, amount, userId, propertyTitle });
 
       // Generate a payment link
       const { link, transId } = await generatePaymentLink(amount, {
@@ -48,7 +47,6 @@ export function useFapshiPayment() {
         message: `Payment for reservation of ${propertyTitle}`,
       });
 
-      console.log('[useFapshiPayment] Payment link generated', { link, transId });
 
       // Store the transaction ID for later verification
       await storeTransactionId(reservationId, transId);
@@ -100,7 +98,6 @@ export function useFapshiPayment() {
     try {
       setLoading(true);
       setError(null);
-      console.log('[useFapshiPayment] processDirectPayment called', { amount, userId, phone, options });
       const { transId } = await initiateDirectPayment(amount, phone, {
         userId: options?.externalId ? undefined : userId,
         externalId: options?.externalId,
@@ -141,11 +138,9 @@ export function useFapshiPayment() {
       setCurrentStatus('PENDING');
       setTimeRemaining(300);
 
-      console.log('[useFapshiPayment] Starting automatic payment monitoring', { reservationId, transId });
 
       // Set up 5-minute timeout
       monitoringRef.current.timeout = setTimeout(() => {
-        console.log('[useFapshiPayment] Payment monitoring timed out after 5 minutes');
         stopPaymentMonitoring();
         alert('Payment Timeout: Payment verification timed out. Please check your payment status manually.');
       }, 300000); // 5 minutes
@@ -161,7 +156,6 @@ export function useFapshiPayment() {
       // Set up polling interval (check every 10 seconds)
       monitoringRef.current.interval = setInterval(async () => {
         try {
-          console.log('[useFapshiPayment] Checking payment status...');
           
           const status = await pollPaymentStatus(transId, {
             interval: 2000,
@@ -170,11 +164,9 @@ export function useFapshiPayment() {
           });
 
           setCurrentStatus(status.status);
-          console.log('[useFapshiPayment] Payment status:', status.status);
 
           // Check if we have a final status
           if (status.status === 'SUCCESSFUL' || status.status === 'FAILED' || status.status === 'EXPIRED') {
-            console.log('[useFapshiPayment] Final status reached:', status.status);
             
             // Update database
             await updatePaymentStatus(reservationId, status);
@@ -212,7 +204,6 @@ export function useFapshiPayment() {
   };
 
   const stopPaymentMonitoring = () => {
-    console.log('[useFapshiPayment] Stopping payment monitoring');
     
     if (monitoringRef.current.interval) {
       clearInterval(monitoringRef.current.interval);
@@ -271,7 +262,6 @@ export function useFapshiPayment() {
         if (propertyError) {
           console.error('[useFapshiPayment] Failed to update property status:', propertyError);
         } else {
-          console.log('[useFapshiPayment] Property status updated to reserved');
         }
       }
     } catch (error) {

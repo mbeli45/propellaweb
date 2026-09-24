@@ -49,7 +49,6 @@ export function useLocationSearch() {
     // Check cache first
     const cached = searchCache.current.get(trimmedQuery);
     if (cached) {
-      console.log(`Using cached suggestions for "${trimmedQuery}"`);
       return cached;
     }
 
@@ -92,10 +91,8 @@ export function useLocationSearch() {
         // Cache the results
         searchCache.current.set(trimmedQuery, suggestions);
         
-        console.log(`Found ${suggestions.length} suggestions for "${trimmedQuery}"`);
         return suggestions;
       } else {
-        console.log(`No suggestions found for: ${trimmedQuery}`);
         return [];
       }
     } catch (err: any) {

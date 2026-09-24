@@ -26,9 +26,6 @@ export default function AuthCallback() {
       hasHandledRef.current = true
 
       try {
-        console.log('🔐 Auth callback - URL:', window.location.href)
-        console.log('🔐 Hash:', window.location.hash)
-        console.log('🔐 Search:', window.location.search)
 
         // Check if we have an error in the URL
         const hashParams = new URLSearchParams(window.location.hash.substring(1))
@@ -52,7 +49,6 @@ export default function AuthCallback() {
 
         const code = searchParams.get('code')
         if (!existingSession && code) {
-          console.log('🔐 Exchanging code for session...')
           const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
           
           if (exchangeError) {
@@ -60,14 +56,12 @@ export default function AuthCallback() {
             throw exchangeError
           }
           
-          console.log('✅ Session obtained:', data.session?.user?.email)
         }
 
         // Determine which provider was used and handle callback accordingly
         const { data: { session } } = await supabase.auth.getSession()
         const provider = session?.user?.app_metadata?.provider || 'google'
         
-        console.log('🔐 OAuth provider:', provider)
         
         let callbackResult
         if (provider === 'apple') {
@@ -86,13 +80,11 @@ export default function AuthCallback() {
         }
 
         if (user) {
-          console.log('✅ User authenticated:', user.email)
           
           // Ensure first-time OAuth users have a profile before routing.
           await refreshUser(user.id)
           setCallbackComplete(true)
         } else {
-          console.log('❌ No user found, redirecting to login')
           navigate('/auth/login', { replace: true })
         }
       } catch (err: any) {

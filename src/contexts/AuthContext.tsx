@@ -157,7 +157,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Navigate based on role - use queueMicrotask to ensure state update is processed
         const targetRoute = (profileData.role === 'agent' || profileData.role === 'landlord') ? '/agent' : '/user'
-        console.log('🔐 [signIn] Navigating to:', targetRoute, '| User role:', profileData.role)
         
         // Use queueMicrotask to allow React to process the state update before navigation
         queueMicrotask(() => {

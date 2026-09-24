@@ -66,7 +66,6 @@ export default function GuestMap() {
           })
         },
         (error) => {
-          console.log('Geolocation error:', error)
         }
       )
     }
@@ -76,7 +75,6 @@ export default function GuestMap() {
   useEffect(() => {
     let isMounted = true;
     (async () => {
-      console.log('Starting geocoding for', displayedProperties.length, 'properties');
       const results: Array<{
         id: string;
         coordinates: [number, number];
@@ -94,7 +92,6 @@ export default function GuestMap() {
           continue;
         }
         
-        console.log(`🔍 [Guest] Geocoding "${p.title}" | Location: "${p.location}"`);
         
         // Only geocode using location string - no fallbacks
         const coords = await geocodeLocation(p.location);
@@ -107,7 +104,6 @@ export default function GuestMap() {
           const isInSouthwest = lng >= 8.5 && lng <= 10.5 && lat >= 3.8 && lat <= 5.5;
           
           if (isInSouthwest) {
-            console.log(`✅ [Guest] Geocoded "${p.location}" to Southwest: [${lng.toFixed(4)}, ${lat.toFixed(4)}]`);
             results.push({
               id: p.id || Math.random().toString(36),
               coordinates: coords,
@@ -124,7 +120,6 @@ export default function GuestMap() {
       }
       
       const failedCount = displayedProperties.length - results.length;
-      console.log(`\n📊 [Guest] Geocoding Summary: ${results.length}/${displayedProperties.length} properties shown on map (${failedCount} excluded)`);
       if (isMounted) setMarkers(results);
     })();
     return () => { isMounted = false; };
@@ -200,7 +195,6 @@ export default function GuestMap() {
           onPropertySelect={(property) => navigate(`/property/${property.id}`)}
           onPropertyFocus={(property) => {
             // Could update map focus here if needed
-            console.log('Focused property:', property.title)
           }}
         />
       )}

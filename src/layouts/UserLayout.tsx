@@ -29,7 +29,6 @@ export default function UserLayout() {
   const { user } = useAuth()
   const { reservationBadgeCount, messageBadgeCount } = useBadgeCounts(user?.id || '', user?.role)
 
-  console.log('👤 [UserLayout] Rendering with user:', user?.email, '| Role:', user?.role)
 
   const navItems = [
     { path: '/user', icon: Home as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.home' },

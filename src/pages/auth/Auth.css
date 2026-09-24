@@ -681,3 +681,16 @@
 .auth-user-type-card { border-width: 1px; border-radius: 12px; }
 .auth-code-input { border-width: 1px; border-radius: 12px; height: 56px; }
 .auth-footer { padding: 0 16px 24px; }
+
+/* Kit tokens for components used on auth pages (e.g. the role SegmentedControl) */
+.auth-container {
+  --rsv-surface: var(--color-white, #fff);
+  --rsv-ground: var(--color-neutral-50, #f9fafb);
+  --rsv-ink: var(--color-neutral-900, #111827);
+  --rsv-faint: var(--color-neutral-500, #6b7280);
+  --rsv-line: var(--color-neutral-200, #e5e7eb);
+  --rsv-line-soft: var(--color-neutral-100, #f3f4f6);
+}
+.auth-user-type-container { margin-bottom: 24px; }
+.auth-section-title { font-size: 11px !important; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--color-neutral-500, #6b7280) !important; margin: 0 0 8px 4px !important; }
+.auth-role-hint { margin: 8px 0 0 4px; font-size: 13px; color: var(--color-neutral-600, #4b5563); }

@@ -240,7 +240,6 @@ export const shareContent = async (options: ShareOptions): Promise<void> => {
             const filename = `property${extension}`
             file = await urlToFile(mediaUrl, filename)
           } catch (fileError) {
-            console.log('⚠️ Could not prepare file:', fileError)
           }
         }
 
@@ -252,7 +251,6 @@ export const shareContent = async (options: ShareOptions): Promise<void> => {
         if (hasShareableFile) {
           try {
             await navigator.clipboard.writeText(fullText)
-            console.log('📋 Copied caption to clipboard for paste')
           } catch {
             // Clipboard may be blocked; continue anyway
           }
@@ -271,7 +269,6 @@ export const shareContent = async (options: ShareOptions): Promise<void> => {
 
         if (hasShareableFile && file) {
           shareData.files = [file]
-          console.log('✅ Attached file:', file.name, file.type, `${(file.size / 1024).toFixed(2)}KB`)
         }
 
         await navigator.share(shareData)
@@ -280,13 +277,11 @@ export const shareContent = async (options: ShareOptions): Promise<void> => {
         if (shareError.name === 'AbortError') {
           return // User cancelled
         }
-        console.log('Share failed:', shareError.message)
       }
     }
 
     // Fallback: Copy to clipboard
     await navigator.clipboard.writeText(fullText)
-    console.log('📋 Copied to clipboard')
   } catch (error) {
     console.error('Share error:', error)
     captureException(error as Error, { context: 'shareContent', options })

@@ -88,7 +88,6 @@ export function initSentry() {
 
       // Filter out development errors if needed
       if (import.meta.env.MODE === 'development') {
-        console.log('Sentry Event:', event);
       }
       return event;
     },

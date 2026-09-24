@@ -97,7 +97,6 @@ export const authProvider: RAuthProvider = {
       }
       
       if (!session || !session.user) {
-        console.log('No session found');
         return Promise.reject();
       }
 
@@ -117,7 +116,6 @@ export const authProvider: RAuthProvider = {
                         profile?.role === 'landlord';
 
       if (!hasAccess) {
-        console.log('Access denied for user:', userEmail, 'role:', profile?.role);
         return Promise.reject();
       }
 

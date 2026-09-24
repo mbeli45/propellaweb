@@ -19,7 +19,6 @@ export async function signInWithGoogle(options?: GoogleSignInOptions) {
     // Always use the current origin so PKCE verifier storage and callback origin match.
     const redirectUrl = `${window.location.origin}/auth/callback`
 
-    console.log('🔐 Google Sign-In redirect URL:', redirectUrl)
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',

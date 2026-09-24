@@ -33,7 +33,6 @@ export function useGeocoding() {
     // Check cache first
     const cached = geocodingCache.current.get(locationName);
     if (cached) {
-      console.log(`Using cached coordinates for "${locationName}":`, cached);
       return cached;
     }
     if (!locationName || locationName.trim() === '') {
@@ -70,11 +69,6 @@ export function useGeocoding() {
       
       if (data.features && data.features.length > 0) {
         // Log all results for debugging
-        console.log(`Geocoding results for "${locationName}":`, data.features.map(f => ({
-          place: f.place_name,
-          coords: f.center,
-          relevance: f.relevance
-        })));
         
         // Find the best match that is in Southwest Cameroon
         // Southwest region roughly: lng 8.5-10.5, lat 3.8-5.5
@@ -84,7 +78,6 @@ export function useGeocoding() {
         });
         
         const bestMatch = southwestMatch || data.features[0];
-        console.log(`✓ Geocoded "${locationName}" to: [${bestMatch.center[0].toFixed(4)}, ${bestMatch.center[1].toFixed(4)}] - ${bestMatch.place_name}`);
         
         // Cache the result
         geocodingCache.current.set(locationName, bestMatch.center);

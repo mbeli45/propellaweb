@@ -28,7 +28,6 @@ let lastNavigationUrl = '';
 export function clearNavigationState() {
   lastNavigationTime = 0;
   lastNavigationUrl = '';
-  console.log('🔄 Navigation state cleared');
 }
 
 /**
@@ -63,12 +62,10 @@ export interface NotificationData {
  * Navigate with proper stack management for notifications
  */
 function navigateFromNotification(url: string, notificationType: 'chat' | 'reservation' | 'property', userRole?: string) {
-  console.log('🔔 Navigating from notification to:', url);
   
   // Prevent duplicate navigations within a short time window
   const now = Date.now();
   if (lastNavigationUrl === url && now - lastNavigationTime < 2000) {
-    console.log('⚠️ Preventing duplicate navigation to:', url);
     return;
   }
   
@@ -84,7 +81,6 @@ function navigateFromNotification(url: string, notificationType: 'chat' | 'reser
       // Navigate to the appropriate messages screen first, then to the chat
       // This ensures there's a proper back navigation
       const messagesRoute = (userRole === 'agent' || userRole === 'landlord') ? '/(agent)/messages' : '/(user)/messages';
-      console.log('📱 Setting up navigation stack with messages route:', messagesRoute);
       
       // Use push instead of replace to maintain proper navigation stack
       router.push(messagesRoute);
@@ -95,11 +91,9 @@ function navigateFromNotification(url: string, notificationType: 'chat' | 'reser
     } else {
       // For property/reservation notifications, navigate directly without intermediate steps
       // This prevents random navigation issues
-      console.log('🏠 Direct navigation to:', url);
       router.push(url);
     }
   } catch (error) {
-    console.log('⚠️ Fallback navigation:', error);
     router.push(url);
   }
 }
@@ -108,7 +102,6 @@ function navigateFromNotification(url: string, notificationType: 'chat' | 'reser
  * Handles navigation based on notification data
  */
 export function handleNotificationNavigation(data: NotificationData, currentUserId?: string, userRole?: string) {
-  console.log('🔔 Handling notification navigation:', data);
 
   try {
     switch (data.type) {
@@ -128,7 +121,7 @@ export function handleNotificationNavigation(data: NotificationData, currentUser
         break;
       
       default:
-        console.log('⚠️ Unknown notification type:', data.type);
+        console.warn('Unknown notification type:', data.type);
     }
   } catch (error) {
     console.error('❌ Error handling notification navigation:', error);
@@ -140,11 +133,9 @@ export function handleNotificationNavigation(data: NotificationData, currentUser
  */
 function handleChatNotification(data: NotificationData, currentUserId?: string, userRole?: string) {
   if (!data.messageId || !data.senderId) {
-    console.log('⚠️ Missing messageId or senderId for chat notification');
     return;
   }
 
-  console.log('📨 Navigating to chat for message:', data.messageId);
 
   if (data.propertyId) {
     // Property-based chat - navigate directly to chat with the sender
@@ -153,7 +144,6 @@ function handleChatNotification(data: NotificationData, currentUserId?: string, 
     if (data.messageId) chatParams.set('messageId', data.messageId);
     
     const chatUrl = `/chat/${data.senderId}${chatParams.toString() ? '?' + chatParams.toString() : ''}`;
-    console.log('🏠 Navigating to property chat with sender:', chatUrl);
     navigateFromNotification(chatUrl, 'chat', userRole);
   } else {
     // Direct message chat - navigate to chat with the sender
@@ -161,7 +151,6 @@ function handleChatNotification(data: NotificationData, currentUserId?: string, 
     if (data.messageId) chatParams.set('messageId', data.messageId);
     
     const chatUrl = `/chat/${data.senderId}${chatParams.toString() ? '?' + chatParams.toString() : ''}`;
-    console.log('💬 Navigating to direct chat with sender:', chatUrl);
     navigateFromNotification(chatUrl, 'chat', userRole);
   }
 }
@@ -171,11 +160,9 @@ function handleChatNotification(data: NotificationData, currentUserId?: string, 
  */
 function handleReservationNotification(data: NotificationData) {
   if (!data.propertyId) {
-    console.log('⚠️ Missing propertyId for reservation notification');
     return;
   }
 
-  console.log('📅 Navigating to property details for reservation:', data.propertyId);
   
   // Navigate to property details screen with reservation context
   const propertyParams = new URLSearchParams();
@@ -183,7 +170,6 @@ function handleReservationNotification(data: NotificationData) {
   if (data.userId) propertyParams.set('userId', data.userId);
   
   const propertyUrl = `/property/${data.propertyId}${propertyParams.toString() ? '?' + propertyParams.toString() : ''}`;
-  console.log('🏠 Navigating to property details with reservation:', propertyUrl);
   navigateFromNotification(propertyUrl, 'reservation');
 }
 
@@ -192,11 +178,9 @@ function handleReservationNotification(data: NotificationData) {
  */
 function handlePropertyNotification(data: NotificationData) {
   if (!data.propertyId) {
-    console.log('⚠️ Missing propertyId for property notification');
     return;
   }
 
-  console.log('🏠 Navigating to property details:', data.propertyId);
   navigateFromNotification(`/property/${data.propertyId}`, 'property');
 }
 
@@ -207,13 +191,11 @@ export function extractNotificationData(response: Notifications.NotificationResp
   const data = response.notification.request.content.data;
   
   if (!data || typeof data !== 'object') {
-    console.log('⚠️ No valid data in notification response');
     return null;
   }
 
   // Validate that required fields exist
   if (!data.type) {
-    console.log('⚠️ Missing required type field in notification data');
     return null;
   }
 
@@ -224,7 +206,6 @@ export function extractNotificationData(response: Notifications.NotificationResp
  * Handle notification response (when user taps notification)
  */
 export function handleNotificationResponse(response: Notifications.NotificationResponse, currentUserId?: string, userRole?: string) {
-  console.log('🔔 Notification response received');
   
   const data = extractNotificationData(response);
   if (data) {
