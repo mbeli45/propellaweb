@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
@@ -14,6 +14,25 @@ export default function GuestMap() {
   const Colors = getColors(colorScheme)
   const { properties, loading } = useAllProperties()
   const { geocodeLocation } = useGeocoding()
+  // Opened from a property's "View on map": centre on it without filtering.
+  const [searchParams] = useSearchParams()
+  const focusLat = searchParams.get('focusLat')
+  const focusLng = searchParams.get('focusLng')
+  const focusQuery = searchParams.get('focusQuery')
+  const [focus, setFocus] = useState<[number, number] | null>(null)
+  useEffect(() => {
+    const lat = Number(focusLat)
+    const lng = Number(focusLng)
+    if (focusLat && focusLng && Number.isFinite(lat) && Number.isFinite(lng)) {
+      setFocus([lng, lat])
+      return
+    }
+    if (focusQuery) {
+      geocodeLocation(focusQuery).then((coords) => {
+        if (coords && Array.isArray(coords) && coords.length === 2) setFocus(coords as [number, number])
+      })
+    }
+  }, [focusLat, focusLng, focusQuery, geocodeLocation])
   const navigate = useNavigate()
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [markers, setMarkers] = useState<Array<{
@@ -170,6 +189,7 @@ export default function GuestMap() {
           markers={markers}
           userLocation={userLocation}
           onPropertyClick={(property) => navigate(`/property/${property.id}`)}
+          focus={focus}
         />
       </div>
 

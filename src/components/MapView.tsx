@@ -12,9 +12,13 @@ interface MapViewProps {
   }>
   userLocation?: { lat: number; lng: number } | null
   onPropertyClick?: (property: PropertyData) => void
+  /** [lng, lat] to centre on with a pin (e.g. opened from a property's "View on map"). */
+  focus?: [number, number] | null
+  /** Set false when the map sits inside a scrolling page, so the wheel scrolls the page. */
+  scrollZoom?: boolean
 }
 
-export default function MapView({ markers, userLocation, onPropertyClick }: MapViewProps) {
+export default function MapView({ markers, userLocation, onPropertyClick, focus, scrollZoom = true }: MapViewProps) {
   const [mapLoaded, setMapLoaded] = useState(false)
   const mapRef = useRef<any>(null)
   const mapInstanceRef = useRef<any>(null)
@@ -81,8 +85,11 @@ export default function MapView({ markers, userLocation, onPropertyClick }: MapV
       let center: [number, number] = [11.502, 3.848] // Default: Yaoundé, Cameroon
       let zoom = 12
 
-      // If user location is available, use it
-      if (userLocation) {
+      // A requested focus point wins; otherwise the user's location.
+      if (focus) {
+        center = focus
+        zoom = 15
+      } else if (userLocation) {
         center = [userLocation.lng, userLocation.lat]
         zoom = 13
       }
@@ -102,6 +109,7 @@ export default function MapView({ markers, userLocation, onPropertyClick }: MapV
       })
 
       mapInstanceRef.current = map
+      if (!scrollZoom) map.scrollZoom.disable()
 
       // Track map errors
       map.on('error', (e: any) => {
@@ -169,9 +177,20 @@ export default function MapView({ markers, userLocation, onPropertyClick }: MapV
         }
       })
 
-      // Center map on markers
+      if (focus) {
+        try {
+          const pin = new window.mapboxgl.Marker({ color: '#DC2626' }).setLngLat(focus).addTo(map)
+          markersRef.current.push(pin)
+        } catch (error) {
+          captureMapError(error as Error, { action: 'add_focus_marker' })
+        }
+      }
+
+      // Center map on markers (unless a focus point was requested)
       try {
-        if (!userLocation && markers.length > 0) {
+        if (focus) {
+          // keep the focus centre
+        } else if (!userLocation && markers.length > 0) {
           const bounds = new window.mapboxgl.LngLatBounds()
           markers.forEach(({ coordinates }) => {
             bounds.extend(coordinates)
@@ -219,7 +238,7 @@ export default function MapView({ markers, userLocation, onPropertyClick }: MapV
         mapInstanceRef.current = null
       }
     }
-  }, [mapLoaded, markers, userLocation, onPropertyClick])
+  }, [mapLoaded, markers, userLocation, onPropertyClick, focus, scrollZoom])
 
   if (!mapLoaded) {
     return (

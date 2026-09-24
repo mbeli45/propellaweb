@@ -367,7 +367,12 @@ export function useProperty(propertyId: string) {
           category,
           bedrooms,
           bathrooms,
+          kitchen,
           area,
+          property_type,
+          latitude,
+          longitude,
+          verification_status,
           amenities,
           images,
           status,
@@ -383,7 +388,9 @@ export function useProperty(propertyId: string) {
             full_name,
             avatar_url,
             email,
-            role
+            phone,
+            role,
+            is_verified_agent
           )
         `)
         .eq('id', propertyId)
@@ -404,6 +411,11 @@ export function useProperty(propertyId: string) {
         bedrooms: data.bedrooms || undefined,
         bathrooms: data.bathrooms || undefined,
         area: data.area || undefined,
+        kitchen: data.kitchen || undefined,
+        property_type: data.property_type || undefined,
+        latitude: data.latitude ?? undefined,
+        longitude: data.longitude ?? undefined,
+        listingVerified: data.verification_status === 'approved',
         amenities: data.amenities || [],
         image: data.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image',
         images: data.images || [], // Only use images array
@@ -412,14 +424,16 @@ export function useProperty(propertyId: string) {
         rent_period: data.rent_period as 'monthly' | 'yearly' | null | undefined,
         advance_months_min: data.advance_months_min || undefined,
         advance_months_max: data.advance_months_max || undefined,
-        isVerified: data.profiles?.role === 'agent' || data.profiles?.role === 'landlord',
+        isVerified: !!data.profiles?.is_verified_agent,
         owner_id: data.owner_id, // Add owner_id for owner check
         owner: data.profiles ? {
           id: data.profiles.id,
           full_name: data.profiles.full_name || undefined,
           avatar_url: data.profiles.avatar_url || undefined,
           email: data.profiles.email || undefined,
+          phone: data.profiles.phone || undefined,
           role: data.profiles.role || undefined,
+          is_verified_agent: !!data.profiles.is_verified_agent,
         } : undefined,
       };
 

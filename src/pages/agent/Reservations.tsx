@@ -172,6 +172,8 @@ export default function AgentReservations() {
     <ReservationsPage label={t('agentReservations.pageTitle')}>
       <ReservationsHeader
         title={t('agentReservations.pageTitle')}
+        onBack={(window.history.state?.idx ?? 0) > 0 ? () => navigate(-1) : undefined}
+        backLabel={t('common.back')}
         count={reservations.length}
         subtitle={t('agentReservations.subtitle')}
       >

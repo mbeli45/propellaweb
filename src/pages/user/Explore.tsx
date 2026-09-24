@@ -7,7 +7,7 @@ import { useAllProperties } from '@/hooks/useProperties'
 import PropertyCard from '@/components/PropertyCard'
 import FilterModal, { FilterOptions, MAX_PRICE } from '@/components/FilterModal'
 import MapView from '@/components/MapView'
-import { Search, Map as MapIcon, List, Filter, X } from 'lucide-react'
+import { Search, Map as MapIcon, List, Filter, X, ArrowLeft } from 'lucide-react'
 import './Explore.css'
 import { PropertyCardSkeleton, MapSkeleton } from '@/components/skeletons'
 
@@ -118,7 +118,16 @@ export default function UserExplore() {
         top: 0,
         zIndex: 10
       }}>
-        <h1 style={{
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            aria-label={t('common.back')}
+            style={{ width: '40px', height: '40px', borderRadius: '50%', border: 0, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: Colors.neutral[900], flexShrink: 0 }}
+          >
+            <ArrowLeft size={22} />
+          </button>
+          <h1 style={{ margin: 0,
           fontSize: '24px',
           fontWeight: '700',
           color: Colors.neutral[900],
@@ -126,6 +135,7 @@ export default function UserExplore() {
         }}>
           {t('explore.exploreProperties')}
         </h1>
+        </div>
 
         {/* Search Bar */}
         <div style={{

@@ -574,3 +574,40 @@ export function ReservationCard({
     </article>
   )
 }
+
+// ---------------------------------------------------------------------------
+// Empty state (design language: icon tile, title, one sentence, one action).
+// Self-contained styles so it works on any page, not only inside ReservationsPage.
+// ---------------------------------------------------------------------------
+
+export function EmptyState({
+  icon: Icon,
+  title,
+  body,
+  action,
+  compact,
+}: {
+  icon: LucideIcon
+  title: string
+  body?: string
+  action?: { label: string; onClick: () => void; icon?: LucideIcon }
+  /** Smaller variant for use inside a page section. */
+  compact?: boolean
+}) {
+  const ActionIcon = action?.icon
+  return (
+    <div className={`ds-empty${compact ? ' ds-empty--compact' : ''}`}>
+      <span className="ds-empty-icon" aria-hidden="true">
+        <Icon size={compact ? 28 : 38} />
+      </span>
+      <h3 className="ds-empty-title">{title}</h3>
+      {body && <p className="ds-empty-body">{body}</p>}
+      {action && (
+        <button type="button" className="ds-empty-action" onClick={action.onClick}>
+          {ActionIcon && <ActionIcon size={16} aria-hidden="true" />}
+          {action.label}
+        </button>
+      )}
+    </div>
+  )
+}

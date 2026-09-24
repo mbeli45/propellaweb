@@ -26,8 +26,14 @@ export interface PropertyData {
   bedrooms?: number
   bathrooms?: number
   area?: number
+  kitchen?: number
+  latitude?: number
+  longitude?: number
   category: 'budget' | 'standard' | 'premium' | 'luxury'
+  /** Owner is a verified agent (profiles.is_verified_agent). */
   isVerified?: boolean
+  /** The listing itself passed document verification (verification_status = 'approved'). */
+  listingVerified?: boolean
   description?: string
   amenities?: string[]
   reservationFee?: number
@@ -47,6 +53,7 @@ export interface PropertyData {
     phone?: string
     email?: string
     role?: string
+    is_verified_agent?: boolean
   }
 }
 

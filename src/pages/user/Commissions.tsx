@@ -4,7 +4,8 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { useCommissionPayment } from '@/hooks/useCommissionPayment'
-import { Shield, Clock, CheckCircle, AlertTriangle, DollarSign, Filter } from 'lucide-react'
+import { Shield, Clock, CheckCircle, AlertTriangle, DollarSign, Filter, ArrowLeft } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { formatPrice } from '@/utils/shareUtils'
 import './Commissions.css'
 import { ListItemSkeleton } from '@/components/skeletons'
@@ -13,6 +14,7 @@ export default function UserCommissions() {
   const { user } = useAuth()
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
+  const navigate = useNavigate()
   const Colors = getColors(colorScheme)
 
   const { getCommissionPayments, loading } = useCommissionPayment()
@@ -74,7 +76,16 @@ export default function UserCommissions() {
   return (
     <div className="commissions-container" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh' }}>
       <div style={{ padding: '20px 16px' }}>
-        <h1 style={{
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            aria-label={t('common.back')}
+            style={{ width: '40px', height: '40px', borderRadius: '50%', border: 0, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: Colors.neutral[900], flexShrink: 0 }}
+          >
+            <ArrowLeft size={22} />
+          </button>
+          <h1 style={{ margin: 0,
           fontSize: '24px',
           fontWeight: '700',
           color: Colors.neutral[900],
@@ -82,6 +93,7 @@ export default function UserCommissions() {
         }}>
           {t('commission.commissionPayments')}
         </h1>
+        </div>
 
         {/* Summary Cards */}
         <div style={{

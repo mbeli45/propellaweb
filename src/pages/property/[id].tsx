@@ -13,12 +13,22 @@ import {
   ChevronRight,
   Star,
   ShieldCheck,
-  Play
+  Play,
+  BadgeCheck,
+  ChefHat,
+  Ruler,
+  Building2,
+  CalendarClock,
+  Navigation,
+  Phone,
+  MessageCircle
 } from 'lucide-react'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { useProperty, useSimilarProperties } from '@/hooks/useProperties'
+import { useGeocoding } from '@/hooks/useGeocoding'
+import MapView from '@/components/MapView'
 import { useSavedProperty } from '@/hooks/useSavedProperties'
 import { usePropertyReviews } from '@/hooks/usePropertyReviews'
 import {
@@ -42,6 +52,7 @@ import VideoPlayer from '@/components/VideoPlayer'
 import SEO from '@/components/SEO'
 import './PropertyDetail.css'
 import { PropertyDetailSkeleton, ListItemSkeleton } from '@/components/skeletons'
+import { EmptyState } from '@/components/reservations/ReservationUI'
 
 type PaymentMethod = 'mtn' | 'orange'
 
@@ -63,6 +74,29 @@ export default function PropertyDetail() {
   const { hasActiveBooking } = usePropertyReservation(user?.id || '', id || '')
 
   const { property, loading, error } = useProperty(id || '')
+  // Coordinate for the embedded map: saved coordinates, else geocode the location.
+  const { geocodeLocation } = useGeocoding()
+  const [mapCoordinate, setMapCoordinate] = useState<[number, number] | null>(null)
+  useEffect(() => {
+    if (!property) return
+    const lat = Number(property.latitude)
+    const lng = Number(property.longitude)
+    if (property.latitude != null && property.longitude != null && Number.isFinite(lat) && Number.isFinite(lng)) {
+      setMapCoordinate([lng, lat])
+      return
+    }
+    let active = true
+    const query = property.town ? `${property.town}, ${property.location}` : property.location
+    if (query) {
+      geocodeLocation(query).then((coords) => {
+        if (active && coords && Array.isArray(coords) && coords.length === 2) setMapCoordinate(coords as [number, number])
+      })
+    }
+    return () => {
+      active = false
+    }
+  }, [property?.id, property?.latitude, property?.longitude, property?.location, property?.town, geocodeLocation])
+  const noMapMarkers = useMemo(() => [], [])
   const { properties: similarProperties } = useSimilarProperties(
     id || '',
     property?.category || 'standard',
@@ -324,6 +358,19 @@ export default function PropertyDetail() {
       setWaitingForPayment(false)
       setPaymentStartedAt(null)
     }
+  }
+
+  // Opens our map focused on this listing: its saved coordinates when set,
+  // otherwise its location is geocoded by the map page.
+  const openInMaps = () => {
+    if (!property) return
+    const hasCoords = typeof property.latitude === 'number' && typeof property.longitude === 'number'
+    const params = new URLSearchParams(
+      hasCoords
+        ? { focusLat: String(property.latitude), focusLng: String(property.longitude) }
+        : { focusQuery: property.town ? `${property.town}, ${property.location}` : property.location },
+    )
+    navigate(`${user ? '/user/map' : '/guest/map'}?${params.toString()}`)
   }
 
   // Generate structured data for SEO - MUST be before early returns
@@ -588,10 +635,16 @@ export default function PropertyDetail() {
                 </div>
               </>
             )}
+            {property.listingVerified && (
+              <span className="detail-verified-pill">
+                <BadgeCheck size={14} aria-hidden="true" />
+                {t('propertyDetails.verifiedListing')}
+              </span>
+            )}
           </div>
           {allMedia.length > 1 && (
             <div className="thumbnail-container hidden-scrollbar">
-              {allMedia.slice(0, 5).map((media, idx) => {
+              {allMedia.map((media, idx) => {
                 const isVideo = isVideoUrl(media)
                 const thumbnail = isVideo ? videoThumbnails[media] : media
                 return (
@@ -654,136 +707,112 @@ export default function PropertyDetail() {
       )}
 
       <section className="property-summary">
-        {/* Price and Title */}
-        <div style={{ marginBottom: '16px' }}>
+        {/* Reference and listing pills */}
+        <div className="pd-ref-row">
+          <span className="pd-ref">#{String(property.id).slice(0, 8).toUpperCase()}</span>
+          <div className="pd-pills">
+            <span className="pd-pill" style={{ backgroundColor: Colors.primary[50], color: Colors.primary[700] }}>
+              {property.type === 'rent' ? t('propertyDetails.forRent') : t('propertyDetails.forSale')}
+            </span>
+            <span className="pd-pill" style={{ backgroundColor: Colors.neutral[100], color: Colors.neutral[700] }}>
+              {t(`property.${property.category}`)}
+            </span>
+          </div>
+        </div>
+
+        <h2 className="pd-title">{property.title}</h2>
+        <div className="pd-location">
+          <MapPin size={18} aria-hidden="true" />
+          <span>{property.town ? `${property.town}, ${property.location}` : property.location}</span>
+          <button type="button" className="pd-link" onClick={openInMaps}>{t('propertyDetails.viewOnMap')}</button>
+        </div>
+        {averageRating !== null && reviewsCount > 0 && (
+          <div className="pd-rating">
+            <Star size={15} color="#F59E0B" fill="#F59E0B" aria-hidden="true" />
+            <strong>{averageRating.toFixed(1)}</strong>
+            <span>· {t('propertyDetails.reviewsCount', { count: reviewsCount })}</span>
+          </div>
+        )}
+
+        {/* Price card: price, rent terms and availability freshness */}
+        <div className="pd-price-card">
           {property.type === 'rent' && rentPrices ? (
             <>
-              <div style={{ 
-                fontSize: '28px', 
-                fontWeight: '700', 
-                color: Colors.primary[800],
-                marginBottom: '4px'
-              }}>
-                {formatPrice(rentPrices.monthlyPrice)} / {t('propertyCard.month')}
-              </div>
-              <div style={{ 
-                fontSize: '14px', 
-                color: Colors.neutral[600],
-                marginBottom: '8px'
-              }}>
-                ({formatPrice(rentPrices.yearlyPrice)} / {t('propertyCard.year')})
-              </div>
+              <div className="pd-price">{formatPrice(rentPrices.monthlyPrice)} / {t('propertyCard.month')}</div>
+              <div className="pd-price-sub">({formatPrice(rentPrices.yearlyPrice)} / {t('propertyCard.year')})</div>
+              {(property.advance_months_min || property.advance_months_max) && (
+                <div className="pd-price-sub">
+                  {t('propertyCard.advance', 'Advance')}: {property.advance_months_min || 6}–{property.advance_months_max || 12} {t('propertyCard.months', 'months')}
+                </div>
+              )}
             </>
           ) : (
-            <div style={{ 
-              fontSize: '28px', 
-              fontWeight: '700', 
-              color: Colors.primary[800],
-              marginBottom: '8px'
-            }}>
-              {formatPrice(property.price)}
-            </div>
+            <div className="pd-price">{formatPrice(property.price)}</div>
           )}
-
+          <div className="pd-divider" />
+          {/* Availability freshness. Clients see when the listing was last
+              confirmed; the owner gets the one-tap way to refresh it. */}
+          <div className="pd-availability">
+            <ShieldCheck
+              size={16}
+              color={isAvailabilityStale(availabilityConfirmedAt) ? Colors.warning[600] : Colors.success[600]}
+              aria-hidden="true"
+            />
+            <span>{formatLastVerified(availabilityConfirmedAt, t, currentLanguage)}</span>
+            {isPropertyOwner && (
+              <button
+                onClick={handleConfirmAvailability}
+                disabled={confirmingAvailability}
+                style={{
+                  backgroundColor: Colors.primary[50],
+                  border: `1px solid ${Colors.primary[200]}`,
+                  borderRadius: '999px',
+                  padding: '4px 10px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: Colors.primary[700],
+                  cursor: confirmingAvailability ? 'default' : 'pointer',
+                  opacity: confirmingAvailability ? 0.6 : 1
+                }}
+              >
+                {confirmingAvailability
+                  ? t('common.loading')
+                  : t('availability.confirmStillAvailable', 'Confirm still available')}
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Location */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '6px',
-          color: Colors.neutral[600],
-          marginBottom: '20px'
-        }}>
-          <MapPin size={18} />
-          <span>{property.town ? `${property.town}, ${property.location}` : property.location}</span>
-        </div>
-
-        {/* Availability freshness. Clients see when the listing was last
-            confirmed; the owner gets the one-tap way to refresh it. */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '8px',
-          marginBottom: '20px'
-        }}>
-          <ShieldCheck
-            size={16}
-            color={isAvailabilityStale(availabilityConfirmedAt) ? Colors.warning[600] : Colors.success[600]}
-          />
-          <span style={{ fontSize: '13px', fontWeight: 500, color: Colors.neutral[600] }}>
-            {formatLastVerified(availabilityConfirmedAt, t, currentLanguage)}
-          </span>
-          {isPropertyOwner && (
-            <button
-              onClick={handleConfirmAvailability}
-              disabled={confirmingAvailability}
-              style={{
-                backgroundColor: Colors.primary[50],
-                border: `1px solid ${Colors.primary[200]}`,
-                borderRadius: '999px',
-                padding: '4px 10px',
-                fontSize: '12px',
-                fontWeight: 600,
-                color: Colors.primary[700],
-                cursor: confirmingAvailability ? 'default' : 'pointer',
-                opacity: confirmingAvailability ? 0.6 : 1
-              }}
-            >
-              {confirmingAvailability
-                ? t('common.loading')
-                : t('availability.confirmStillAvailable', 'Confirm still available')}
-            </button>
-          )}
-        </div>
-
-        {/* Badges */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '8px', 
-          marginBottom: '20px',
-          flexWrap: 'wrap'
-        }}>
-          {property.isVerified && (
-            <span style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              backgroundColor: Colors.success[100],
-              color: Colors.success[700],
-              padding: '6px 12px',
-              borderRadius: '20px',
-              fontSize: '12px',
-              fontWeight: '600'
-            }}>
-              <CheckCircle2 size={14} />
-              {t('property.verified')}
-            </span>
-          )}
-          <span style={{
-            backgroundColor: Colors.primary[100],
-            color: Colors.primary[700],
-            padding: '6px 12px',
-            borderRadius: '20px',
-            fontSize: '12px',
-            fontWeight: '600',
-            textTransform: 'capitalize'
-          }}>
-            {t(`property.${property.category}`)}
-          </span>
-          <span style={{
-            backgroundColor: Colors.neutral[100],
-            color: Colors.neutral[700],
-            padding: '6px 12px',
-            borderRadius: '20px',
-            fontSize: '12px',
-            fontWeight: '600',
-            textTransform: 'capitalize'
-          }}>
-            {property.type === 'rent' ? t('property.forRent') : t('property.forSale')}
-          </span>
-        </div>
+        {/* Specifications: only what the listing actually has */}
+        {(() => {
+          const specs = [
+            property.bedrooms ? { icon: BedDouble, value: String(property.bedrooms), label: t('propertyDetails.bedrooms') } : null,
+            property.bathrooms ? { icon: Bath, value: String(property.bathrooms), label: t('propertyDetails.bathrooms') } : null,
+            property.kitchen ? { icon: ChefHat, value: String(property.kitchen), label: t('propertyDetails.kitchens') } : null,
+            property.area ? { icon: Ruler, value: `${property.area} m²`, label: t('propertyDetails.area') } : null,
+            property.property_type
+              ? { icon: Building2, value: property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1), label: t('propertyDetails.propertyType') }
+              : null,
+            property.type === 'rent' && property.rent_period
+              ? { icon: CalendarClock, value: property.rent_period === 'yearly' ? t('propertyDetails.yearly') : t('propertyDetails.monthly'), label: t('propertyDetails.rentPeriod') }
+              : null,
+          ].filter(Boolean) as { icon: typeof BedDouble; value: string; label: string }[]
+          if (specs.length === 0) return null
+          return (
+            <>
+              <div className="pd-section-label">{t('propertyDetails.specifications')}</div>
+              <div className="pd-spec-grid">
+                {specs.map(({ icon: Icon, value, label }) => (
+                  <div key={label} className="pd-spec">
+                    <Icon size={20} aria-hidden="true" />
+                    <strong>{value}</strong>
+                    <span>{label}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )
+        })()}
 
       {/* Bottom Action Bar */}
       <div className="property-bottom-bar" style={{
@@ -800,6 +829,12 @@ export default function PropertyDetail() {
         boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.1)',
         zIndex: 100
       }}>
+        {!isOwner && !hasActiveBooking && (
+          <div className="pd-bottom-summary">
+            <span>{t('propertyDetails.visitFee')}</span>
+            <strong>{formatPrice(totalFee)}</strong>
+          </div>
+        )}
         <button
           onClick={handleToggleSaved}
           disabled={savingProperty}
@@ -920,174 +955,85 @@ export default function PropertyDetail() {
           </div>
         )}
 
-        {/* Features */}
-        <div className="property-features" style={{ 
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-          gap: '16px',
-          padding: '20px',
-          backgroundColor: Colors.white,
-          borderRadius: '12px',
-          marginBottom: '20px'
-        }}>
-          {property.bedrooms !== undefined && property.bedrooms !== null && (
-            <div style={{ textAlign: 'center' }}>
-              <BedDouble size={24} color={Colors.primary[600]} style={{ marginBottom: '8px' }} />
-              <div style={{ fontSize: '14px', color: Colors.neutral[600] }}>
-                {property.bedrooms} {t('property.bedrooms')}
-              </div>
-            </div>
-          )}
-          {property.bathrooms !== undefined && property.bathrooms !== null && (
-            <div style={{ textAlign: 'center' }}>
-              <Bath size={24} color={Colors.primary[600]} style={{ marginBottom: '8px' }} />
-              <div style={{ fontSize: '14px', color: Colors.neutral[600] }}>
-                {property.bathrooms} {t('property.bathrooms')}
-              </div>
-            </div>
-          )}
-          {property.area && (
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', fontWeight: '600', color: Colors.primary[600], marginBottom: '8px' }}>
-                {property.area}m²
-              </div>
-              <div style={{ fontSize: '14px', color: Colors.neutral[600] }}>
-                {t('property.area')}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Agent Information */}
-        {property.owner && (
-          <div style={{ 
-            backgroundColor: Colors.white,
-            padding: '20px 16px',
-            borderRadius: '12px',
-            marginBottom: '20px',
-            maxWidth: '100%'
-          }}>
-            <h3 style={{ 
-              fontSize: '18px', 
-              fontWeight: '600', 
-              color: Colors.neutral[900],
-              marginBottom: '16px'
-            }}>
-              {t('propertyDetails.propertyAgent')}
-            </h3>
-            <div
-              onClick={() => navigate(`/agents/${property.owner?.id}`)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px',
-                backgroundColor: Colors.neutral[50],
-                borderRadius: '12px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                border: `1px solid ${Colors.neutral[200]}`,
-                minWidth: 0,
-                overflow: 'hidden'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = Colors.neutral[100]
-                e.currentTarget.style.transform = 'translateY(-2px)'
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = Colors.neutral[50]
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
-            >
-              {property.owner.avatar_url ? (
-                <img
-                  src={property.owner.avatar_url}
-                  alt={property.owner.full_name || 'Agent'}
-                  style={{
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '28px',
-                    objectFit: 'cover',
-                    border: `2px solid ${Colors.neutral[200]}`,
-                    flexShrink: 0
-                  }}
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none'
-                  }}
-                />
-              ) : (
-                <div style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '28px',
-                  backgroundColor: Colors.neutral[200],
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: `2px solid ${Colors.neutral[300]}`,
-                  flexShrink: 0
-                }}>
-                  <UserIcon size={24} color={Colors.neutral[500]} />
+        {/* Amenities */}
+        {property.amenities && property.amenities.length > 0 && (
+          <div className="pd-card">
+            <h3>{t('propertyDetails.amenities')}</h3>
+            <div className="pd-amenities">
+              {property.amenities.map((amenity, index) => (
+                <div key={index} className="pd-amenity">
+                  <CheckCircle2 size={18} aria-hidden="true" />
+                  <span>{amenity}</span>
                 </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Location map (our Mapbox map); open the full map for more */}
+        {mapCoordinate && (
+          <div className="pd-card">
+            <h3>{t('propertyDetails.location')}</h3>
+            <div className="pd-inline-map">
+              <MapView markers={noMapMarkers} focus={mapCoordinate} scrollZoom={false} />
+            </div>
+            <button
+              type="button"
+              className="pd-link"
+              style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}
+              onClick={openInMaps}
+            >
+              <Navigation size={16} aria-hidden="true" />
+              {t('propertyDetails.openFullMap')}
+            </button>
+          </div>
+        )}
+
+        {/* Agent: who lists this property. Contact opens once a visit is booked. */}
+        {property.owner && (
+          <div className="pd-card">
+            <h3>{t('propertyDetails.propertyAgent')}</h3>
+            <button type="button" className="pd-owner-row" onClick={() => navigate(`/agents/${property.owner?.id}`)}>
+              {property.owner.avatar_url ? (
+                <img src={property.owner.avatar_url} alt="" className="pd-owner-avatar" loading="lazy" />
+              ) : (
+                <span className="pd-owner-avatar"><UserIcon size={24} color={Colors.neutral[500]} aria-hidden="true" /></span>
               )}
-              <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-                <div style={{ 
-                  fontSize: '16px', 
-                  fontWeight: '600', 
-                  color: Colors.neutral[900],
-                  marginBottom: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}>
-                  <span style={{
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }}>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span className="pd-owner-name">
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {property.owner.full_name || t('property.owner')}
                   </span>
-                  {property.isVerified && (
-                    <CheckCircle2 size={16} color={Colors.success[600]} style={{ flexShrink: 0 }} />
-                  )}
+                  {property.owner.is_verified_agent && <BadgeCheck size={17} aria-label={t('agentProfile.verifiedAgent')} />}
+                </span>
+                <span className="pd-owner-role" style={{ display: 'block' }}>
+                  {property.owner.is_verified_agent
+                    ? t('agentProfile.verifiedAgent')
+                    : property.owner.role === 'agent'
+                      ? t('propertyDetails.roleAgent')
+                      : property.owner.role === 'landlord'
+                        ? t('propertyDetails.roleLandlord')
+                        : t('property.owner')}
+                </span>
+              </span>
+              <ChevronRight size={18} color={Colors.neutral[400]} aria-hidden="true" />
+            </button>
+            {!isOwner && (
+              hasActiveBooking ? (
+                <div className="pd-owner-actions">
+                  <button
+                    type="button"
+                    className="pd-btn pd-btn-primary"
+                    onClick={() => navigate(`/chat/${property.owner_id}?propertyId=${property.id}`)}
+                  >
+                    <MessageCircle size={16} aria-hidden="true" />
+                    {t('propertyDetails.messageAgent')}
+                  </button>
                 </div>
-                <div style={{ 
-                  fontSize: '13px', 
-                  color: Colors.neutral[600],
-                  marginBottom: '8px',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}>
-                  {property.isVerified ? t('agentProfile.verifiedAgent') : t('property.owner')}
-                </div>
-                {/* Rating Display */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexWrap: 'nowrap' }}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      size={13}
-                      color={Colors.warning[500]}
-                      fill={Colors.warning[500]}
-                    />
-                  ))}
-                  <span style={{ 
-                    fontSize: '13px', 
-                    fontWeight: '600', 
-                    color: Colors.neutral[700],
-                    marginLeft: '4px',
-                    flexShrink: 0
-                  }}>
-                    5.0
-                  </span>
-                </div>
-              </div>
-              <ChevronRight size={18} color={Colors.neutral[400]} style={{ flexShrink: 0 }} />
-            </div>
+              ) : (
+                <p className="pd-hint">{t('propertyDetails.bookToContact')}</p>
+              )
+            )}
           </div>
         )}
 
@@ -1106,7 +1052,9 @@ export default function PropertyDetail() {
           {reviewsLoading ? (
             <ListItemSkeleton count={2} leading="avatar" lines={3} flush />
           ) : propertyReviews.length === 0 ? (
-            <p style={{ color: Colors.neutral[500] }}>{t('property.noReviewsYet', 'No reviews yet')}</p>
+            <div style={{ border: `1px solid ${Colors.neutral[100]}`, backgroundColor: Colors.white }}>
+              <EmptyState compact icon={Star} title={t('propertyDetails.reviewsEmptyTitle')} body={t('propertyDetails.reviewsEmptyBody')} />
+            </div>
           ) : (
             <>
               {averageRating !== null && (

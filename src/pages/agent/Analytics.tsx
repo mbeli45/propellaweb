@@ -4,7 +4,8 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { usePropertyViews } from '@/hooks/usePropertyViews'
-import { BarChart3, Eye, TrendingUp, Users, Calendar, Star } from 'lucide-react'
+import { BarChart3, Eye, TrendingUp, Users, Calendar, Star, ArrowLeft } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import './Analytics.css'
 import { DashboardSkeleton } from '@/components/skeletons'
 
@@ -12,6 +13,7 @@ export default function AgentAnalytics() {
   const { user } = useAuth()
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
+  const navigate = useNavigate()
   const Colors = getColors(colorScheme)
   const { getAgentTotalViews, getAgentPropertyAnalytics } = usePropertyViews()
 
@@ -55,7 +57,16 @@ export default function AgentAnalytics() {
   return (
     <div className="analytics-container" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh' }}>
       <div style={{ padding: '20px 16px' }}>
-        <h1 style={{
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            aria-label={t('common.back')}
+            style={{ width: '40px', height: '40px', borderRadius: '50%', border: 0, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: Colors.neutral[900], flexShrink: 0 }}
+          >
+            <ArrowLeft size={22} />
+          </button>
+          <h1 style={{ margin: 0,
           fontSize: '24px',
           fontWeight: '700',
           color: Colors.neutral[900],
@@ -63,6 +74,7 @@ export default function AgentAnalytics() {
         }}>
           Analytics
         </h1>
+        </div>
 
         {/* Overview Stats */}
         <div style={{

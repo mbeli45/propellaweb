@@ -208,3 +208,14 @@
   .rsv-search { max-width: none; flex-basis: 100%; }
   .rsv-thumb { width: 72px; height: 72px; }
 }
+
+/* Design-language empty state (usable on any page) */
+.ds-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 40px 24px; text-align: center; }
+.ds-empty--compact { padding: 20px 16px; }
+.ds-empty-icon { width: 88px; height: 88px; border-radius: 50%; background: var(--color-primary-50, #e6f0ff); color: var(--color-primary-600, #004aad); display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+.ds-empty--compact .ds-empty-icon { width: 64px; height: 64px; }
+.ds-empty-title { margin: 0; font-size: 18px; font-weight: 700; color: var(--color-neutral-900, #111827); }
+.ds-empty--compact .ds-empty-title { font-size: 16px; }
+.ds-empty-body { margin: 0; max-width: 380px; font-size: 14px; line-height: 1.45; color: var(--color-neutral-600, #4b5563); }
+.ds-empty-action { margin-top: 8px; min-height: 44px; padding: 0 18px; border: 0; border-radius: 12px; background: var(--color-primary-600, #004aad); color: #fff; font: inherit; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.ds-empty-action:hover { filter: brightness(1.08); }

@@ -364,6 +364,8 @@ export default function UserReservations() {
     <ReservationsPage label={t('reservations.myReservations')}>
       <ReservationsHeader
         title={t('reservations.myReservations')}
+        onBack={(window.history.state?.idx ?? 0) > 0 ? () => navigate(-1) : undefined}
+        backLabel={t('common.back')}
         count={reservations.length}
         subtitle={t('reservations.pageSubtitle')}
         action={{
