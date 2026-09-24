@@ -62,7 +62,6 @@ export default function MapView({ markers, userLocation, onPropertyClick, focus,
     const mapboxToken = import.meta.env.VITE_PUBLIC_MAPBOX_ACCESS_TOKEN
     if (!mapboxToken) {
       const error = new Error('Mapbox token not configured')
-      console.warn(error.message)
       captureMapError(error, { action: 'token_missing' })
       return
     }

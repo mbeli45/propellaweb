@@ -33,7 +33,6 @@ export async function signInWithApple(options?: AppleSignInOptions) {
     // Browser will redirect to Apple OAuth page
     return { user: null, error: null }
   } catch (error: any) {
-    console.error('Apple Sign-In error:', error)
     return { user: null, error: error.message || 'Failed to sign in with Apple' }
   }
 }
@@ -98,7 +97,6 @@ export async function handleAppleCallback() {
 
     return { user: null, error: 'No session found' }
   } catch (error: any) {
-    console.error('Apple callback error:', error)
     return { user: null, error: error.message }
   }
 }
@@ -115,6 +113,5 @@ async function updateUserRole(userId: string, role: 'normal' | 'agent' | 'landlo
 
     if (error) throw error
   } catch (error) {
-    console.error('Failed to update user role:', error)
   }
 }

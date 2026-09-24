@@ -47,7 +47,6 @@ export function useGeocoding() {
       const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_PUBLIC_MAPBOX_ACCESS_TOKEN;
       
       if (!MAPBOX_ACCESS_TOKEN) {
-        console.warn('Mapbox access token not configured. Please set VITE_PUBLIC_MAPBOX_ACCESS_TOKEN in your environment.');
         return null;
       }
       
@@ -84,11 +83,9 @@ export function useGeocoding() {
         
         return bestMatch.center;
       } else {
-        console.warn(`⚠ No geocoding results found for: "${locationName}"`);
         return null;
       }
     } catch (err: any) {
-      console.error('Geocoding error:', err);
       setError(err.message || 'Failed to geocode location');
       return null;
     } finally {

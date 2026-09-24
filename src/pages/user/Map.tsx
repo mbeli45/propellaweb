@@ -89,7 +89,6 @@ export default function UserMap() {
         
         // Skip properties without location
         if (!p.location || p.location.trim() === '') {
-          console.warn('⚠ Property has no location:', p.title);
           continue;
         }
         
@@ -113,10 +112,8 @@ export default function UserMap() {
               property: p,
             });
           } else {
-            console.warn(`⚠ Geocoded "${p.location}" OUTSIDE Southwest: [${lng.toFixed(4)}, ${lat.toFixed(4)}] - Skipping`);
           }
         } else {
-          console.error(`❌ Failed to geocode "${p.location}" - Property "${p.title}" will not appear on map`);
         }
       }
       

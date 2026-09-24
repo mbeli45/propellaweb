@@ -67,7 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         username: profileData.full_name || undefined,
       })
     } catch (err: any) {
-      console.error('Error fetching profile:', err)
       setError(err.message)
       throw err
     }
@@ -88,7 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Check for an existing session before rendering protected routes.
     loadSession().catch((sessionError) => {
-      console.error('Error restoring auth session:', sessionError)
       if (isMounted) {
         setUser(null)
         setLoading(false)
@@ -105,7 +103,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setLoading(true)
           fetchProfile(session.user.id, true)
             .catch((profileError) => {
-              console.error('Error loading auth profile:', profileError)
               if (isMounted) setUser(null)
             })
             .finally(() => {
@@ -192,9 +189,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .from('profiles')
             .update({ eula_accepted_at: new Date().toISOString() } as any)
             .eq('id', data.user.id)
-            .then(({ error: eulaError }) => {
-              if (eulaError) console.warn('Failed to persist eula_accepted_at:', eulaError.message)
-            })
+            // The builder only runs when awaited or then'd; the result is best-effort.
+            .then(() => undefined)
         }
         await fetchProfile(data.user.id, true)
       }
@@ -324,7 +320,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const urlParams = new URLSearchParams(window.location.search)
           email = urlParams.get('email')
         } catch (e) {
-          console.warn('Failed to read query string:', e)
         }
       }
       
@@ -336,7 +331,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email = localStorage.getItem('pendingPasswordResetEmail')
           }
         } catch (storageError) {
-          console.warn('localStorage error:', storageError)
         }
       }
       
@@ -365,7 +359,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem('pendingVerificationEmail')
           localStorage.removeItem('pendingPasswordResetEmail')
         } catch (e) {
-          console.warn('Failed to clear localStorage:', e)
         }
         navigate('/auth/reset-password')
       } else {

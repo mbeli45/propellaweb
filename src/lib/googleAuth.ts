@@ -36,7 +36,6 @@ export async function signInWithGoogle(options?: GoogleSignInOptions) {
     // Browser will redirect to Google OAuth page
     return { user: null, error: null }
   } catch (error: any) {
-    console.error('Google Sign-In error:', error)
     return { user: null, error: error.message || 'Failed to sign in with Google' }
   }
 }
@@ -75,7 +74,6 @@ export async function handleGoogleCallback() {
           })
 
         if (profileError) {
-          console.error('Failed to create profile:', profileError)
         }
         
         localStorage.removeItem('pendingGoogleRole')
@@ -95,7 +93,6 @@ export async function handleGoogleCallback() {
 
     return { user: null, error: 'No session found' }
   } catch (error: any) {
-    console.error('Google callback error:', error)
     return { user: null, error: error.message }
   }
 }
@@ -112,6 +109,5 @@ async function updateUserRole(userId: string, role: 'normal' | 'agent' | 'landlo
 
     if (error) throw error
   } catch (error) {
-    console.error('Failed to update user role:', error)
   }
 }

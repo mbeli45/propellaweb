@@ -60,7 +60,6 @@ export function useLocationSearch() {
       const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_PUBLIC_MAPBOX_ACCESS_TOKEN;
       
       if (!MAPBOX_ACCESS_TOKEN) {
-        console.warn('Mapbox access token not configured. Please set VITE_PUBLIC_MAPBOX_ACCESS_TOKEN in your environment.');
         return [];
       }
       
@@ -96,7 +95,6 @@ export function useLocationSearch() {
         return [];
       }
     } catch (err: any) {
-      console.error('Location search error:', err);
       setError(err.message || 'Failed to search locations');
       return [];
     } finally {
@@ -142,7 +140,6 @@ export function useLocationSearch() {
       const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_PUBLIC_MAPBOX_ACCESS_TOKEN;
       
       if (!MAPBOX_ACCESS_TOKEN) {
-        console.warn('Mapbox access token not configured. Please set VITE_PUBLIC_MAPBOX_ACCESS_TOKEN in your environment.');
         return null;
       }
 
@@ -156,7 +153,6 @@ export function useLocationSearch() {
         type: 'current'
       };
     } catch (error) {
-      console.error('Error getting current location suggestion:', error);
       return null;
     }
   }, []);

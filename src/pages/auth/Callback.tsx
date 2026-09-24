@@ -35,7 +35,6 @@ export default function AuthCallback() {
         const errorDescription = hashParams.get('error_description') || searchParams.get('error_description')
         
         if (errorParam) {
-          console.error('❌ OAuth error:', errorParam, errorDescription)
           setError(errorDescription || errorParam)
           setTimeout(() => navigate('/auth/login'), 3000)
           return
@@ -52,7 +51,6 @@ export default function AuthCallback() {
           const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
           
           if (exchangeError) {
-            console.error('❌ Code exchange error:', exchangeError)
             throw exchangeError
           }
           
@@ -73,7 +71,6 @@ export default function AuthCallback() {
         const { user, error: callbackError } = callbackResult
 
         if (callbackError) {
-          console.error('❌ Callback error:', callbackError)
           setError(callbackError)
           setTimeout(() => navigate('/auth/login'), 3000)
           return
@@ -88,7 +85,6 @@ export default function AuthCallback() {
           navigate('/auth/login', { replace: true })
         }
       } catch (err: any) {
-        console.error('❌ Auth callback error:', err)
         setError(err.message || 'Authentication failed')
         setTimeout(() => navigate('/auth/login'), 3000)
       }

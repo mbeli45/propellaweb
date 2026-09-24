@@ -62,12 +62,10 @@ export function useAuth() {
         ]) as any;
 
         if (profileError) {
-          console.error('❌ Profile fetch error:', profileError);
           throw new Error(`Failed to fetch profile: ${profileError.message}`);
         }
 
         if (!profile) {
-          console.error('❌ Profile not found for user:', userId);
           throw new Error('Profile not found. Please try signing in again.');
         }
 
@@ -116,7 +114,6 @@ export function useAuth() {
         // OPTIMIZATION: Defer full profile fetch and push notifications
         // Web: Push notifications not available
       } catch (error: any) {
-        console.error('Profile fetch error:', error);
         setError(error.message || 'Failed to fetch profile');
         throw error;
       }
@@ -164,7 +161,6 @@ export function useAuth() {
         
         // OPTIMIZATION: Don't await profile fetch - let it happen in background
         profilePromise.catch((error: any) => {
-          console.error('Background profile fetch failed:', error);
         });
         
         // Web: Push notifications not available
@@ -192,7 +188,6 @@ export function useAuth() {
       // If no user returned, it's an authentication failure
       throw new Error('Invalid email or password. Please check your credentials and try again.');
     } catch (error: any) {
-      console.error('Sign in error:', error);
       
       // Provide user-friendly error messages
       let errorMessage = 'Login failed. Please check your credentials.';
@@ -254,7 +249,6 @@ export function useAuth() {
       try {
         localStorage.setItem('pendingVerificationEmail', trimmedEmail)
       } catch (e) {
-        console.error('Failed to save email:', e)
       }
       
       // Add timeout to prevent hanging
@@ -280,7 +274,6 @@ export function useAuth() {
       
       
       if (error) {
-        console.error('❌ Signup error:', error);
         throw new Error(error.message);
       }
       
@@ -303,7 +296,6 @@ export function useAuth() {
         navigate('/auth/login');
       }
     } catch (error: any) {
-      console.error('Sign up error:', error);
       setError(error.message);
       setMessage({ type: 'error', text: error.message || 'Failed to create account. Please try again.' });
     } finally {
@@ -330,7 +322,6 @@ export function useAuth() {
           email = await localStorage.getItem('pendingPasswordResetEmail');
         }
       } catch (storageError) {
-        console.warn('AsyncStorage error:', storageError);
       }
       
       if (!email) {
@@ -388,7 +379,6 @@ export function useAuth() {
         // Fetch profile after navigation
         setTimeout(() => {
           fetchProfile(data.user.id, true).catch(error => {
-            console.error('Profile fetch failed:', error);
           });
         }, 100);
         
@@ -396,7 +386,6 @@ export function useAuth() {
         // Web: Push notifications not available
       }
     } catch (error: any) {
-      console.error('OTP verification error:', error);
       setError(error.message);
       setMessage({ type: 'error', text: error.message || 'Failed to verify code' });
     } finally {
@@ -435,7 +424,6 @@ export function useAuth() {
       
       setMessage({ type: 'success', text: 'Verification email sent! Please check your email.' });
     } catch (error: any) {
-      console.error('Resend verification error:', error);
       setError(error.message);
       setMessage({ type: 'error', text: error.message || 'Failed to resend verification email' });
     } finally {
@@ -466,7 +454,6 @@ export function useAuth() {
         localStorage.setItem('pendingPasswordResetEmail', trimmedEmail);
         localStorage.setItem('pendingVerificationEmail', trimmedEmail);
       } catch (e) {
-        console.error('Failed to save to localStorage:', e);
       }
       
       const { error } = await Promise.race([
@@ -481,7 +468,6 @@ export function useAuth() {
       setMessage(createMessage('success', 'Password reset code sent to your email!'));
       // Navigation is handled by the calling component
     } catch (error: any) {
-      console.error('Forgot password error:', error);
       setError(error.message);
       setMessage(createMessage('error', error.message || 'Failed to send reset email'));
     } finally {
@@ -519,13 +505,11 @@ export function useAuth() {
         localStorage.removeItem('pendingPasswordResetEmail');
         localStorage.removeItem('pendingVerificationEmail');
       } catch (e) {
-        console.error('Failed to clear localStorage:', e);
       }
       
       setMessage({ type: 'success', text: 'Password reset successful!' });
       navigate('/auth/login');
     } catch (error: any) {
-      console.error('Reset password error:', error);
       setError(error.message);
       setMessage({ type: 'error', text: error.message || 'Failed to reset password' });
     } finally {
@@ -554,14 +538,12 @@ export function useAuth() {
         localStorage.removeItem('pendingVerificationEmail');
         localStorage.removeItem('pendingPasswordResetEmail');
       } catch (e) {
-        console.error('Failed to clear localStorage:', e);
       }
       
       navigate('/guest');
       // Don't set loading to false here - let the redirect happen
       // The loading state will be reset when the component unmounts
     } catch (error: any) {
-      console.error('Sign out error:', error);
       setError(error.message);
       setMessage({ type: 'error', text: error.message || 'Failed to sign out' });
       setLoading(false); // Only set loading to false on error
@@ -597,7 +579,6 @@ export function useAuth() {
       profileCache.clear();
       navigate('/guest');
     } catch (error: any) {
-      console.error('Delete account error:', error);
       setError(error.message);
       setMessage({ type: 'error', text: error.message || 'Failed to delete account' });
       throw error;
@@ -670,7 +651,6 @@ export function useAuth() {
       
       setMessage({ type: 'success', text: successMessage });
     } catch (error: any) {
-      console.error('Resend verification code error:', error);
       setError(error.message);
       setMessage({ type: 'error', text: error.message || 'Failed to resend verification email' });
       throw error;
