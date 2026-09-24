@@ -213,7 +213,7 @@ export default function UserCommissions() {
             backgroundColor: Colors.white,
             borderRadius: '12px'
           }}>
-            <Shield size={48} color={Colors.neutral[400]} style={{ marginBottom: '16px' }} />
+            <Shield size={48} color={Colors.neutral[400]} strokeWidth={1.5} style={{ marginBottom: '16px' }} />
             <h2 style={{
               fontSize: '18px',
               fontWeight: '600',

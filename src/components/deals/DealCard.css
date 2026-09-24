@@ -1,0 +1,36 @@
+/* Deal card: the property card's anatomy (image, badges, price, title, location, feature chips)
+   with deal-specific actions underneath. Lives inside .rsv-page for the colour tokens. */
+.dc-card { display: flex; flex-direction: column; min-width: 0; height: 100%; background: var(--rsv-surface); border: 1px solid rgba(128, 145, 166, .18); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, .06); }
+.dc-card--highlight { border: 2px solid var(--color-primary-400, #3389ff); }
+.dc-media { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 1.6; padding: 0; border: 0; background: var(--rsv-line-soft); color: var(--rsv-faint); cursor: pointer; overflow: hidden; }
+.dc-media:disabled { cursor: default; }
+.dc-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.dc-media:focus-visible { outline: 3px solid var(--color-primary-300, #66a5ff); outline-offset: -3px; }
+.dc-gradient { position: absolute; inset: auto 0 0; height: 65px; background: linear-gradient(transparent, rgba(0, 0, 0, .48)); pointer-events: none; }
+.dc-overlay { position: absolute; left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 8px; pointer-events: none; }
+.dc-overlay--top { top: 12px; }
+.dc-overlay--bottom { bottom: 12px; justify-content: flex-start; }
+.dc-pill { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, .94); color: #1f2937; font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dc-pill--attention { background: #fffbeb; color: #b45309; }
+.dc-pill--attention .rsv-dot { background: #f59e0b; }
+
+.dc-info { flex: 1; display: flex; flex-direction: column; min-width: 0; padding: 16px; overflow-wrap: anywhere; }
+.dc-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.dc-badges > span { padding: 5px 8px; border-radius: 6px; background: var(--rsv-primary-tint); color: var(--rsv-primary-ink); font-size: 11px; line-height: 1.4; font-weight: 600; }
+.dc-price { margin: 0; font-size: 20px; font-weight: 700; color: var(--rsv-primary); }
+.dc-caption { margin: 2px 0 6px; font-size: 12px; font-weight: 600; color: var(--rsv-faint); }
+.dc-title { margin: 0 0 6px; font-size: 16px; font-weight: 600; line-height: 1.35; color: var(--rsv-ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dc-location { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 14px; color: var(--rsv-muted); }
+.dc-location svg { color: var(--rsv-faint); flex-shrink: 0; }
+.dc-location span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dc-features { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(128, 145, 166, .18); }
+.dc-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 8px; border-radius: 12px; background: var(--rsv-ground); color: var(--rsv-ink-2); font-size: 13px; font-weight: 500; }
+.dc-chip svg { color: var(--rsv-primary-ink); flex-shrink: 0; }
+.dc-chip-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
+.dc-stage { display: inline-flex; gap: 2px; }
+.dc-stage > span { width: 8px; height: 5px; border-radius: 3px; background: var(--rsv-line); }
+.dc-stage > span.is-done { background: var(--rsv-primary); }
+.dc-info > .rsv-hint, .dc-info > .rsv-warning { margin-top: 12px; }
+.dc-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.dc-links { display: flex; justify-content: center; gap: 16px; margin-top: 8px; flex-wrap: wrap; }
+.dc-info > .rsv-more, .dc-info > .rsv-details { margin-top: 8px; }

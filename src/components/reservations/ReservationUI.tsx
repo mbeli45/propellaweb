@@ -108,9 +108,9 @@ export function statusTone(status: string): Tone {
 // Page chrome
 // ---------------------------------------------------------------------------
 
-export function ReservationsPage({ children, label }: { children: React.ReactNode; label?: string }) {
+export function ReservationsPage({ children, label, narrow }: { children: React.ReactNode; label?: string; /** Settings-style pages (Profile, Security, Help). */ narrow?: boolean }) {
   return (
-    <main className="rsv-page" aria-label={label}>
+    <main className={`rsv-page${narrow ? ' rsv-page--narrow' : ''}`} aria-label={label}>
       {children}
     </main>
   )
@@ -598,7 +598,7 @@ export function EmptyState({
   return (
     <div className={`ds-empty${compact ? ' ds-empty--compact' : ''}`}>
       <span className="ds-empty-icon" aria-hidden="true">
-        <Icon size={compact ? 28 : 38} />
+        <Icon size={compact ? 30 : 40} strokeWidth={1.5} />
       </span>
       <h3 className="ds-empty-title">{title}</h3>
       {body && <p className="ds-empty-body">{body}</p>}
@@ -609,5 +609,186 @@ export function EmptyState({
         </button>
       )}
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Settings lists (Profile and its sub-pages)
+// ---------------------------------------------------------------------------
+
+/** Page title for pages without a count or header action (Profile, Security, Help). */
+export function PageHeader({
+  title,
+  subtitle,
+  onBack,
+  backLabel,
+}: {
+  title: string
+  subtitle?: string
+  onBack?: () => void
+  backLabel?: string
+}) {
+  return (
+    <header className="rsv-header">
+      <div className="rsv-title-row">
+        {onBack && (
+          <button type="button" className="rsv-back" onClick={onBack} aria-label={backLabel}>
+            <ChevronLeft size={22} />
+          </button>
+        )}
+        <h1 className="rsv-title">{title}</h1>
+      </div>
+      {subtitle && <p className="rsv-subtitle">{subtitle}</p>}
+    </header>
+  )
+}
+
+/** One surface per group of related rows, with an uppercase label and an optional footnote. */
+export function SettingsGroup({ title, footer, children }: { title?: string; footer?: string; children: React.ReactNode }) {
+  const rows = React.Children.toArray(children).filter(Boolean)
+  if (rows.length === 0) return null
+  return (
+    <section className="ds-set-group" aria-label={title}>
+      {title && <h2 className="ds-set-title">{title}</h2>}
+      <ul className="ds-set-list">
+        {rows.map((row, index) => (
+          <li key={index}>{row}</li>
+        ))}
+      </ul>
+      {footer && <p className="ds-set-footer">{footer}</p>}
+    </section>
+  )
+}
+
+/** A settings row: icon tile, label (+ optional detail), value on the right, chevron. */
+export function SettingsRow({
+  icon: Icon,
+  label,
+  detail,
+  value,
+  valueStrong,
+  onClick,
+  href,
+  tone = 'default',
+  right,
+  chevron,
+  below,
+  disabled,
+}: {
+  icon: LucideIcon
+  label: string
+  detail?: string
+  value?: string
+  /** Value in primary text colour and bold (e.g. a balance). */
+  valueStrong?: boolean
+  onClick?: () => void
+  /** Renders the row as a link (mailto:, tel:). */
+  href?: string
+  tone?: 'default' | 'danger'
+  /** Replaces the value/chevron, e.g. a segmented control. */
+  right?: React.ReactNode
+  /** Defaults to true when the row is clickable. */
+  chevron?: boolean
+  /** Content under the label row. */
+  below?: React.ReactNode
+  disabled?: boolean
+}) {
+  const clickable = !!onClick || !!href
+  const showChevron = chevron ?? (clickable && tone !== 'danger')
+  const inner = (
+    <>
+      <span className="ds-set-main">
+        <span className="ds-set-icon" aria-hidden="true">
+          <Icon size={18} />
+        </span>
+        <span className="ds-set-text">
+          <span className="ds-set-label">{label}</span>
+          {detail && <span className="ds-set-detail">{detail}</span>}
+        </span>
+        {right ?? (
+          <>
+            {value && <span className={`ds-set-value${valueStrong ? ' ds-set-value--strong' : ''}`}>{value}</span>}
+            {showChevron && <ChevronRight size={18} className="ds-set-chevron" aria-hidden="true" />}
+          </>
+        )}
+      </span>
+      {below && <span className="ds-set-below">{below}</span>}
+    </>
+  )
+  const className = `ds-set-row${tone === 'danger' ? ' ds-set-row--danger' : ''}`
+  if (href) {
+    return (
+      <a className={className} href={href}>
+        {inner}
+      </a>
+    )
+  }
+  if (onClick) {
+    return (
+      <button type="button" className={className} onClick={onClick} disabled={disabled}>
+        {inner}
+      </button>
+    )
+  }
+  return <div className={className}>{inner}</div>
+}
+
+/** Compact segmented control (e.g. Light / Dark / Auto). */
+export function SegmentedControl<T extends string>({
+  options,
+  value,
+  onChange,
+  label,
+}: {
+  options: { value: T; label: string; icon?: LucideIcon }[]
+  value: T
+  onChange: (value: T) => void
+  label: string
+}) {
+  return (
+    <div className="ds-seg" role="radiogroup" aria-label={label}>
+      {options.map((option) => {
+        const OptionIcon = option.icon
+        const active = option.value === value
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            className={`ds-seg-btn${active ? ' is-active' : ''}`}
+            onClick={() => onChange(option.value)}
+          >
+            {OptionIcon && <OptionIcon size={15} aria-hidden="true" />}
+            {option.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/** A row of headline numbers in one surface (dashboards). Cells can be clickable. */
+export function StatStrip({ items }: { items: { label: string; value: string | number; onClick?: () => void }[] }) {
+  return (
+    <dl className="ds-stats">
+      {items.map((item) => {
+        const inner = (
+          <>
+            <dd className="ds-stat-value">{item.value}</dd>
+            <dt className="ds-stat-label">{item.label}</dt>
+          </>
+        )
+        return item.onClick ? (
+          <button key={item.label} type="button" className="ds-stat" onClick={item.onClick}>
+            {inner}
+          </button>
+        ) : (
+          <div key={item.label} className="ds-stat">
+            {inner}
+          </div>
+        )
+      })}
+    </dl>
   )
 }

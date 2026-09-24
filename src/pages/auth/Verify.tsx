@@ -157,9 +157,9 @@ export default function Verify() {
           {/* Icon */}
           <div className="auth-icon-container" style={{ backgroundColor: Colors.primary[50] }}>
             {isResetMode ? (
-              <Shield size={48} color={Colors.primary[600]} />
+              <Shield size={40} color={Colors.primary[600]} strokeWidth={1.5} />
             ) : (
-              <Mail size={48} color={Colors.primary[600]} />
+              <Mail size={40} color={Colors.primary[600]} strokeWidth={1.5} />
             )}
           </div>
 

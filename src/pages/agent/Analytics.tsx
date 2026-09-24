@@ -1,20 +1,29 @@
-import React, { useState, useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
-import { useThemeMode } from '@/contexts/ThemeContext'
-import { useLanguage } from '@/contexts/I18nContext'
-import { getColors } from '@/constants/Colors'
-import { usePropertyViews } from '@/hooks/usePropertyViews'
-import { BarChart3, Eye, TrendingUp, Users, Calendar, Star, ChevronLeft } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import './Analytics.css'
+import { BarChart3, TrendingUp } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { useLanguage } from '@/contexts/I18nContext'
+import { usePropertyViews } from '@/hooks/usePropertyViews'
 import { DashboardSkeleton } from '@/components/skeletons'
+import {
+  EmptyState,
+  PageHeader,
+  ReservationsPage,
+  SettingsGroup,
+  SettingsRow,
+  StatStrip,
+} from '@/components/reservations/ReservationUI'
+
+const formatNumber = (num: number): string => {
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+  return String(num || 0)
+}
 
 export default function AgentAnalytics() {
   const { user } = useAuth()
-  const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
   const navigate = useNavigate()
-  const Colors = getColors(colorScheme)
   const { getAgentTotalViews, getAgentPropertyAnalytics } = usePropertyViews()
 
   const [loading, setLoading] = useState(true)
@@ -24,14 +33,9 @@ export default function AgentAnalytics() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       if (!user?.id) return
-
       setLoading(true)
       try {
-        const [views, analytics] = await Promise.all([
-          getAgentTotalViews(user.id),
-          getAgentPropertyAnalytics(user.id)
-        ])
-
+        const [views, analytics] = await Promise.all([getAgentTotalViews(user.id), getAgentPropertyAnalytics(user.id)])
         setTotalViews(views)
         setPropertyAnalytics(analytics)
       } catch (error) {
@@ -40,211 +44,55 @@ export default function AgentAnalytics() {
         setLoading(false)
       }
     }
-
     fetchAnalytics()
   }, [user?.id, getAgentTotalViews, getAgentPropertyAnalytics])
 
-  const formatNumber = (num: number): string => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
-    return num.toString()
-  }
-
-  if (loading) {
-    return <DashboardSkeleton showHeader statCount={4} listCount={4} />
-  }
-
   return (
-    <div className="analytics-container" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh' }}>
-      <div style={{ padding: '20px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            aria-label={t('common.back')}
-            style={{ width: '40px', height: '40px', borderRadius: '50%', border: 0, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: Colors.neutral[900], flexShrink: 0 }}
-          >
-            <ChevronLeft size={22} />
-          </button>
-          <h1 style={{ margin: 0,
-          fontSize: '24px',
-          fontWeight: '700',
-          color: Colors.neutral[900],
-          marginBottom: '24px'
-        }}>
-          Analytics
-        </h1>
-        </div>
+    <ReservationsPage narrow label={t('agentDashboard.analytics')}>
+      <PageHeader
+        title={t('agentDashboard.analytics')}
+        subtitle={t('agentDashboard.analyticsSubtitle')}
+        onBack={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/agent'))}
+        backLabel={t('common.back')}
+      />
 
-        {/* Overview Stats */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '12px',
-          marginBottom: '24px'
-        }}>
-          <div style={{
-            backgroundColor: Colors.white,
-            padding: '16px',
-            borderRadius: '12px',
-            textAlign: 'center',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '20px',
-              backgroundColor: Colors.primary[100],
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 8px'
-            }}>
-              <Eye size={20} color={Colors.primary[600]} />
-            </div>
-            <div style={{
-              fontSize: '24px',
-              fontWeight: '700',
-              color: Colors.neutral[900],
-              marginBottom: '4px'
-            }}>
-              {formatNumber(totalViews)}
-            </div>
-            <div style={{
-              fontSize: '12px',
-              color: Colors.neutral[600]
-            }}>
-              Total Views
-            </div>
-          </div>
+      {loading ? (
+        <DashboardSkeleton statCount={3} listCount={4} />
+      ) : (
+        <>
+          <StatStrip
+            items={[
+              { label: t('agent.views'), value: formatNumber(totalViews) },
+              { label: t('agentDashboard.listings'), value: propertyAnalytics.length },
+              {
+                label: t('agentDashboard.avgViews'),
+                value: propertyAnalytics.length ? formatNumber(Math.round(totalViews / propertyAnalytics.length)) : '0',
+              },
+            ]}
+          />
 
-          <div style={{
-            backgroundColor: Colors.white,
-            padding: '16px',
-            borderRadius: '12px',
-            textAlign: 'center',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '20px',
-              backgroundColor: Colors.success[100],
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 8px'
-            }}>
-              <TrendingUp size={20} color={Colors.success[600]} />
-            </div>
-            <div style={{
-              fontSize: '24px',
-              fontWeight: '700',
-              color: Colors.neutral[900],
-              marginBottom: '4px'
-            }}>
-              {propertyAnalytics.length}
-            </div>
-            <div style={{
-              fontSize: '12px',
-              color: Colors.neutral[600]
-            }}>
-              Properties
-            </div>
-          </div>
-        </div>
-
-        {/* Property Analytics */}
-        {propertyAnalytics.length > 0 && (
-          <div style={{
-            backgroundColor: Colors.white,
-            borderRadius: '12px',
-            padding: '20px',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
-          }}>
-            <h2 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: Colors.neutral[900],
-              marginBottom: '16px'
-            }}>
-              Property Performance
-            </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {propertyAnalytics.slice(0, 10).map((property, index) => (
-                <div
-                  key={property.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '12px',
-                    backgroundColor: Colors.neutral[50],
-                    borderRadius: '8px'
-                  }}
-                >
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '16px',
-                    backgroundColor: Colors.primary[100],
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: Colors.primary[700],
-                    flexShrink: 0
-                  }}>
-                    {index + 1}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: Colors.neutral[900],
-                      marginBottom: '4px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {property.title || 'Untitled Property'}
-                    </div>
-                    <div style={{
-                      fontSize: '12px',
-                      color: Colors.neutral[600]
-                    }}>
-                      {property.views || 0} views
-                    </div>
-                  </div>
-                </div>
+          {propertyAnalytics.length === 0 ? (
+            <EmptyState icon={BarChart3} title={t('agentDashboard.noViewsYet')} body={t('agentDashboard.noViewsBody')} />
+          ) : (
+            <SettingsGroup title={t('agentDashboard.topListings')}>
+              {propertyAnalytics.slice(0, 10).map((property) => (
+                <SettingsRow
+                  key={property.property_id}
+                  icon={TrendingUp}
+                  label={property.title}
+                  detail={t('agentDashboard.viewsLine', {
+                    week: formatNumber(property.views_this_week),
+                    unique: formatNumber(property.unique_viewers),
+                  })}
+                  value={formatNumber(property.view_count)}
+                  valueStrong
+                  onClick={() => navigate(`/property/${property.property_id}`)}
+                />
               ))}
-            </div>
-          </div>
-        )}
-
-        {propertyAnalytics.length === 0 && (
-          <div style={{
-            padding: '48px 24px',
-            textAlign: 'center',
-            backgroundColor: Colors.white,
-            borderRadius: '12px'
-          }}>
-            <BarChart3 size={48} color={Colors.neutral[400]} style={{ marginBottom: '16px' }} />
-            <h2 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: Colors.neutral[800],
-              marginBottom: '8px'
-            }}>
-              No Analytics Data
-            </h2>
-            <p style={{ color: Colors.neutral[600] }}>
-              Analytics will appear here once your properties receive views
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+            </SettingsGroup>
+          )}
+        </>
+      )}
+    </ReservationsPage>
   )
 }

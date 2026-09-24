@@ -9,11 +9,19 @@ import { usePropertyViews } from '@/hooks/usePropertyViews'
 import { useStorage } from '@/hooks/useStorage'
 import { useDialog } from '@/contexts/DialogContext'
 import PropertyCard from '@/components/PropertyCard'
-import { Plus, BarChart3, Home, Users, Calendar, RefreshCw, Wallet } from 'lucide-react'
+import { Plus, BarChart3, Home, RefreshCw, Wallet, AlertCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { confirmPropertyAvailability } from '@/hooks/usePropertyAvailability'
 import './Listings.css'
 import { PropertyCardSkeleton } from '@/components/skeletons'
+import {
+  CardButton,
+  EmptyState,
+  ReservationToolbar,
+  ReservationsHeader,
+  ReservationsPage,
+  StatStrip,
+} from '@/components/reservations/ReservationUI'
 
 export default function AgentListings() {
   const { user } = useAuth()
@@ -31,6 +39,7 @@ export default function AgentListings() {
   const { confirm, alert } = useDialog()
   const [totalViews, setTotalViews] = useState(0)
   const [activeTab, setActiveTab] = useState<'active' | 'reserved' | 'sold'>('active')
+  const [search, setSearch] = useState('')
   const [deletingPropertyId, setDeletingPropertyId] = useState<string | null>(null)
   const [confirmingAvailabilityId, setConfirmingAvailabilityId] = useState<string | null>(null)
   // Keeps the freshly stamped date on screen without refetching the whole list.
@@ -66,31 +75,20 @@ export default function AgentListings() {
 
   const filteredProperties = useMemo(() => {
     if (!properties) return []
+    const q = search.trim().toLowerCase()
+    const matches = (p: any) => !q || `${p.title || ''} ${p.location || ''} ${p.town || ''}`.toLowerCase().includes(q)
     
     switch (activeTab) {
       case 'active':
-        return properties.filter(p => p.status === 'available')
+        return properties.filter(p => p.status === 'available' && matches(p))
       case 'reserved':
-        return properties.filter(p => p.status === 'reserved')
+        return properties.filter(p => p.status === 'reserved' && matches(p))
       case 'sold':
-        return properties.filter(p => p.status === 'sold')
+        return properties.filter(p => p.status === 'sold' && matches(p))
       default:
-        return properties
+        return properties.filter(matches)
     }
-  }, [properties, activeTab])
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'available':
-        return '#10B981'
-      case 'reserved':
-        return '#F59E0B'
-      case 'sold':
-        return '#EF4444'
-      default:
-        return '#6B7280'
-    }
-  }
+  }, [properties, activeTab, search])
 
   const handleEdit = (propertyId: string) => {
     navigate(`/property/edit/${propertyId}`)
@@ -158,376 +156,93 @@ export default function AgentListings() {
     previousPendingCountRef.current = pendingUploads.length
   }, [pendingUploads.length, refetch])
 
+  const counts = {
+    active: properties?.filter((p) => p.status === 'available').length || 0,
+    reserved: properties?.filter((p) => p.status === 'reserved').length || 0,
+    sold: properties?.filter((p) => p.status === 'sold').length || 0,
+  }
+  const total = properties?.length || 0
+
   return (
-    <div className="agent-listings-container" style={{ backgroundColor: Colors.neutral[50] }}>
-      {/* Header */}
-      <div className="agent-header" style={{ 
-        backgroundColor: Colors.white,
-        borderBottom: `1px solid ${Colors.neutral[100]}`,
-        paddingTop: '20px',
-        paddingBottom: '20px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-      }}>
-        <div className="header-content" style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '0 20px',
-          marginBottom: '20px'
-        }}>
-          <div className="welcome-section" style={{ flex: 1 }}>
-            <h1 style={{
-              fontSize: '24px',
-              fontWeight: '700',
-              color: Colors.neutral[900],
-              marginBottom: '4px',
-              margin: 0
-            }}>
-              {t('home.welcomeBack', { name: user?.full_name?.split(' ')[0] || t('common.agent') })}
-            </h1>
-            <p style={{
-              fontSize: '16px',
-              fontWeight: '400',
-              color: Colors.neutral[600],
-              margin: 0
-            }}>
-              {t('agent.manageListings')}
-            </p>
-          </div>
-          
-          <div className="header-actions" style={{ display: 'flex', gap: '12px' }}>
-            <button
-              onClick={() => navigate('/agent/analytics')}
-              style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '22px',
-                backgroundColor: Colors.neutral[200],
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'background 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = Colors.neutral[300]
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = Colors.neutral[200]
-              }}
-            >
-              <BarChart3 size={20} color={Colors.neutral[700]} />
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/agent/wallet')}
-              aria-label={t('navigation.wallet')}
-              title={t('navigation.wallet')}
-              style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '22px',
-                backgroundColor: Colors.neutral[200],
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-            >
-              <Wallet size={20} color={Colors.neutral[700]} />
-            </button>
-            <button
-              onClick={() => navigate('/property/add')}
-              style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '22px',
-                backgroundColor: Colors.primary[600],
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'background 0.2s',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = Colors.primary[700]
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = Colors.primary[600]
-              }}
-            >
-              <Plus size={20} color="white" />
-            </button>
-          </div>
-        </div>
+    <ReservationsPage label={t('agentDashboard.title')}>
+      <ReservationsHeader
+        title={t('agentDashboard.title')}
+        count={total}
+        subtitle={t('agent.manageListings')}
+        action={{ label: t('agent.addProperty'), icon: Plus, onClick: () => navigate('/property/add') }}
+      />
 
-        {/* Stats Cards */}
-        <div className="stats-container" style={{
-          display: 'flex',
-          gap: '12px',
-          padding: '0 20px'
-        }}>
-          <div className="stat-card" style={{
-            flex: 1,
-            borderRadius: '12px',
-            padding: '16px',
-            backgroundColor: Colors.neutral[50],
-            border: `1px solid ${Colors.neutral[200]}`,
-            textAlign: 'center'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '20px',
-              backgroundColor: Colors.primary[50],
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 8px'
-            }}>
-              <Home size={20} color={Colors.primary[600]} />
-            </div>
-            <p style={{
-              fontSize: '20px',
-              fontWeight: '700',
-              color: Colors.neutral[900],
-              margin: '0 0 4px 0'
-            }}>
-              {properties?.length || 0}
-            </p>
-            <p style={{
-              fontSize: '12px',
-              fontWeight: '500',
-              color: Colors.neutral[600],
-              margin: 0
-            }}>
-              {t('agent.totalListings')}
-            </p>
-          </div>
-          
-          <div className="stat-card" style={{
-            flex: 1,
-            borderRadius: '12px',
-            padding: '16px',
-            backgroundColor: Colors.neutral[50],
-            border: `1px solid ${Colors.neutral[200]}`,
-            textAlign: 'center'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '20px',
-              backgroundColor: '#FEF3C7',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 8px'
-            }}>
-              <BarChart3 size={20} color="#F59E0B" />
-            </div>
-            <p style={{
-              fontSize: '20px',
-              fontWeight: '700',
-              color: Colors.neutral[900],
-              margin: '0 0 4px 0'
-            }}>
-              {properties?.filter(p => p.status === 'available').length || 0}
-            </p>
-            <p style={{
-              fontSize: '12px',
-              fontWeight: '500',
-              color: Colors.neutral[600],
-              margin: 0
-            }}>
-              {t('agent.available')}
-            </p>
-          </div>
-          
-          <div className="stat-card" style={{
-            flex: 1,
-            borderRadius: '12px',
-            padding: '16px',
-            backgroundColor: Colors.neutral[50],
-            border: `1px solid ${Colors.neutral[200]}`,
-            textAlign: 'center'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '20px',
-              backgroundColor: '#DCFCE7',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 8px'
-            }}>
-              <Users size={20} color="#16A34A" />
-            </div>
-            <p style={{
-              fontSize: '20px',
-              fontWeight: '700',
-              color: Colors.neutral[900],
-              margin: '0 0 4px 0'
-            }}>
-              {totalViews}
-            </p>
-            <p style={{
-              fontSize: '12px',
-              fontWeight: '500',
-              color: Colors.neutral[600],
-              margin: 0
-            }}>
-              {t('agent.views')}
-            </p>
-          </div>
+      <StatStrip
+        items={[
+          { label: t('agentDashboard.listings'), value: total },
+          { label: t('agent.available'), value: counts.active },
+          { label: t('agent.views'), value: totalViews, onClick: () => navigate('/agent/analytics') },
+          { label: t('agent.statBookings'), value: agentReservations?.length || 0, onClick: () => navigate('/agent/reservations') },
+        ]}
+      />
 
-          <div className="stat-card" style={{
-            flex: 1,
-            borderRadius: '12px',
-            padding: '16px',
-            backgroundColor: Colors.neutral[50],
-            border: `1px solid ${Colors.neutral[200]}`,
-            textAlign: 'center'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '20px',
-              backgroundColor: '#E0E7FF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 8px'
-            }}>
-              <Calendar size={20} color="#4F46E5" />
-            </div>
-            <p style={{
-              fontSize: '20px',
-              fontWeight: '700',
-              color: Colors.neutral[900],
-              margin: '0 0 4px 0'
-            }}>
-              {agentReservations?.length || 0}
-            </p>
-            <p style={{
-              fontSize: '12px',
-              fontWeight: '500',
-              color: Colors.neutral[600],
-              margin: 0
-            }}>
-              {t('navigation.bookings')}
-            </p>
-          </div>
-        </div>
+      <div className="ds-shortcuts">
+        <CardButton label={t('profileMenu.analytics')} icon={BarChart3} tone="neutral" onClick={() => navigate('/agent/analytics')} />
+        <CardButton label={t('navigation.wallet')} icon={Wallet} tone="neutral" onClick={() => navigate('/agent/wallet')} />
       </div>
 
-      {/* Tabs */}
-      <div className="tabs-container" style={{
-        display: 'flex',
-        gap: '4px',
-        padding: '16px 20px',
-        backgroundColor: Colors.white,
-        borderBottom: `1px solid ${Colors.neutral[100]}`
-      }}>
-        {[
-          { key: 'active', label: t('agent.available'), count: properties?.filter(p => p.status === 'available').length || 0 },
-          { key: 'reserved', label: t('property.reserved'), count: properties?.filter(p => p.status === 'reserved').length || 0 },
-          { key: 'sold', label: t('property.sold'), count: properties?.filter(p => p.status === 'sold').length || 0 },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key as any)}
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: '10px 16px',
-              borderRadius: '8px',
-              border: `1px solid ${Colors.neutral[200]}`,
-              backgroundColor: activeTab === tab.key ? Colors.primary[600] : Colors.neutral[50],
-              color: activeTab === tab.key ? '#FFFFFF' : Colors.neutral[600],
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-          >
-            <span>{tab.label}</span>
-            <span style={{
-              padding: '2px 8px',
-              borderRadius: '10px',
-              backgroundColor: activeTab === tab.key ? 'rgba(255, 255, 255, 0.2)' : Colors.neutral[200],
-              color: activeTab === tab.key ? '#FFFFFF' : Colors.neutral[600],
-              fontSize: '12px',
-              fontWeight: '600',
-              minWidth: '20px',
-              textAlign: 'center'
-            }}>
-              {tab.count}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Content */}
-      {loading && filteredProperties.length === 0 && !hasPendingCards && (
-        <PropertyCardSkeleton count={6} />
+      {total > 0 && (
+        <ReservationToolbar
+          search={search}
+          onSearch={setSearch}
+          placeholder={t('reservations.searchPlaceholder', 'Search property, location or reference')}
+          options={[
+            { key: 'active', label: t('agent.available'), count: counts.active },
+            { key: 'reserved', label: t('agentDashboard.reserved'), count: counts.reserved },
+            { key: 'sold', label: t('agentDashboard.sold'), count: counts.sold },
+          ]}
+          value={activeTab}
+          onChange={(key) => setActiveTab(key as 'active' | 'reserved' | 'sold')}
+          label={t('agentDashboard.listings')}
+        />
       )}
 
+      {loading && filteredProperties.length === 0 && !hasPendingCards && <PropertyCardSkeleton count={6} />}
+
       {error && (
-        <div style={{ textAlign: 'center', padding: '40px', color: Colors.error[600] }}>
-          {t('agent.errorLoadingProperties')}
-        </div>
+        <EmptyState
+          icon={AlertCircle}
+          title={t('agent.errorLoadingProperties')}
+          body={t('agent.pleaseTryRefreshing')}
+          action={{ label: t('agent.refresh'), icon: RefreshCw, onClick: () => refetch() }}
+        />
       )}
 
       {!loading && !error && filteredProperties.length === 0 && !hasPendingCards && (
-        <div style={{
-          textAlign: 'center',
-          padding: '40px',
-          backgroundColor: Colors.white,
-          margin: '20px',
-          borderRadius: '12px'
-        }}>
-          <p style={{ color: Colors.neutral[600], marginBottom: '16px' }}>
-            {activeTab === 'active' ? t('agent.noAvailableProperties') :
-             activeTab === 'reserved' ? t('agent.noReservedProperties') :
-             t('agent.noSoldProperties')}
-          </p>
-          {activeTab === 'active' && (
-            <button
-              onClick={() => navigate('/property/add')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '12px 24px',
-                backgroundColor: Colors.primary[600],
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer'
-              }}
-            >
-              <Plus size={20} />
-              {t('agent.addProperty')}
-            </button>
-          )}
-        </div>
+        total === 0 ? (
+          <EmptyState
+            icon={Home}
+            title={t('agent.noAvailableProperties')}
+            body={t('agent.startByAddingFirstProperty')}
+            action={{ label: t('agent.addProperty'), icon: Plus, onClick: () => navigate('/property/add') }}
+          />
+        ) : (
+          <EmptyState
+            compact
+            icon={Home}
+            title={
+              search.trim()
+                ? t('agentDashboard.noResults')
+                : activeTab === 'active'
+                  ? t('agent.noAvailableProperties')
+                  : activeTab === 'reserved'
+                    ? t('agent.noReservedProperties')
+                    : t('agent.noSoldProperties')
+            }
+          />
+        )
       )}
 
       {!error && (filteredProperties.length > 0 || hasPendingCards) && (
         <div className="properties-list" style={{
-          padding: '20px',
+          paddingTop: '16px',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))',
           gap: '16px'
         }}>
           {activeTab === 'active' && pendingUploads.map((item: any) => (
@@ -560,7 +275,7 @@ export default function AgentListings() {
                 fontWeight: 700,
                 zIndex: 10,
               }}>
-                {item.status === 'failed' ? 'Failed' : 'Uploading'}
+                {item.status === 'failed' ? t('agentDashboard.uploadFailed') : t('agentDashboard.uploading')}
               </div>
               {item.status === 'failed' && (
                 <button
@@ -585,7 +300,7 @@ export default function AgentListings() {
                   }}
                 >
                   <RefreshCw size={14} color={Colors.warning[700]} />
-                  {retryingPendingId === item.id ? 'Retrying...' : 'Retry'}
+                  {retryingPendingId === item.id ? t('agentDashboard.retrying') : t('agentDashboard.retry')}
                 </button>
               )}
             </div>
@@ -607,6 +322,6 @@ export default function AgentListings() {
           })}
         </div>
       )}
-    </div>
+    </ReservationsPage>
   )
 }

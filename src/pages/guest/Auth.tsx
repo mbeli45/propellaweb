@@ -44,7 +44,7 @@ export default function GuestAuth() {
             marginBottom: '32px',
           }}
         >
-          <User size={64} color={Colors.primary[600]} />
+          <User size={40} color={Colors.primary[600]} strokeWidth={1.5} />
         </div>
 
         <h1

@@ -219,3 +219,59 @@
 .ds-empty-body { margin: 0; max-width: 380px; font-size: 14px; line-height: 1.45; color: var(--color-neutral-600, #4b5563); }
 .ds-empty-action { margin-top: 8px; min-height: 44px; padding: 0 18px; border: 0; border-radius: 12px; background: var(--color-primary-600, #004aad); color: #fff; font: inherit; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
 .ds-empty-action:hover { filter: brightness(1.08); }
+
+/* Settings lists (Profile and its sub-pages) */
+.rsv-page--narrow { max-width: 720px; }
+.ds-identity { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
+.ds-identity-avatar { position: relative; flex-shrink: 0; width: 72px; height: 72px; border: 0; padding: 0; border-radius: 50%; background: var(--rsv-line); color: var(--rsv-faint); display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; cursor: pointer; }
+.ds-identity-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.ds-identity-avatar:disabled { cursor: progress; opacity: .7; }
+.ds-identity-camera { position: absolute; right: -2px; bottom: -2px; width: 26px; height: 26px; border-radius: 50%; background: var(--rsv-primary); color: #fff; border: 2px solid var(--rsv-ground); display: flex; align-items: center; justify-content: center; }
+.ds-identity-text { min-width: 0; display: flex; flex-direction: column; }
+.ds-identity-name { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 19px; font-weight: 700; color: var(--rsv-ink); overflow-wrap: anywhere; }
+.ds-identity-name svg { color: var(--rsv-primary); flex-shrink: 0; }
+.ds-identity-email { margin: 2px 0 0; font-size: 13px; color: var(--rsv-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ds-identity-role { align-self: flex-start; margin-top: 8px; padding: 3px 10px; border-radius: 999px; background: var(--rsv-primary-tint); color: var(--rsv-primary-ink); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+
+.ds-set-group { margin-top: 24px; }
+.ds-set-title { margin: 0 0 8px 4px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--rsv-faint); }
+.ds-set-list { list-style: none; margin: 0; padding: 0; background: var(--rsv-surface); border: 1px solid var(--rsv-line-soft); border-radius: 16px; overflow: hidden; }
+.ds-set-list > li + li { border-top: 1px solid var(--rsv-line); margin-left: 60px; }
+.ds-set-list > li + li > .ds-set-row { margin-left: -60px; width: calc(100% + 60px); }
+.ds-set-footer { margin: 8px 4px 0; font-size: 12px; line-height: 1.45; color: var(--rsv-faint); }
+.ds-set-row { display: flex; flex-direction: column; gap: 12px; width: 100%; padding: 12px 16px; border: 0; background: transparent; font: inherit; color: inherit; text-align: left; text-decoration: none; }
+button.ds-set-row, a.ds-set-row { cursor: pointer; }
+button.ds-set-row:hover, a.ds-set-row:hover { background: var(--rsv-ground); }
+button.ds-set-row:disabled { cursor: progress; opacity: .6; }
+.ds-set-row:focus-visible { outline: 3px solid var(--color-primary-300, #66a5ff); outline-offset: -3px; }
+.ds-set-main { display: flex; align-items: center; gap: 12px; min-height: 32px; }
+.ds-set-icon { width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0; background: var(--rsv-line-soft); color: var(--rsv-ink-2); display: flex; align-items: center; justify-content: center; }
+.ds-set-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ds-set-label { font-size: 15px; font-weight: 500; color: var(--rsv-ink); }
+.ds-set-detail { margin-top: 1px; font-size: 13px; color: var(--rsv-faint); overflow-wrap: anywhere; }
+.ds-set-value { max-width: 45%; font-size: 14px; color: var(--rsv-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ds-set-value--strong { font-size: 15px; font-weight: 700; color: var(--rsv-ink); }
+.ds-set-chevron { flex-shrink: 0; color: var(--color-neutral-400, #9ca3af); }
+.ds-set-row--danger .ds-set-icon { background: rgba(239, 68, 68, .10); color: var(--rsv-error); }
+.ds-set-row--danger .ds-set-label { color: var(--rsv-error); }
+.ds-set-below { display: block; }
+
+.ds-seg { display: flex; gap: 3px; padding: 3px; border-radius: 12px; background: var(--rsv-line-soft); }
+.ds-seg-btn { flex: 1; min-height: 36px; padding: 0 12px; border: 0; border-radius: 9px; background: transparent; color: var(--rsv-faint); font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; }
+.ds-seg-btn.is-active { background: var(--rsv-surface); color: var(--rsv-ink); font-weight: 700; box-shadow: 0 1px 3px rgba(0, 0, 0, .08); }
+.ds-seg-btn:focus-visible { outline: 3px solid var(--color-primary-300, #66a5ff); outline-offset: 1px; }
+.ds-set-note { margin: 24px 0 0; text-align: center; font-size: 12px; color: var(--rsv-faint); }
+.ds-toast { position: fixed; left: 50%; bottom: 88px; transform: translateX(-50%); z-index: 50; max-width: min(520px, calc(100vw - 32px)); padding: 12px 16px; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; text-align: center; }
+@media (min-width: 1024px) { .ds-toast { bottom: 24px; } }
+
+/* Dashboard stat strip */
+.ds-stats { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); margin: 16px 0 0; background: var(--rsv-surface); border: 1px solid var(--rsv-line-soft); border-radius: 16px; overflow: hidden; }
+.ds-stat { display: flex; flex-direction: column-reverse; align-items: center; justify-content: center; gap: 4px; min-width: 0; padding: 14px 8px; border: 0; border-left: 1px solid var(--rsv-line); background: transparent; font: inherit; color: inherit; text-align: center; }
+.ds-stat:first-child { border-left: 0; }
+button.ds-stat { cursor: pointer; }
+button.ds-stat:hover { background: var(--rsv-ground); }
+button.ds-stat:focus-visible { outline: 3px solid var(--color-primary-300, #66a5ff); outline-offset: -3px; }
+.ds-stat-value { margin: 0; font-size: 20px; font-weight: 700; color: var(--rsv-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.ds-stat-label { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--rsv-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.ds-shortcuts { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.ds-section-title { margin: 28px 0 4px; font-size: 17px; font-weight: 700; color: var(--rsv-ink); }

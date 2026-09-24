@@ -1,21 +1,18 @@
-import React, { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { useDialog } from '@/contexts/DialogContext'
-import { getColors } from '@/constants/Colors'
 import { useStorage } from '@/hooks/useStorage'
-import { ChevronLeft, Camera, User as UserIcon, Save, CheckCircle } from 'lucide-react'
+import { Camera, CheckCircle, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { PageHeader, ReservationsPage } from '@/components/reservations/ReservationUI'
 import './Settings.css'
 
 export default function ProfileSettings() {
   const { user, refreshUser } = useAuth()
-  const { colorScheme, setMode } = useThemeMode()
   const { t } = useLanguage()
   const { alert } = useDialog()
-  const Colors = getColors(colorScheme)
   const navigate = useNavigate()
   const { pickImage, uploadImage, uploading } = useStorage()
 
@@ -24,10 +21,10 @@ export default function ProfileSettings() {
   const [bio, setBio] = useState(user?.bio || '')
   const [location, setLocation] = useState(user?.location || '')
   const [isSaving, setIsSaving] = useState(false)
-  const [avatarKey, setAvatarKey] = useState(0)
   const [showSuccess, setShowSuccess] = useState(false)
 
-  const handleSave = async () => {
+  const handleSave = async (event: React.FormEvent) => {
+    event.preventDefault()
     if (!user?.id) return
 
     setIsSaving(true)
@@ -45,7 +42,7 @@ export default function ProfileSettings() {
 
       if (error) throw error
       await refreshUser()
-      
+
       setShowSuccess(true)
       setTimeout(() => {
         setShowSuccess(false)
@@ -60,202 +57,94 @@ export default function ProfileSettings() {
 
   const handleAvatarChange = async () => {
     try {
-      const image = await pickImage()
-      if (image && user?.id) {
-        const uploadedUrl = await uploadImage(image, 'avatars')
-        const { error } = await supabase
-          .from('profiles')
-          .update({ 
-            avatar_url: uploadedUrl,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', user.id)
+      const picked = await pickImage()
+      const file = Array.isArray(picked) ? picked[0] : picked
+      if (!file || !user?.id) return
+      const uploaded = await uploadImage(file, 'avatars')
+      if (!uploaded?.url) throw new Error('upload failed')
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          avatar_url: uploaded.url,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
 
-        if (error) throw error
-        setAvatarKey(prev => prev + 1)
-        await refreshUser()
-        
-        setShowSuccess(true)
-        setTimeout(() => setShowSuccess(false), 2000)
-      }
+      if (error) throw error
+      await refreshUser()
+
+      setShowSuccess(true)
+      setTimeout(() => setShowSuccess(false), 2000)
     } catch (error) {
       console.error('Error updating avatar:', error)
       alert('Failed to update profile picture', 'error')
     }
   }
 
+  const name = user?.full_name || t('common.user')
+
   return (
-    <div className="settings-container" style={{ backgroundColor: Colors.neutral[50] }}>
-      {/* Header */}
-      <div className="settings-header" style={{ 
-        backgroundColor: Colors.white, 
-        borderBottomColor: Colors.neutral[200] 
-      }}>
+    <ReservationsPage narrow label={t('profile.personalInformation')}>
+      <PageHeader
+        title={t('profile.personalInformation')}
+        subtitle={t('profileMenu.personalInfoSubtitle')}
+        onBack={() => navigate(-1)}
+        backLabel={t('common.back')}
+      />
+
+      <div className="ps-photo">
         <button
-          onClick={() => navigate(-1)}
-          className="back-button"
+          type="button"
+          className="ds-identity-avatar ps-avatar"
+          onClick={handleAvatarChange}
+          disabled={uploading}
+          aria-label={t('profileMenu.changePhoto')}
         >
-          <ChevronLeft size={24} color={Colors.neutral[700]} />
+          {user?.avatar_url ? <img src={user.avatar_url} alt="" /> : name.charAt(0).toUpperCase()}
+          <span className="ds-identity-camera" aria-hidden="true">
+            {uploading ? <Loader2 size={13} className="ps-spin" /> : <Camera size={13} />}
+          </span>
         </button>
-        <h1 className="settings-header-title" style={{ color: Colors.neutral[900] }}>
-          {t('profile.settings')}
-        </h1>
+        <button type="button" className="ps-link" onClick={handleAvatarChange} disabled={uploading}>
+          {t('profileMenu.changePhoto')}
+        </button>
       </div>
 
-      {/* Profile Avatar Section */}
-      <div className="avatar-section">
-        <div className="avatar-card" style={{ 
-          backgroundColor: Colors.white,
-          borderColor: Colors.neutral[200]
-        }}>
-          <div className="avatar-wrapper">
-            {user?.avatar_url ? (
-              <img
-                key={avatarKey}
-                src={`${user.avatar_url}?t=${Date.now()}`}
-                alt={user.full_name || ''}
-                className="avatar-image"
-                style={{ borderColor: Colors.primary[200] }}
-              />
-            ) : (
-              <div 
-                className="avatar-placeholder"
-                style={{
-                  backgroundColor: Colors.neutral[200],
-                  borderColor: Colors.neutral[300],
-                  color: Colors.neutral[500]
-                }}
-              >
-                {user?.full_name?.charAt(0).toUpperCase() || 'U'}
-              </div>
-            )}
-            <button
-              onClick={handleAvatarChange}
-              disabled={uploading}
-              className="camera-button"
-              style={{ backgroundColor: Colors.primary[700] }}
-            >
-              <Camera size={18} color="white" />
-            </button>
-          </div>
+      <form className="ps-form" onSubmit={handleSave}>
+        <h2 className="ds-set-title">{t('profileForm.basicInformation')}</h2>
 
-          <h2 className="avatar-name" style={{ color: Colors.neutral[900] }}>
-            {user?.full_name || t('common.user')}
-          </h2>
-          <p className="avatar-email" style={{ color: Colors.neutral[600] }}>
-            {user?.email}
-          </p>
-        </div>
+        <label className="ps-field">
+          <span>{t('profileForm.fullName')}</span>
+          <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" />
+        </label>
 
-        {/* Form Section */}
-        <div className="form-section">
-          <div className="form-card" style={{ 
-            backgroundColor: Colors.white,
-            borderColor: Colors.neutral[200]
-          }}>
-            <h3 className="form-section-title" style={{ color: Colors.neutral[900] }}>
-              {t('profileForm.basicInformation')}
-            </h3>
+        <label className="ps-field">
+          <span>{t('profileForm.phoneNumber')}</span>
+          <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+237 6XX XXX XXX" autoComplete="tel" />
+        </label>
 
-            <div className="form-group">
-              <label className="form-label" style={{ color: Colors.neutral[700] }}>
-                {t('profileForm.fullName')}
-              </label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="form-input"
-                style={{
-                  borderColor: Colors.neutral[300],
-                  backgroundColor: Colors.white,
-                  color: Colors.neutral[900]
-                }}
-              />
-            </div>
+        <label className="ps-field">
+          <span>{t('profileForm.location')}</span>
+          <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, Country" />
+        </label>
 
-            <div className="form-group">
-              <label className="form-label" style={{ color: Colors.neutral[700] }}>
-                {t('profileForm.phoneNumber')}
-              </label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="form-input"
-                style={{
-                  borderColor: Colors.neutral[300],
-                  backgroundColor: Colors.white,
-                  color: Colors.neutral[900]
-                }}
-                placeholder="+237 6XX XXX XXX"
-              />
-            </div>
+        <label className="ps-field">
+          <span>{t('profileForm.bio')}</span>
+          <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={4} placeholder="Tell us about yourself..." />
+        </label>
 
-            <div className="form-group">
-              <label className="form-label" style={{ color: Colors.neutral[700] }}>
-                {t('profileForm.location')}
-              </label>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="form-input"
-                style={{
-                  borderColor: Colors.neutral[300],
-                  backgroundColor: Colors.white,
-                  color: Colors.neutral[900]
-                }}
-                placeholder="City, Country"
-              />
-            </div>
+        <button type="submit" className="rsv-btn rsv-btn--primary ps-save" disabled={isSaving || uploading}>
+          {isSaving && <Loader2 size={16} className="ps-spin" />}
+          {isSaving ? t('buttons.saving') : t('buttons.saveChanges')}
+        </button>
+      </form>
 
-            <div className="form-group">
-              <label className="form-label" style={{ color: Colors.neutral[700] }}>
-                {t('profileForm.bio')}
-              </label>
-              <textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                className="form-textarea"
-                style={{
-                  borderColor: Colors.neutral[300],
-                  backgroundColor: Colors.white,
-                  color: Colors.neutral[900]
-                }}
-                placeholder="Tell us about yourself..."
-              />
-            </div>
-
-            <button
-              onClick={handleSave}
-              disabled={isSaving || uploading}
-              className="save-button"
-              style={{
-                backgroundColor: (isSaving || uploading) ? Colors.neutral[400] : Colors.primary[700],
-                color: Colors.white
-              }}
-            >
-              <Save size={20} />
-              {isSaving ? t('common.loading') : t('profile.updateProfile')}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Success Toast */}
       {showSuccess && (
-        <div 
-          className="success-toast"
-          style={{
-            backgroundColor: Colors.success[600],
-            color: 'white'
-          }}
-        >
-          <CheckCircle size={20} />
-          <span>{t('profile.profileUpdated')}</span>
+        <div className="ds-toast" role="status" style={{ background: 'var(--color-success-600, #059669)' }}>
+          <CheckCircle size={16} style={{ verticalAlign: '-3px', marginRight: 6 }} />
+          {t('profile.profileUpdated')}
         </div>
       )}
-    </div>
+    </ReservationsPage>
   )
 }

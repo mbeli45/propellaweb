@@ -5,18 +5,21 @@ import {
   ChevronDown,
   ChevronUp,
   CircleDollarSign,
-  Eye,
+  Flag,
   HeartHandshake as Handshake,
+  Home as HomeIcon,
   MapPin,
   MessageCircle,
   MoreHorizontal,
   Receipt,
+  User as UserIcon,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useLanguage } from '@/contexts/I18nContext'
 import type { Deal, DealEvent, DealForm, DealReport, Partner, PropertyRequest } from '@/lib/deals'
 import { configurePartner, dealForms, money, requestActions, resolveReport, statusLabel } from '@/lib/deals'
-import { CardButton, Hint, Media, PersonStrip, StatusPill, Tone } from '@/components/reservations/ReservationUI'
+import { CardButton, Hint, StatusPill, Tone } from '@/components/reservations/ReservationUI'
+import './DealCard.css'
 
 /*
  * Web counterpart of propella/components/deals/DealCard.tsx: a deal rendered
@@ -136,149 +139,172 @@ export function DealCard({
           }
         : { name: t('deals.awaitingAgency'), subtitle: t('deals.agency') }
 
+  const image = deal.property?.images?.[0]
+  // The headline figure, like a property card's price: the quoted commission,
+  // else the property amount.
+  const headline =
+    deal.commission_amount != null
+      ? { value: money(deal.commission_amount), caption: `${t('deals.commission')} · ${t('deals.quoteVersion', { version: deal.quote_version })}` }
+      : deal.transaction_amount != null
+        ? { value: money(deal.transaction_amount), caption: t('deals.propertyAmount') }
+        : { value: t('deals.notQuoted'), caption: t('deals.commission') }
+  // One notice at most: blocking problems first.
+  const notice = openReports.length > 0
+    ? { warning: true, text: t('deals.openReports', { count: openReports.length }) }
+    : !deal.agency_accepted_at && deal.status !== 'cancelled'
+      ? { warning: false, text: t('deals.waitingForPartner') }
+      : deal.paid_at
+        ? { warning: false, text: t('deals.paymentVerified', { date: formatDate(deal.paid_at) }) }
+        : null
+
   return (
-    <article className={`rsv-card${highlighted ? ' rsv-card--highlight' : ''}`}>
+    <article className={`dc-card${highlighted ? ' dc-card--highlight' : ''}`}>
       <button
         type="button"
-        className="rsv-card-media"
-        style={{ maxHeight: 200 }}
+        className="dc-media"
         disabled={!deal.property_id}
         onClick={() => deal.property_id && onViewProperty(deal.property_id)}
-        aria-label={title}
+        aria-label={deal.property_id ? `${t('deals.viewProperty')}: ${title}` : title}
       >
-        <Media src={deal.property?.images?.[0]} alt={title} size={36} />
-        <span className="rsv-overlay">
-          <span className="rsv-overlay-pill" style={{ color: tone.text }}>
+        {image ? <img src={image} alt="" loading="lazy" /> : <HomeIcon size={36} aria-hidden="true" />}
+        <span className="dc-gradient" aria-hidden="true" />
+        <span className="dc-overlay dc-overlay--top">
+          <span className="dc-pill" style={{ color: tone.text }}>
             <span className="rsv-dot" style={{ background: tone.dot }} />
             {statusLabel(deal.status)}
           </span>
-          <span className="rsv-overlay-pill">{dealRef(deal.id)}</span>
+          <span className="dc-pill">{dealRef(deal.id)}</span>
         </span>
+        {needsAction && (
+          <span className="dc-overlay dc-overlay--bottom">
+            <span className="dc-pill dc-pill--attention">
+              <span className="rsv-dot" />
+              {t('reservations.dealActionNeeded')}
+            </span>
+          </span>
+        )}
       </button>
 
-      <div className="rsv-body">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span className="rsv-ref">
-            {deal.request_id ? t('deals.referralDeal') : t('deals.listedPropertyDeal')} · {deal.purpose === 'buy' ? t('deals.buy') : t('deals.rent')}
+      <div className="dc-info">
+        <div className="dc-badges">
+          <span>{deal.purpose === 'buy' ? t('deals.buy') : t('deals.rent')}</span>
+          <span>{deal.request_id ? t('deals.referralDeal') : t('deals.listedPropertyDeal')}</span>
+        </div>
+
+        <p className="dc-price">{headline.value}</p>
+        <p className="dc-caption">{headline.caption}</p>
+        <h3 className="dc-title">{title}</h3>
+        {!!location && (
+          <p className="dc-location">
+            <MapPin size={14} aria-hidden="true" />
+            <span>{location}</span>
+          </p>
+        )}
+
+        <div className="dc-features">
+          <span className="dc-chip" title={person.subtitle}>
+            <UserIcon size={14} aria-hidden="true" />
+            <span className="dc-chip-text">{person.name}</span>
+            {'verified' in person && person.verified && <BadgeCheck size={14} aria-label={t('deals.verifiedAgency')} />}
           </span>
-          <h3 className="rsv-card-title rsv-card-title--hero">{title}</h3>
-          {!!location && (
-            <div className="rsv-location">
-              <MapPin size={14} color="var(--rsv-primary)" aria-hidden="true" />
-              <span>{location}</span>
-            </div>
-          )}
-        </div>
-
-        <PersonStrip person={person} />
-
-        <div className="rsv-meta">
-          <div>
-            <span className="rsv-meta-label">
-              {t('deals.commission')}
-              {deal.commission_amount != null ? ` · ${t('deals.quoteVersion', { version: deal.quote_version })}` : ''}
-            </span>
-            <span className="rsv-meta-value">{deal.commission_amount != null ? money(deal.commission_amount) : t('deals.notQuoted')}</span>
-          </div>
-          <div>
-            <span className="rsv-meta-label">{t('deals.propertyAmount')}</span>
-            <span className="rsv-meta-value">{deal.transaction_amount != null ? money(deal.transaction_amount) : '—'}</span>
-          </div>
-        </div>
-
-        <div className="rsv-stage">
-          <div className="rsv-stage-head">
-            <span>{stage ? t('deals.stage', stage) : t('deals.closed')}</span>
-            {needsAction && (
-              <span className="rsv-attention">
-                <span className="rsv-dot" />
-                {t('reservations.dealActionNeeded')}
-              </span>
-            )}
-          </div>
-          {stage && (
-            <div
-              className="rsv-stage-track"
+          {stage ? (
+            <span
+              className="dc-chip"
               role="progressbar"
               aria-valuemin={1}
               aria-valuemax={stage.total}
               aria-valuenow={stage.step}
               aria-label={t('deals.stage', stage)}
             >
-              {Array.from({ length: stage.total }, (_, index) => (
-                <span key={index} className={index < stage.step ? 'is-done' : undefined} />
-              ))}
-            </div>
+              <span className="dc-stage" aria-hidden="true">
+                {Array.from({ length: stage.total }, (_, index) => (
+                  <span key={index} className={index < stage.step ? 'is-done' : undefined} />
+                ))}
+              </span>
+              {stage.step}/{stage.total}
+            </span>
+          ) : (
+            <span className="dc-chip">{t('deals.closed')}</span>
+          )}
+          {deal.commission_amount != null && deal.transaction_amount != null && (
+            <span className="dc-chip" title={t('deals.propertyAmount')}>
+              <HomeIcon size={14} aria-hidden="true" />
+              {money(deal.transaction_amount)}
+            </span>
           )}
         </div>
 
-        {!deal.agency_accepted_at && deal.status !== 'cancelled' && <Hint text={t('deals.waitingForPartner')} />}
-        {!!deal.paid_at && <Hint text={t('deals.paymentVerified', { date: formatDate(deal.paid_at) })} />}
-        {openReports.length > 0 && (
-          <div className="rsv-warning" role="note">
-            <AlertTriangle size={16} aria-hidden="true" />
-            <span>{t('deals.openReports', { count: openReports.length })}</span>
-          </div>
-        )}
+        {notice &&
+          (notice.warning ? (
+            <div className="rsv-warning" role="note">
+              <AlertTriangle size={16} aria-hidden="true" />
+              <span>{notice.text}</span>
+            </div>
+          ) : (
+            <Hint text={notice.text} />
+          ))}
 
-        {primaryForms.map((form) => (
-          <CardButton
-            key={form.action}
-            label={form.title}
-            icon={actionIcon(form.action)}
-            tone="primary"
-            onClick={() => onForm(form)}
-            disabled={busy}
-            block
-          />
-        ))}
-
-        {(counterpartId || deal.property_id) && (
-          <div className="rsv-actions">
+        {(primaryForms.length > 0 || counterpartId) && (
+          <div className="dc-actions">
+            {primaryForms.map((form) => (
+              <CardButton
+                key={form.action}
+                label={form.title}
+                icon={actionIcon(form.action)}
+                tone="primary"
+                onClick={() => onForm(form)}
+                disabled={busy}
+                block
+              />
+            ))}
             {counterpartId && (
               <CardButton
                 label={isCustomer ? t('deals.messageAgency') : t('deals.messageCustomer')}
                 icon={MessageCircle}
                 tone="secondary"
                 onClick={() => onMessage(counterpartId)}
+                block
               />
-            )}
-            {deal.property_id && (
-              <CardButton label={t('deals.viewProperty')} icon={Eye} tone="neutral" onClick={() => onViewProperty(deal.property_id!)} />
             )}
           </div>
         )}
 
-        {secondaryForms.length > 0 && (
-          <>
+        <div className="dc-links">
+          {secondaryForms.length > 0 && (
             <button type="button" className="rsv-toggle" aria-expanded={showMore} onClick={() => setShowMore((value) => !value)}>
               <MoreHorizontal size={16} aria-hidden="true" />
               {showMore ? t('deals.fewerActions') : t('deals.moreActions')}
             </button>
-            {showMore && (
-              <div className="rsv-more">
-                {secondaryForms.map((form) => (
-                  <CardButton
-                    key={form.action}
-                    label={form.title}
-                    tone={['cancel', 'decline_referral', 'report'].includes(form.action) ? 'danger' : 'neutral'}
-                    onClick={() => onForm(form)}
-                    disabled={busy}
-                    block
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        )}
+          )}
+          <button type="button" className="rsv-toggle" aria-expanded={showDetails} onClick={() => setShowDetails((value) => !value)}>
+            {showDetails ? t('deals.hideDetails') : t('deals.showDetails')}
+            {showDetails ? <ChevronUp size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}
+          </button>
+        </div>
 
-        <button type="button" className="rsv-toggle" aria-expanded={showDetails} onClick={() => setShowDetails((value) => !value)}>
-          {showDetails ? t('deals.hideDetails') : t('deals.showDetails')}
-          {showDetails ? <ChevronUp size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}
-        </button>
+        {showMore && secondaryForms.length > 0 && (
+          <div className="rsv-more">
+            {secondaryForms.map((form) => (
+              <CardButton
+                key={form.action}
+                label={form.title}
+                icon={form.action === 'report' ? Flag : undefined}
+                tone={['cancel', 'decline_referral', 'report'].includes(form.action) ? 'danger' : 'neutral'}
+                onClick={() => onForm(form)}
+                disabled={busy}
+                block
+              />
+            ))}
+          </div>
+        )}
 
         {showDetails && (
           <div className="rsv-details">
+            <p className="rsv-muted">{person.subtitle}: {person.name}</p>
+            {deal.commission_amount != null && (
+              <Detail label={t('deals.commission')} text={money(deal.commission_amount)} />
+            )}
+            {deal.transaction_amount != null && <Detail label={t('deals.propertyAmount')} text={money(deal.transaction_amount)} />}
             {!!deal.requirements && <Detail label={t('deals.requirements')} text={deal.requirements} />}
             {!!deal.proposal && <Detail label={t('deals.proposal')} text={deal.proposal} />}
             {!!deal.sourcing_agency && <Detail label={t('deals.supplyingAgency')} text={deal.sourcing_agency} />}

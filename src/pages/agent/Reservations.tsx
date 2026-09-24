@@ -217,7 +217,7 @@ export default function AgentReservations() {
         <p className="rsv-error" role="alert">{error}</p>
       ) : reservations.length === 0 ? (
         <div className="rsv-empty">
-          <span className="rsv-empty-icon" aria-hidden="true"><CalendarClock size={40} /></span>
+          <span className="rsv-empty-icon" aria-hidden="true"><CalendarClock size={40} strokeWidth={1.5} /></span>
           <h2>{t('agentReservations.emptyBookingsTitle')}</h2>
           <p>{t('agentReservations.emptyBookingsBody')}</p>
           <CardButton label={t('agentReservations.myListings')} icon={HomeIcon} tone="primary" onClick={() => navigate('/agent')} />

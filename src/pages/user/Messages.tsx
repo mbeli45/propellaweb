@@ -244,7 +244,7 @@ export default function UserMessages() {
             ) : (
               <div className="chats-empty">
                 <span className="chats-empty-icon" aria-hidden="true">
-                  <MessageCircle size={40} />
+                  <MessageCircle size={40} strokeWidth={1.5} />
                 </span>
                 <h2>{t('messages.noConversations')}</h2>
                 <p>{audience === 'agent' ? t('messages.startChattingWithClients') : t('messages.startChattingWithAgents')}</p>
@@ -330,7 +330,7 @@ export default function UserMessages() {
           <div className="chats-pane-empty">
             <div className="chats-empty">
               <span className="chats-empty-icon" aria-hidden="true">
-                <MessageCircle size={40} />
+                <MessageCircle size={40} strokeWidth={1.5} />
               </span>
               <h2>{t('messages.selectConversation')}</h2>
               <p>{t('messages.selectConversationHint')}</p>

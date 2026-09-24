@@ -22,7 +22,7 @@ export default function SavedProperties() {
 
   const renderEmptyState = (title: string, hint: string, actionLabel: string, onAction: () => void) => (
     <div className="saved-empty" style={{ backgroundColor: Colors.white }}>
-      <Bookmark size={48} color={Colors.neutral[400]} />
+      <Bookmark size={48} color={Colors.neutral[400]} strokeWidth={1.5} />
       <p className="saved-empty-title" style={{ color: Colors.neutral[800] }}>{title}</p>
       <p className="saved-empty-hint" style={{ color: Colors.neutral[600] }}>{hint}</p>
       <button

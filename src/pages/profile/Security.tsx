@@ -1,174 +1,64 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useThemeMode } from '@/contexts/ThemeContext'
+import { FileText, KeyRound, Mail } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/I18nContext'
-import { getColors } from '@/constants/Colors'
-import { ChevronLeft, Lock, Eye, Shield, Bell, Key, Smartphone } from 'lucide-react'
-import './Security.css'
+import { PageHeader, ReservationsPage, SettingsGroup, SettingsRow } from '@/components/reservations/ReservationUI'
 
 export default function ProfileSecurity() {
-  const { colorScheme } = useThemeMode()
+  const { user, forgotPassword } = useAuth()
   const { t } = useLanguage()
-  const Colors = getColors(colorScheme)
   const navigate = useNavigate()
+  const [sending, setSending] = useState(false)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
-  const [biometricEnabled, setBiometricEnabled] = useState(false)
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true)
-
-  const handleChangePassword = () => {
-    alert('This feature is coming soon! You will be able to change your password here.')
+  const handleChangePassword = async () => {
+    if (!user?.email) return
+    setSending(true)
+    try {
+      await forgotPassword(user.email)
+      setMessage({ type: 'success', text: t('profileMenu.resetLinkSent', { email: user.email }) })
+    } catch {
+      setMessage({ type: 'error', text: t('profileMenu.resetLinkFailed') })
+    } finally {
+      setSending(false)
+      setTimeout(() => setMessage(null), 5000)
+    }
   }
 
-  const securityItems = [
-    {
-      icon: <Shield size={24} />,
-      iconBg: Colors.success[100],
-      iconColor: Colors.success[700],
-      title: 'Two-Factor Authentication',
-      description: 'Add an extra layer of security to your account',
-      isToggle: true,
-      toggleValue: twoFactorEnabled,
-      onToggleChange: () => {
-        alert('Two-factor authentication will be available soon!')
-      },
-    },
-    {
-      icon: <Smartphone size={24} />,
-      iconBg: Colors.primary[100],
-      iconColor: Colors.primary[700],
-      title: 'Biometric Login',
-      description: 'Use fingerprint or face recognition',
-      isToggle: true,
-      toggleValue: biometricEnabled,
-      onToggleChange: () => {
-        alert('Biometric authentication will be available soon!')
-      },
-    },
-    {
-      icon: <Bell size={24} />,
-      iconBg: Colors.warning[100],
-      iconColor: Colors.warning[700],
-      title: 'Security Notifications',
-      description: 'Get notified about account activity',
-      isToggle: true,
-      toggleValue: notificationsEnabled,
-      onToggleChange: () => setNotificationsEnabled(!notificationsEnabled),
-    },
-  ]
-
   return (
-    <div className="security-container" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh' }}>
-      {/* Header */}
-      <div style={{
-        backgroundColor: Colors.white,
-        padding: '16px',
-        borderBottom: `1px solid ${Colors.neutral[200]}`,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 10
-      }}>
-        <button
-          onClick={() => navigate(-1)}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '8px',
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
-          <ChevronLeft size={24} color={Colors.neutral[700]} />
-        </button>
-        <h1 style={{
-          fontSize: '20px',
-          fontWeight: '600',
-          color: Colors.neutral[900],
-          margin: 0
-        }}>
-          {t('security.accountSecurity')}
-        </h1>
-      </div>
+    <ReservationsPage narrow label={t('profileMenu.securityPrivacy')}>
+      <PageHeader
+        title={t('profileMenu.securityPrivacy')}
+        subtitle={t('profileMenu.securitySubtitle')}
+        onBack={() => navigate(-1)}
+        backLabel={t('common.back')}
+      />
 
-      <div style={{ padding: '20px 16px' }}>
-        <div style={{
-          backgroundColor: Colors.white,
-          borderRadius: '12px',
-          overflow: 'hidden',
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
-        }}>
-          {securityItems.map((item, index) => (
-            <div
-              key={index}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '16px',
-                borderBottom: index < securityItems.length - 1 ? `1px solid ${Colors.neutral[200]}` : 'none'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                {item.icon}
-                <span style={{
-                  fontSize: '16px',
-                  fontWeight: '500',
-                  color: Colors.neutral[900]
-                }}>
-                  {item.title}
-                </span>
-              </div>
-              {item.isToggle ? (
-                <label style={{
-                  position: 'relative',
-                  display: 'inline-block',
-                  width: '44px',
-                  height: '24px'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={item.toggleValue}
-                    onChange={item.onToggleChange}
-                    style={{
-                      opacity: 0,
-                      width: 0,
-                      height: 0
-                    }}
-                  />
-                  <span style={{
-                    position: 'absolute',
-                    cursor: 'pointer',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: item.toggleValue ? Colors.primary[600] : Colors.neutral[300],
-                    borderRadius: '24px',
-                    transition: '0.3s'
-                  }}>
-                    <span style={{
-                      position: 'absolute',
-                      content: '""',
-                      height: '18px',
-                      width: '18px',
-                      left: '3px',
-                      bottom: '3px',
-                      backgroundColor: Colors.white,
-                      borderRadius: '50%',
-                      transition: '0.3s',
-                      transform: item.toggleValue ? 'translateX(20px)' : 'translateX(0)'
-                    }} />
-                  </span>
-                </label>
-              ) : null}
-            </div>
-          ))}
+      <SettingsGroup title={t('profileMenu.signIn')}>
+        <SettingsRow icon={Mail} label={t('profileMenu.email')} value={user?.email || '—'} />
+        <SettingsRow
+          icon={KeyRound}
+          label={t('profileMenu.changePassword')}
+          detail={t('profileMenu.changePasswordDetail')}
+          onClick={user?.email ? handleChangePassword : undefined}
+          disabled={sending}
+        />
+      </SettingsGroup>
+
+      <SettingsGroup title={t('profileMenu.privacy')} footer={t('profileMenu.privacyNote')}>
+        <SettingsRow icon={FileText} label={t('help.privacyPolicy')} onClick={() => navigate('/privacy')} />
+      </SettingsGroup>
+
+      {message && (
+        <div
+          className="ds-toast"
+          role={message.type === 'error' ? 'alert' : 'status'}
+          style={{ background: message.type === 'success' ? 'var(--color-success-600, #059669)' : 'var(--color-error-600, #dc2626)' }}
+        >
+          {message.text}
         </div>
-      </div>
-    </div>
+      )}
+    </ReservationsPage>
   )
 }

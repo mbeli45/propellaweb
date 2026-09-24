@@ -537,15 +537,6 @@ export default function Signup() {
             </span>
           </button>
 
-          {/* Divider */}
-          <div className="auth-divider">
-            <div className="auth-divider-line" style={{ backgroundColor: Colors.neutral[200] }} />
-            <span className="auth-divider-text" style={{ color: Colors.neutral[500] }}>
-              {t('signup.or')}
-            </span>
-            <div className="auth-divider-line" style={{ backgroundColor: Colors.neutral[200] }} />
-          </div>
-
           {/* Login Section */}
           <div
             className="auth-signup-container"

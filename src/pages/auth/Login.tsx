@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
-import { ChevronLeft, Eye, EyeOff, Mail, Lock, LogIn, UserPlus, CheckCircle, XCircle } from 'lucide-react'
+import { ChevronLeft, Eye, EyeOff, Mail, Lock, LogIn, CheckCircle, XCircle } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { IconButton } from '@mui/material'
 import { Icon } from '@iconify/react'
@@ -300,15 +300,6 @@ export default function Login() {
             </span>
           </button>
 
-          {/* Divider */}
-          <div className="auth-divider">
-            <div className="auth-divider-line" style={{ backgroundColor: Colors.neutral[200] }} />
-            <span className="auth-divider-text" style={{ color: Colors.neutral[500] }}>
-              {t('auth.or')}
-            </span>
-            <div className="auth-divider-line" style={{ backgroundColor: Colors.neutral[200] }} />
-          </div>
-
           {/* Sign Up Section */}
           <div
             className="auth-signup-container"
@@ -328,7 +319,6 @@ export default function Login() {
                 borderColor: Colors.primary[200],
               }}
             >
-              <UserPlus size={16} color={Colors.primary[700]} />
               <span
                 className="auth-signup-button-text"
                 style={{

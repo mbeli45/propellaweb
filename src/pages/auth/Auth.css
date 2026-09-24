@@ -642,3 +642,42 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ---------------------------------------------------------------------------
+   Design language (matches the app kit): a centred 440 px column, flat surfaces,
+   48 px controls with 12 px radius, 24/700 titles, no drop shadows, one "or".
+   !important only where the pages set an inline colour/shadow that must lose.
+   --------------------------------------------------------------------------- */
+.auth-container { background: var(--color-neutral-50, #f9fafb) !important; }
+.auth-scroll-content { width: 100%; max-width: 440px; margin: 0 auto; }
+.auth-header { padding: 12px 16px 8px; }
+.auth-back-button { width: 40px; height: 40px; margin: 0 0 8px -8px; background: transparent !important; border-radius: 10px; }
+.auth-back-button:hover { background: var(--color-neutral-100, #f3f4f6) !important; }
+.auth-back-button:focus-visible { outline: 3px solid var(--color-primary-300, #66a5ff); outline-offset: 1px; }
+.auth-logo-container { margin-bottom: 24px; }
+.auth-logo { width: 56px; height: 56px; border-radius: 16px; box-shadow: none !important; }
+.auth-logo img { width: 32px !important; height: 32px !important; }
+.auth-welcome-title, .auth-content-title { font-size: 24px !important; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 6px !important; }
+.auth-welcome-subtitle, .auth-content-description { font-size: 14px !important; line-height: 1.45 !important; }
+.auth-icon-container { width: 88px !important; height: 88px !important; padding: 0 !important; border-radius: 50% !important; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px !important; box-shadow: none !important; }
+.auth-content-header { margin-bottom: 24px !important; }
+.auth-message-container { margin: 0 16px 16px; padding: 12px; border-radius: 10px; }
+.auth-form-container { padding: 8px 16px 0; }
+.auth-input-group { margin-bottom: 16px; }
+.auth-input-label { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.auth-input-container { border-width: 1px; border-radius: 12px; height: 48px; padding: 0 14px; background-color: var(--color-white, #fff) !important; }
+[data-theme="dark"] .auth-input-container, .dark .auth-input-container { background-color: var(--color-white, #18181b) !important; }
+.auth-input-container:focus-within { border-color: var(--color-primary-600, #004aad) !important; box-shadow: 0 0 0 3px var(--color-primary-100, #cce1ff); }
+.auth-text-input { font-size: 15px; }
+.auth-primary-button, .auth-google-button { min-height: 48px; border-radius: 12px; margin-bottom: 12px; box-shadow: none !important; font-size: 15px; font-weight: 700; }
+.auth-google-button { border-width: 1px !important; }
+.auth-divider { margin: 20px 0; }
+.auth-signup-container { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px; padding: 0; margin: 8px 0 24px; background: transparent !important; border-radius: 0; }
+.auth-signup-text { margin: 0 !important; font-size: 14px; }
+.auth-signup-button { min-width: 0; padding: 6px 4px; border: 0 !important; background: transparent !important; }
+.auth-signup-button-text { font-size: 14px; font-weight: 700; }
+.auth-signup-button:hover .auth-signup-button-text { text-decoration: underline; }
+.auth-bottom-actions { padding: 12px 16px 16px; border-top: 0 !important; box-shadow: none !important; background: transparent !important; }
+.auth-user-type-card { border-width: 1px; border-radius: 12px; }
+.auth-code-input { border-width: 1px; border-radius: 12px; height: 56px; }
+.auth-footer { padding: 0 16px 24px; }

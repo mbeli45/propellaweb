@@ -14,6 +14,8 @@ interface AuthContextProps {
   signUp: (email: string, password: string, fullName: string, role: string, eulaAccepted?: boolean) => Promise<void>
   acceptEula: () => Promise<void>
   signOut: () => Promise<void>
+  /** Anonymises the profile (same as mobile) and signs out. */
+  deleteAccount: () => Promise<void>
   refreshUser: (userId?: string) => Promise<void>
   forgotPassword: (email: string) => Promise<void>
   resetPassword: (newPassword: string, token?: string) => Promise<void>
@@ -233,6 +235,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [navigate])
 
+  const deleteAccount = useCallback(async () => {
+    if (!user?.id) throw new Error('No authenticated user')
+    try {
+      setError(null)
+      // Soft delete: anonymise PII, matching the mobile app's deleteAccount.
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ full_name: 'Deleted User', email: null, phone: null, avatar_url: null, bio: null })
+        .eq('id', user.id)
+      if (profileError) throw profileError
+      await supabase.auth.signOut()
+      setUser(null)
+      profileCache.clear()
+      setSentryUser(null)
+      navigate('/')
+    } catch (err: any) {
+      setError(err.message)
+      throw err
+    }
+  }, [user?.id, navigate])
+
   const refreshUser = useCallback(async (userId?: string) => {
     const id = userId || user?.id
     if (id) {
@@ -404,6 +427,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       acceptEula,
       signOut,
+      deleteAccount,
       refreshUser,
       forgotPassword,
       resetPassword,

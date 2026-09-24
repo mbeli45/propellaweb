@@ -135,3 +135,18 @@
     padding: 20px;
   }
 }
+
+/* Wallet page on the design language */
+.wl-balance { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; padding: 16px; background: var(--rsv-surface); border: 1px solid var(--rsv-line-soft); border-radius: 16px; }
+.wl-label { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--rsv-faint); }
+.wl-amount { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; color: var(--rsv-ink); }
+.wl-list { list-style: none; margin: 12px 0 0; padding: 0 16px; background: var(--rsv-surface); border: 1px solid var(--rsv-line-soft); border-radius: 16px; }
+.wl-row { display: flex; align-items: center; gap: 12px; padding: 14px 0; }
+.wl-row + .wl-row { border-top: 1px solid var(--rsv-line); }
+.wl-icon { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(239, 68, 68, .10); color: var(--rsv-error); }
+.wl-icon--in { background: rgba(16, 185, 129, .12); color: var(--rsv-success); }
+.wl-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.wl-title { font-size: 15px; font-weight: 600; color: var(--rsv-ink); text-transform: capitalize; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wl-date { font-size: 12px; color: var(--rsv-faint); }
+.wl-value { font-size: 15px; font-weight: 700; color: var(--rsv-error); white-space: nowrap; }
+.wl-value--in { color: var(--rsv-success); }

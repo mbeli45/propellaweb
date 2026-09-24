@@ -419,7 +419,7 @@ export default function UserReservations() {
         <p className="rsv-error" role="alert">{error}</p>
       ) : reservations.length === 0 ? (
         <div className="rsv-empty">
-          <span className="rsv-empty-icon" aria-hidden="true"><CalendarClock size={40} /></span>
+          <span className="rsv-empty-icon" aria-hidden="true"><CalendarClock size={40} strokeWidth={1.5} /></span>
           <h2>{t('reservations.noReservationsYetTitle')}</h2>
           <p>{t('reservations.noReservationsYetMessage')}</p>
           <CardButton label={t('reservations.newVisit')} icon={Compass} tone="primary" onClick={() => navigate('/user/explore')} />

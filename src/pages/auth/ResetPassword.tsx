@@ -161,7 +161,7 @@ export default function ResetPassword() {
         <form className="auth-form-container" onSubmit={handleReset}>
           {/* Icon */}
           <div className="auth-icon-container" style={{ backgroundColor: Colors.primary[50] }}>
-            <Lock size={48} color={Colors.primary[600]} />
+            <Lock size={40} color={Colors.primary[600]} strokeWidth={1.5} />
           </div>
 
           {/* Title and Description */}
