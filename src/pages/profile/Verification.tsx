@@ -5,10 +5,11 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { useAgentVerification } from '@/hooks/useAgentVerification'
-import { ChevronLeft, Shield, CheckCircle, Clock, XCircle, Upload, Eye, Trash2, CreditCard } from 'lucide-react'
+import { Award, Building, CheckCircle, Clock, Shield, Star, Upload } from 'lucide-react'
 import { useStorage } from '@/hooks/useStorage'
 import './Verification.css'
 import { FormSkeleton } from '@/components/skeletons'
+import { CardButton, PageHeader, ReservationsPage, SettingsGroup, SettingsRow } from '@/components/reservations/ReservationUI'
 
 export default function ProfileVerification() {
   const { user } = useAuth()
@@ -100,349 +101,134 @@ export default function ProfileVerification() {
     }
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return <CheckCircle size={20} color={Colors.success[600]} />
-      case 'pending':
-        return <Clock size={20} color={Colors.warning[600]} />
-      case 'rejected':
-        return <XCircle size={20} color={Colors.error[600]} />
-      default:
-        return <Clock size={20} color={Colors.neutral[400]} />
-    }
-  }
-
   if (loading) {
     return <FormSkeleton fields={4} />
   }
 
+  // Where the agent is: started -> fee paid -> under review -> verified.
+  const STEPS = 4
+  const status = verification?.verification_status
+  const step = !verification ? 0 : status === 'approved' ? 4 : status === 'documents_review' ? 3 : verification.verification_fee_paid ? 2 : 1
+  const statusKey = !verification ? 'not_started' : status
+  const tone =
+    statusKey === 'approved'
+      ? { bg: 'var(--rsv-success-tint)', text: 'var(--rsv-success-ink)', dot: 'var(--rsv-success)' }
+      : statusKey === 'rejected'
+        ? { bg: 'var(--rsv-error-tint)', text: 'var(--rsv-error-ink)', dot: 'var(--rsv-error)' }
+        : statusKey === 'documents_review'
+          ? { bg: 'var(--rsv-primary-tint)', text: 'var(--rsv-primary-ink)', dot: 'var(--rsv-primary)' }
+          : statusKey === 'pending'
+            ? { bg: 'var(--rsv-warning-tint)', text: 'var(--rsv-warning-ink)', dot: 'var(--rsv-warning)' }
+            : { bg: 'var(--rsv-line-soft)', text: 'var(--rsv-ink-2)', dot: 'var(--rsv-faint)' }
+  const statusLabel =
+    statusKey === 'approved'
+      ? t('verificationUI.statusApproved')
+      : statusKey === 'rejected'
+        ? t('verificationUI.statusRejected')
+        : statusKey === 'documents_review'
+          ? t('verificationUI.statusReview')
+          : statusKey === 'pending'
+            ? t('verificationUI.statusPending')
+            : t('verificationUI.statusNotStarted')
+
   return (
-    <div className="verification-container" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh' }}>
-      {/* Header */}
-      <div style={{
-        backgroundColor: Colors.white,
-        padding: '16px',
-        borderBottom: `1px solid ${Colors.neutral[200]}`,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 10
-      }}>
-        <button
-          onClick={() => navigate(-1)}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '8px',
-            display: 'flex',
-            alignItems: 'center'
+    <ReservationsPage narrow label={t('sharedProfile.agentVerification')}>
+      <PageHeader
+        title={t('sharedProfile.agentVerification')}
+        subtitle={t('verificationUI.subtitle')}
+        onBack={() => navigate(-1)}
+        backLabel={t('common.back')}
+      />
+
+      {/* Status: pill, progress, and the one next step */}
+      <section className="vf-status" aria-label={statusLabel}>
+        <div className="vf-status-top">
+          <span className="vf-pill" style={{ background: tone.bg, color: tone.text }}>
+            <span className="rsv-dot" style={{ background: tone.dot }} />
+            {statusLabel}
+          </span>
+          <span className="vf-step">{t('verificationUI.stepOf', { step, total: STEPS })}</span>
+        </div>
+        <div className="vf-track" role="progressbar" aria-valuemin={0} aria-valuemax={STEPS} aria-valuenow={step}>
+          {Array.from({ length: STEPS }, (_, index) => (
+            <span key={index} className={index < step ? 'is-done' : undefined} />
+          ))}
+        </div>
+        {!verification && !showInitForm && (
+          <>
+            <p className="vf-text">{t('verification.oneTimeVerificationFee')}</p>
+            <CardButton label={t('verificationUI.start')} icon={Shield} tone="primary" onClick={() => setShowInitForm(true)} block />
+          </>
+        )}
+        {canSubmitForReview && verification?.id && (
+          <CardButton label={t('verificationUI.submit')} icon={CheckCircle} tone="primary" onClick={() => submitForReview(verification.id)} block />
+        )}
+      </section>
+
+      {error && <p className="vf-error" role="alert">{error}</p>}
+
+      {showInitForm && (
+        <form
+          className="vf-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            handleInitialize()
           }}
         >
-          <ChevronLeft size={24} color={Colors.neutral[700]} />
-        </button>
-        <h1 style={{
-          fontSize: '20px',
-          fontWeight: '600',
-          color: Colors.neutral[900],
-          margin: 0
-        }}>
-          {t('profile.verification')}
-        </h1>
-      </div>
-
-      <div style={{ padding: '20px 16px' }}>
-        {!verification && (
-          <div style={{
-            backgroundColor: Colors.white,
-            borderRadius: '12px',
-            padding: '24px',
-            textAlign: 'center',
-            marginBottom: '20px',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
-          }}>
-            <Shield size={48} color={Colors.primary[600]} style={{ marginBottom: '16px' }} />
-            <h2 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: Colors.neutral[900],
-              marginBottom: '8px'
-            }}>
-              {t('verification.startVerificationProcess')}
-            </h2>
-            <p style={{
-              fontSize: '14px',
-              color: Colors.neutral[600],
-              marginBottom: '20px'
-            }}>
-              {t('verification.oneTimeVerificationFee')}
-            </p>
-            <button
-              onClick={() => setShowInitForm(true)}
-              style={{
-                padding: '12px 24px',
-                backgroundColor: Colors.primary[600],
-                color: Colors.white,
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer'
-              }}
-            >
-              {t('verification.initializeVerification')}
-            </button>
+          <h2 className="ds-set-title">{t('verification.businessInformation')}</h2>
+          <label className="vf-field">
+            <span>{t('form.realEstateBusinessName')}</span>
+            <input type="text" value={formData.businessName} onChange={(e) => setFormData((prev) => ({ ...prev, businessName: e.target.value }))} required />
+          </label>
+          <label className="vf-field">
+            <span>{t('form.businessAddress')}</span>
+            <input type="text" value={formData.businessAddress} onChange={(e) => setFormData((prev) => ({ ...prev, businessAddress: e.target.value }))} required />
+          </label>
+          <label className="vf-field">
+            <span>{t('form.yearsOfExperience')}</span>
+            <input type="number" min="0" value={formData.yearsOfExperience} onChange={(e) => setFormData((prev) => ({ ...prev, yearsOfExperience: e.target.value }))} required />
+          </label>
+          <div className="vf-actions">
+            <CardButton label={t('common.cancel')} tone="neutral" onClick={() => setShowInitForm(false)} />
+            <button type="submit" className="rsv-btn rsv-btn--primary">{t('verification.initializeVerification')}</button>
           </div>
-        )}
+        </form>
+      )}
 
-        {showInitForm && (
-          <div style={{
-            backgroundColor: Colors.white,
-            borderRadius: '12px',
-            padding: '20px',
-            marginBottom: '20px',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
-          }}>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: Colors.neutral[900],
-              marginBottom: '16px'
-            }}>
-              {t('verification.businessInformation')}
-            </h3>
+      {verification && verificationChecklist && (
+        <SettingsGroup title={t('verificationUI.checklist')}>
+          {verificationChecklist.map((item: any) => (
+            <SettingsRow
+              key={item.id}
+              icon={item.completed ? CheckCircle : Clock}
+              label={item.title}
+              detail={item.completed ? t('verificationUI.done') : item.required ? t('verificationUI.required') : undefined}
+              right={
+                !item.completed && item.id !== 'verification_fee' ? (
+                  <button type="button" className="vf-upload" onClick={() => handleDocumentUpload(item.id)} disabled={uploading}>
+                    <Upload size={15} aria-hidden="true" />
+                    {uploading ? t('common.uploading') : t('verificationUI.upload')}
+                  </button>
+                ) : undefined
+              }
+            />
+          ))}
+        </SettingsGroup>
+      )}
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: Colors.neutral[700],
-                marginBottom: '8px'
-              }}>
-                {t('form.realEstateBusinessName')}
-              </label>
-              <input
-                type="text"
-                value={formData.businessName}
-                onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: `1px solid ${Colors.neutral[300]}`,
-                  backgroundColor: Colors.white,
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  color: Colors.neutral[900],
-                  outline: 'none'
-                }}
-              />
-            </div>
+      <SettingsGroup title={t('verificationUI.whyVerify')}>
+        <SettingsRow icon={Shield} label={t('verificationUI.benefitBadge')} />
+        <SettingsRow icon={Star} label={t('verificationUI.benefitRanking')} />
+        <SettingsRow icon={Award} label={t('verificationUI.benefitFeatures')} />
+        <SettingsRow icon={Building} label={t('verificationUI.benefitSupport')} />
+      </SettingsGroup>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: Colors.neutral[700],
-                marginBottom: '8px'
-              }}>
-                {t('form.businessAddress')}
-              </label>
-              <input
-                type="text"
-                value={formData.businessAddress}
-                onChange={(e) => setFormData(prev => ({ ...prev, businessAddress: e.target.value }))}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: `1px solid ${Colors.neutral[300]}`,
-                  backgroundColor: Colors.white,
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  color: Colors.neutral[900],
-                  outline: 'none'
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: Colors.neutral[700],
-                marginBottom: '8px'
-              }}>
-                {t('form.yearsOfExperience')}
-              </label>
-              <input
-                type="number"
-                value={formData.yearsOfExperience}
-                onChange={(e) => setFormData(prev => ({ ...prev, yearsOfExperience: e.target.value }))}
-                min="0"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: `1px solid ${Colors.neutral[300]}`,
-                  backgroundColor: Colors.white,
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  color: Colors.neutral[900],
-                  outline: 'none'
-                }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={() => setShowInitForm(false)}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: Colors.neutral[200],
-                  color: Colors.neutral[700],
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                onClick={handleInitialize}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: Colors.primary[600],
-                  color: Colors.white,
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-              >
-                {t('verification.initializeVerification')}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {verification && (
-          <div>
-            <div style={{
-              backgroundColor: Colors.white,
-              borderRadius: '12px',
-              padding: '20px',
-              marginBottom: '20px',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '16px'
-              }}>
-                {getStatusIcon(verification.status || 'pending')}
-                <div>
-                  <h3 style={{
-                    fontSize: '18px',
-                    fontWeight: '600',
-                    color: Colors.neutral[900],
-                    margin: 0
-                  }}>
-                    {t('verification.verificationProgress')}
-                  </h3>
-                  <p style={{
-                    fontSize: '14px',
-                    color: Colors.neutral[600],
-                    margin: 0
-                  }}>
-                    Status: {verification.status || 'pending'}
-                  </p>
-                </div>
-              </div>
-
-              {verificationChecklist && (
-                <div>
-                  {verificationChecklist.map((item: any) => (
-                    <div
-                      key={item.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '12px',
-                        marginBottom: '8px',
-                        backgroundColor: Colors.neutral[50],
-                        borderRadius: '8px'
-                      }}
-                    >
-                      <span style={{
-                        fontSize: '14px',
-                        color: Colors.neutral[700]
-                      }}>
-                        {item.title}
-                      </span>
-                      {item.completed ? (
-                        <CheckCircle size={20} color={Colors.success[600]} />
-                      ) : (
-                        <button
-                          onClick={() => handleDocumentUpload(item.id)}
-                          disabled={uploading}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: Colors.primary[600],
-                            color: Colors.white,
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            fontWeight: '500',
-                            cursor: uploading ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            opacity: uploading ? 0.6 : 1
-                          }}
-                        >
-                          <Upload size={14} />
-                          {uploading ? t('common.uploading') : t('common.upload')}
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {canSubmitForReview && verification?.id && (
-                <button
-                  onClick={() => submitForReview(verification.id)}
-                  style={{
-                    width: '100%',
-                    marginTop: '16px',
-                    padding: '12px',
-                    backgroundColor: Colors.primary[600],
-                    color: Colors.white,
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {t('verification.submitForReview')}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+      <SettingsGroup title={t('verificationUI.badgeLevels')}>
+        <SettingsRow icon={Award} label={t('verificationUI.bronze')} detail={t('verificationUI.bronzeReq')} />
+        <SettingsRow icon={Award} label={t('verificationUI.silver')} detail={t('verificationUI.silverReq')} />
+        <SettingsRow icon={Award} label={t('verificationUI.gold')} detail={t('verificationUI.goldReq')} />
+        <SettingsRow icon={Award} label={t('verificationUI.platinum')} detail={t('verificationUI.platinumReq')} />
+      </SettingsGroup>
+    </ReservationsPage>
   )
 }

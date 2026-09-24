@@ -1,9 +1,19 @@
-.verification-container {
-  width: 100%;
-}
-
-@media (max-width: 768px) {
-  .verification-container {
-    padding: 16px 12px;
-  }
-}
+/* Agent verification on the design language (inside .rsv-page for tokens). */
+.vf-status { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; padding: 16px; background: var(--rsv-surface); border: 1px solid var(--rsv-line-soft); border-radius: 16px; }
+.vf-status-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.vf-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.vf-step { font-size: 12px; font-weight: 600; color: var(--rsv-faint); }
+.vf-track { display: flex; gap: 4px; }
+.vf-track > span { flex: 1; height: 5px; border-radius: 3px; background: var(--rsv-line); }
+.vf-track > span.is-done { background: var(--rsv-primary); }
+.vf-text { margin: 0; font-size: 14px; line-height: 1.45; color: var(--rsv-muted); }
+.vf-error { margin: 12px 0 0; font-size: 13px; color: var(--rsv-error); }
+.vf-form { display: flex; flex-direction: column; gap: 14px; margin-top: 24px; padding: 16px; background: var(--rsv-surface); border: 1px solid var(--rsv-line-soft); border-radius: 16px; }
+.vf-form .ds-set-title { margin: 0; }
+.vf-field { display: flex; flex-direction: column; gap: 6px; }
+.vf-field > span { font-size: 13px; font-weight: 600; color: var(--rsv-ink-2); }
+.vf-field input { min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--rsv-line); background: var(--rsv-surface); color: var(--rsv-ink); font: inherit; font-size: 15px; }
+.vf-field input:focus { outline: none; border-color: var(--rsv-primary); box-shadow: 0 0 0 3px var(--color-primary-100, #cce1ff); }
+.vf-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.vf-upload { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border: 0; border-radius: 10px; background: var(--rsv-primary-tint); color: var(--rsv-primary-ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.vf-upload:disabled { opacity: .6; cursor: progress; }

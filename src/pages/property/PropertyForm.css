@@ -264,3 +264,30 @@
     border-radius: 12px;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Design language: page header on the page background (24/700, left-aligned),
+   a centred 760 px column, one rounded surface per section, 48 px fields with
+   radius 12, flat primary button. !important only beats inline sizes/colours.
+   --------------------------------------------------------------------------- */
+.property-form-container { background: var(--color-neutral-50, #f9fafb) !important; }
+.property-form-header { background: var(--color-neutral-50, #f9fafb) !important; border-bottom: 0 !important; box-shadow: none; padding: 12px clamp(16px, 3vw, 32px) 8px !important; max-width: 760px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+.property-form-header > div:nth-of-type(1) { text-align: left !important; }
+.property-form-header h1 { font-size: clamp(22px, 3vw, 28px) !important; font-weight: 700 !important; letter-spacing: -0.02em; }
+.property-form-header p { font-size: 13px !important; }
+.property-form-header > div:last-child:not(:first-child) { background: var(--color-neutral-100, #f3f4f6) !important; border-radius: 12px !important; }
+.property-form-content { background: transparent !important; width: 100%; max-width: 760px; margin: 0 auto; padding: 4px clamp(16px, 3vw, 32px) 24px; box-sizing: border-box; }
+.form-section { background: var(--color-white, #fff) !important; border: 1px solid var(--color-neutral-100, #f3f4f6); border-radius: 16px; padding: 16px; margin: 12px 0 0; }
+.form-section > div:first-child > div:first-child { background: var(--color-neutral-100, #f3f4f6) !important; border-radius: 10px !important; padding: 6px !important; }
+.form-section h2 { font-weight: 700 !important; }
+.form-group { margin-bottom: 16px; }
+.form-group label { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.form-group input, .form-group select, .form-group textarea { min-height: 48px; border-radius: 12px; border-color: var(--color-neutral-200, #e5e7eb) !important; background-color: var(--color-white, #fff) !important; font-size: 15px; box-sizing: border-box; }
+.form-group textarea { min-height: 96px; line-height: 1.5; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--color-primary-600, #004aad) !important; box-shadow: 0 0 0 3px var(--color-primary-100, #cce1ff); }
+.image-upload-label { border-radius: 12px; }
+.image-preview-item, .image-preview-item img { border-radius: 12px; }
+.form-submit-section { background: var(--color-white, #fff); border-top: 1px solid var(--color-neutral-100, #f3f4f6); }
+.form-submit-btn { min-height: 48px; border-radius: 12px; font-size: 15px; font-weight: 700; background-color: var(--color-primary-600, #004aad); max-width: 760px; display: block; margin: 0 auto; }
+.form-submit-btn:hover:not(:disabled) { background-color: var(--color-primary-700, #003b8a); transform: none; box-shadow: none; }
+.success-message, .error-message { border-radius: 10px !important; border-left: 0 !important; }
