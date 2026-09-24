@@ -1,17 +1,14 @@
+import { TextInput, NumberInput, SelectInput, AutocompleteInput } from '../components/ShadcnInputs';
+import { AdminTable, AdminPagination } from '../components/AdminTable';
 import {
   List,
-  Datagrid,
   TextField,
   NumberField,
   DateField,
   Edit,
   SimpleForm,
-  TextInput,
-  NumberInput,
   ReferenceField,
   ReferenceInput,
-  AutocompleteInput,
-  SelectInput,
   Filter,
   useRecordContext,
 } from 'react-admin';
@@ -108,7 +105,7 @@ const ReviewCard = () => {
 };
 
 const ReviewDatagrid = () => (
-  <Datagrid rowClick="edit" bulkActionButtons={false}>
+  <AdminTable rowClick="edit" bulkActionButtons={false}>
     <ReferenceField source="property_id" reference="properties" label="Property" link={false}>
       <TextField source="title" />
     </ReferenceField>
@@ -119,11 +116,11 @@ const ReviewDatagrid = () => (
     <TextField source="comment" />
     <DateField source="created_at" />
     <DeleteButtonWithConfirm />
-  </Datagrid>
+  </AdminTable>
 );
 
 export const ReviewList = () => (
-  <List
+  <List pagination={<AdminPagination />} className="admin-resource-list"
     sort={{ field: 'created_at', order: 'DESC' }}
     filters={<ReviewFilter />}
     sx={{ '& .RaList-content': { boxShadow: 'none' } }}

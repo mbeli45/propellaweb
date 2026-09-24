@@ -1,15 +1,13 @@
+import { TextInput, AutocompleteInput } from '../components/ShadcnInputs';
+import { AdminTable, AdminPagination } from '../components/AdminTable';
 import {
   List,
-  Datagrid,
   TextField,
-  TextInput,
   DateField,
   BooleanField,
   ReferenceField,
   ReferenceInput,
-  AutocompleteInput,
   Filter,
-  ShowButton,
   useRecordContext,
 } from 'react-admin';
 
@@ -29,7 +27,7 @@ const NotificationFilter = (props: any) => (
 );
 
 export const NotificationList = () => (
-  <List
+  <List pagination={<AdminPagination />} className="admin-resource-list"
     sort={{ field: 'created_at', order: 'DESC' }}
     filters={<NotificationFilter />}
     sx={{
@@ -38,7 +36,7 @@ export const NotificationList = () => (
       },
     }}
   >
-    <Datagrid>
+    <AdminTable>
       <TextField source="id" label="ID" />
       <ReferenceField source="user_id" reference="profiles" label="User">
         <TextField source="full_name" />
@@ -48,7 +46,6 @@ export const NotificationList = () => (
       <TextField source="type" />
       <BooleanField source="read" />
       <DateField source="created_at" showTime />
-      <ShowButton />
-    </Datagrid>
+    </AdminTable>
   </List>
 );

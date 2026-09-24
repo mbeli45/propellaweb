@@ -1,17 +1,15 @@
+import { TextInput, NumberInput, SelectInput, AutocompleteInput } from '../components/ShadcnInputs';
+import { AdminTable, AdminPagination } from '../components/AdminTable';
+import { FinanceHeading } from '../components/FinanceHeading';
 import {
   List,
-  Datagrid,
   TextField,
   NumberField,
   DateField,
   Edit,
   SimpleForm,
-  SelectInput,
-  TextInput,
-  NumberInput,
   ReferenceField,
   ReferenceInput,
-  AutocompleteInput,
   Filter,
   useRecordContext,
   FunctionField,
@@ -105,7 +103,7 @@ const WithdrawalCard = () => {
 // ----- Desktop datagrid --------------------------------------------------
 
 const WithdrawalDatagrid = () => (
-  <Datagrid rowClick="edit" bulkActionButtons={false}>
+  <AdminTable rowClick="edit" bulkActionButtons={false}>
     <ReferenceField source="user_id" reference="profiles" label="User" link={false}>
       <TextField source="full_name" />
     </ReferenceField>
@@ -115,17 +113,18 @@ const WithdrawalDatagrid = () => (
     <TextField source="fapshi_reference" label="MeSomb / Fapshi ref" />
     <DateField source="requested_at" showTime />
     <DateField source="processed_at" showTime />
-  </Datagrid>
+  </AdminTable>
 );
 
 export const WithdrawalRequestList = () => (
-  <List
+  <List pagination={<AdminPagination />} className="admin-resource-list finance-list"
     sort={{ field: 'created_at', order: 'DESC' }}
     filterDefaultValues={{ status: 'pending' }}
     filters={<WithdrawalFilter />}
     sx={{ '& .RaList-content': { boxShadow: 'none' } }}
   >
-    <ResponsiveList desktop={<WithdrawalDatagrid />} card={<WithdrawalCard />} />
+
+    <FinanceHeading title="Withdrawal requests" description="Review payout requests and track processing. Pending requests are shown by default." />    <ResponsiveList desktop={<WithdrawalDatagrid />} card={<WithdrawalCard />} />
   </List>
 );
 

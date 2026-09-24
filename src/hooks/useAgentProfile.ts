@@ -33,6 +33,8 @@ interface AgentProperty {
   description?: string;
   price: number;
   location: string;
+  town?: string;
+  availability_confirmed_at?: string | null;
   type: 'rent' | 'sale';
   category: 'budget' | 'standard' | 'premium' | 'luxury';
   bedrooms?: number;
@@ -84,7 +86,7 @@ export function useAgentProfile(agentId: string): UseAgentProfileReturn {
         throw error;
       }
       
-      console.log('useAgentProfile: Agent data fetched:', data);
+
       return data;
     } catch (err: any) {
       console.error('useAgentProfile: Error fetching agent:', err);
@@ -133,7 +135,7 @@ export function useAgentProfile(agentId: string): UseAgentProfileReturn {
       const { data, error } = await supabase
         .from('properties')
         .select(`
-          id, title, description, price, location, type, category,
+          id, title, description, price, location, town, availability_confirmed_at, type, category,
           bedrooms, bathrooms, area, amenities, images, status,
           reservation_fee, rent_period, advance_months_min, advance_months_max,
           owner_id, created_at

@@ -95,7 +95,7 @@ export function DataTable<T extends Record<string, any>>({
             size="small"
             placeholder={searchPlaceholder}
             value={globalFilter ?? ''}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+            onChange={(e) => { setGlobalFilter(e.target.value); setPage(0); }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -106,7 +106,8 @@ export function DataTable<T extends Record<string, any>>({
                 <InputAdornment position="end">
                   <IconButton
                     size="small"
-                    onClick={() => setGlobalFilter('')}
+                    aria-label="Clear search"
+                    onClick={() => { setGlobalFilter(''); setPage(0); }}
                     sx={{ color: Colors.neutral[400] }}
                   >
                     <Icon icon="lucide:x" width={18} />
@@ -125,14 +126,20 @@ export function DataTable<T extends Record<string, any>>({
       )}
 
       <TableContainer
+        tabIndex={0}
+        role="region"
+        aria-label="Scrollable results"
         component={Paper}
         sx={{
           borderRadius: 2,
           border: `1px solid ${Colors.neutral[200]}`,
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+          boxShadow: 'none',
+          maxHeight: '60dvh',
+          overflow: 'auto',
+          overscrollBehavior: 'contain',
         }}
       >
-        <Table>
+        <Table stickyHeader>
           <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow

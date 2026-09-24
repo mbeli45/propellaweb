@@ -101,12 +101,10 @@ export const adminTheme = createTheme({
         },
       },
     },
-    // No rounded corners anywhere in admin — tables, list wrappers, drawer.
-    // The user-facing app still uses its own theme with rounded cards.
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 0,
+          borderRadius: 16,
           boxShadow: 'none',
           border: `1px solid ${Colors.neutral[200]}`,
         },
@@ -115,7 +113,7 @@ export const adminTheme = createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: 0,
+          borderRadius: 16,
           boxShadow: 'none',
           '& .RaSimpleForm-form': {
             '@media (max-width: 768px)': {
@@ -254,8 +252,12 @@ export const adminTheme = createTheme({
       },
     },
     MuiDialog: {
+      defaultProps: { fullWidth: true, maxWidth: 'sm', scroll: 'paper' },
       styleOverrides: {
         paper: {
+          borderRadius: 16,
+          maxHeight: 'calc(100dvh - 48px)',
+          boxShadow: '0 24px 80px rgba(12,35,69,0.22)',
           '@media (max-width: 768px)': {
             margin: '16px',
             maxWidth: 'calc(100% - 32px)',
@@ -263,6 +265,9 @@ export const adminTheme = createTheme({
         },
       },
     },
+    MuiDialogTitle: { styleOverrides: { root: { padding: '22px 24px 18px', fontSize: '1.125rem', fontWeight: 700, borderBottom: '1px solid #e4eaf2' } } },
+    MuiDialogContent: { styleOverrides: { root: { padding: '24px', overscrollBehavior: 'contain', '&.MuiDialogContent-root': { paddingTop: 20 } } } },
+    MuiDialogActions: { styleOverrides: { root: { padding: '16px 24px', gap: 8, borderTop: '1px solid #e4eaf2', flexShrink: 0 } } },
     MuiTableContainer: {
       styleOverrides: {
         root: {

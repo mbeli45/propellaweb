@@ -13,6 +13,7 @@ import { Plus, BarChart3, Home, Users, Calendar, RefreshCw } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { confirmPropertyAvailability } from '@/hooks/usePropertyAvailability'
 import './Listings.css'
+import { PropertyCardSkeleton } from '@/components/skeletons'
 
 export default function AgentListings() {
   const { user } = useAuth()
@@ -457,9 +458,7 @@ export default function AgentListings() {
 
       {/* Content */}
       {loading && filteredProperties.length === 0 && !hasPendingCards && (
-        <div style={{ textAlign: 'center', padding: '40px', color: Colors.neutral[600] }}>
-          {t('agent.loadingYourProperties')}...
-        </div>
+        <PropertyCardSkeleton count={6} />
       )}
 
       {error && (

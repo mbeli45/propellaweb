@@ -7,6 +7,7 @@ import { getColors } from '@/constants/Colors'
 import { supabase } from '@/lib/supabase'
 import AddProperty from '../add'
 import './Edit.css'
+import { FormSkeleton } from '@/components/skeletons'
 
 export default function EditProperty() {
   const { id: propertyId } = useParams<{ id: string }>()
@@ -60,19 +61,7 @@ export default function EditProperty() {
   }, [propertyId, user?.id])
 
   if (loading) {
-    return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        backgroundColor: Colors.neutral[50]
-      }}>
-        <div style={{ textAlign: 'center', color: Colors.neutral[600] }}>
-          {t('common.loading')}...
-        </div>
-      </div>
-    )
+    return <FormSkeleton fields={6} />
   }
 
   if (error || !property) {

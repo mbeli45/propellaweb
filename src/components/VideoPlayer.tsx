@@ -47,6 +47,8 @@ export default function VideoPlayer({
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
+    // Restore the selected source after effect cleanup (including StrictMode).
+    video.src = src
 
     const updateTime = () => setCurrentTime(video.currentTime)
     const updateDuration = () => setDuration(video.duration)
@@ -73,13 +75,16 @@ export default function VideoPlayer({
     }
 
     return () => {
+      video.pause()
+      video.removeAttribute('src')
+      video.load()
       video.removeEventListener('timeupdate', updateTime)
       video.removeEventListener('loadedmetadata', updateDuration)
       video.removeEventListener('play', handlePlay)
       video.removeEventListener('pause', handlePause)
       video.removeEventListener('ended', handleEnded)
     }
-  }, [autoPlay])
+  }, [autoPlay, src])
 
   useEffect(() => {
     if (isFullscreen) {
@@ -176,7 +181,7 @@ export default function VideoPlayer({
           objectFit: 'contain',
         }}
         playsInline
-        preload="metadata"
+        preload="none"
         controls={false}
         onClick={(e) => {
           // On mobile, clicking video toggles play/pause

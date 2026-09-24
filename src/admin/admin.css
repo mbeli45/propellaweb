@@ -1,0 +1,184 @@
+.admin-navigation { display:flex; flex-direction:column; height:100%; min-height:0; padding:24px 14px 14px; box-sizing:border-box; font-family:inherit; }
+.admin-brand { display:flex; align-items:center; gap:12px; padding:0 12px 25px; color:#fff; text-decoration:none; font-size:23px; font-weight:750; letter-spacing:-.6px; }
+.admin-brand img { border-radius:10px; }
+.admin-brand small { display:block; margin-top:4px; color:#a4b8d6; font-size:9px; font-weight:600; letter-spacing:1.7px; }
+.admin-navigation .admin-drawer-close { position:absolute; right:8px; top:12px; color:#c4d2e6; }
+.admin-nav-search { display:flex; align-items:center; gap:8px; margin:0 4px 22px; padding:10px; border:1px solid #334965; border-radius:9px; color:#a4b8d6; background:#162e50; }
+.admin-nav-search input { width:100%; min-width:0; border:0; outline:0; background:transparent; color:#fff; font:inherit; font-size:12px; }
+.admin-nav-search input::placeholder { color:#b0bfd5; }
+.admin-nav-search:focus-within { border-color:#75adff; }
+.admin-nav-search button,.admin-nav-footer button { display:grid; place-items:center; border:0; padding:0; background:transparent; color:inherit; cursor:pointer; }
+.admin-nav-scroll { flex:1; min-height:0; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#334965 transparent; }
+.admin-nav-group { margin-bottom:22px; }
+.admin-nav-group h2 { margin:0 12px 9px; color:#9eafc8; font-size:10px; letter-spacing:1.3px; text-transform:uppercase; font-weight:650; }
+.admin-nav-link { display:flex; position:relative; align-items:center; gap:12px; min-height:42px; box-sizing:border-box; padding:9px 12px; margin:3px 0; border-radius:9px; color:#c4d2e6; font-size:13px; font-weight:500; text-decoration:none; transition:background .15s,color .15s; }
+.admin-nav-link svg { flex-shrink:0; }
+.admin-nav-link:hover { background:#1b365a; color:#fff; }
+.admin-nav-link.is-active { background:#0069ff; color:#fff; box-shadow:0 4px 12px #001b4930; }
+.admin-nav-link span { flex:1; }
+.admin-queue-count { border-radius:6px; background:#ffffff18; color:#fff; padding:2px 6px; font-size:10px; font-weight:600; }
+.admin-queue-dot { position:absolute; right:8px; top:8px; width:6px; height:6px; background:#ffcc80; border-radius:50%; }
+.admin-nav-empty { color:#c4d2e6; font-size:13px; padding:12px; line-height:1.6; }
+.admin-nav-footer { display:flex; align-items:center; justify-content:space-between; gap:4px; border-top:1px solid #ffffff16; padding:16px 6px 0; color:#b0bfd5; }
+.admin-nav-footer>div { display:flex; align-items:center; gap:8px; }
+.admin-nav-footer span { font-size:11px; font-weight:600; }
+.admin-nav-footer small { display:block; margin-top:4px; color:#9eafc8; font-size:9px; font-weight:400; }
+.admin-nav-footer button { min-width:32px; min-height:36px; border-radius:8px; }
+.admin-nav-footer button:hover { background:#1b365a; color:#fff; }
+.is-compact .admin-brand { padding:0 8px 26px; }
+.is-compact .admin-nav-link { justify-content:center; padding:12px; }
+.is-compact .admin-nav-group { padding-bottom:12px; border-bottom:1px solid #ffffff12; margin-bottom:12px; }
+.is-compact .admin-nav-footer { justify-content:center; }
+.admin-topbar { position:fixed; right:0; top:0; z-index:1100; height:72px; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 32px; background:#fff; border-bottom:1px solid #e5eaf2; box-sizing:border-box; }
+.admin-topbar-context,.admin-topbar-actions { display:flex; align-items:center; gap:16px; }
+.admin-topbar-context strong { color:#20324c; font-size:13px; font-weight:650; }
+.admin-breadcrumb { color:#718096; font-size:12px; }
+.admin-breadcrumb span { margin:0 14px; color:#b7c2d1; }
+.admin-app-link { display:flex; align-items:center; gap:7px; border:1px solid #e1e7ef; background:#fff; color:#425570; border-radius:8px; padding:9px 12px; font:inherit; font-size:12px; cursor:pointer; }
+.admin-app-link:hover { background:#f0f6ff; border-color:#a9ccff; color:#004aad; }
+.admin-main { padding:104px 32px 40px; min-width:0; }
+.admin-page-content { max-width:1600px; margin:0 auto; min-width:0; }
+.admin-skip-link { position:fixed; top:-60px; left:12px; z-index:1500; background:#fff; color:#004aad; padding:12px; border-radius:8px; }
+.admin-skip-link:focus { top:12px; }
+.admin-navigation a:focus-visible,.admin-navigation button:focus-visible,.admin-app-link:focus-visible { outline:2px solid #75adff; outline-offset:3px; }
+.admin-dashboard-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:28px; }
+.admin-dashboard-heading h1 { color:#132b4d; font-size:clamp(24px,2.2vw,32px); letter-spacing:-1px; font-weight:750; line-height:1.2; margin:8px 0 10px; }
+.admin-dashboard-heading p { color:#6b7b91; margin:0; font-size:13px; }
+.admin-dashboard-eyebrow { color:#004aad; text-transform:uppercase; letter-spacing:1.5px; font-size:10px; font-weight:750; }
+.admin-dashboard-links { display:flex; flex-wrap:wrap; gap:10px; }
+.propella-admin .admin-stat-card { background:linear-gradient(135deg,#fff 70%,#f3f7ff); }
+.propella-admin .admin-stat-card .MuiCardContent-root { padding:24px; }
+.propella-admin .admin-stat-card h4 { font-size:clamp(23px,2vw,30px); letter-spacing:-.7px; overflow-wrap:anywhere; }
+.propella-admin .RaList-main,.propella-admin .RaEdit-main { min-width:0; }
+.propella-admin .RaList-content { border:1px solid #e4eaf2; overflow:hidden; }
+.propella-admin .RaList-actions { margin-bottom:14px; gap:8px; }
+.propella-admin .MuiTableCell-body { padding-top:17px; padding-bottom:17px; border-color:#edf1f6; font-size:13px; }
+.propella-admin .MuiTableRow-hover:hover { background:#f5f9ff; }
+.propella-admin .MuiTablePagination-root { border-top:1px solid #edf1f6; }
+.propella-admin .admin-detail-hero { padding:24px; background:#fff; border:1px solid #e4eaf2; border-radius:16px; }
+@media(max-width:1100px) { .admin-dashboard-heading { align-items:flex-start; flex-direction:column; } }
+@media(max-width:900px) { .admin-topbar { padding:0 16px; height:64px; } .admin-main { padding:88px 16px 28px; } .admin-breadcrumb { display:none; } .admin-topbar-context,.admin-topbar-actions { gap:8px; } }
+@media(max-width:480px) { .admin-app-link span { display:none; } .admin-app-link { padding:9px; } .admin-dashboard-links { width:100%; } .admin-dashboard-links .MuiButton-root { flex:1; padding:9px 12px; } .propella-admin .admin-detail-hero { padding:18px; } }
+@media(prefers-reduced-motion:reduce) { .admin-nav-link { transition:none; } }
+
+/* The overview is one workspace, with dividers instead of nested cards. */
+.propella-admin .admin-resource-list .RaList-actions { display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; gap:12px; min-height:0; }
+.propella-admin .admin-resource-list .RaList-actions>form { display:flex; flex:1 1 420px; flex-wrap:wrap; align-items:center; gap:12px; padding:0; margin:0; min-height:0; }
+.propella-admin .admin-resource-list .RaList-actions>span { display:none; }
+.propella-admin .admin-resource-list .RaList-actions .RaTopToolbar-root { min-height:42px; padding:0; margin:0; align-items:center; }
+.admin-table { display:flex; flex-direction:column; min-height:0; min-width:0; flex:1; background:#fff; }
+.admin-table-tools { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 18px; border-bottom:1px solid #e7edf4; color:#65758a; font-size:12px; flex-shrink:0; }
+.admin-table-tools>div { display:flex; align-items:center; gap:8px; }
+.admin-table button,.admin-table-pagination button,.admin-column-menu summary { font:inherit; font-size:12px; border:1px solid #e1e7ef; background:#fff; color:#344b68; border-radius:6px; padding:7px 10px; cursor:pointer; }
+.admin-table button:hover,.admin-table-pagination button:hover { background:#edf4ff; }
+.admin-table button:focus-visible,.admin-table-pagination button:focus-visible,.admin-column-menu summary:focus-visible { outline:2px solid #0069ff; outline-offset:2px; }
+.admin-column-menu { position:relative; }
+.admin-column-menu>div { position:absolute; right:0; top:38px; z-index:8; min-width:210px; max-height:300px; overflow:auto; padding:10px; border:1px solid #e1e7ef; background:#fff; box-shadow:0 12px 32px #10284b20; border-radius:8px; }
+.admin-column-menu label { display:flex; align-items:center; gap:8px; padding:8px; white-space:nowrap; }
+.admin-table-scroll { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; max-height:60dvh; }
+.admin-table table { width:100%; border-collapse:separate; border-spacing:0; text-align:left; font-size:13px; }
+.admin-table th { position:sticky; top:0; z-index:2; background:#f7f9fc; color:#63748b; border-bottom:1px solid #dfe7f0; padding:12px 16px; white-space:nowrap; font-size:11px; font-weight:650; }
+.admin-table th button { display:flex; align-items:center; gap:12px; padding:0; border:0; background:transparent; color:inherit; font-weight:650; }
+.admin-table th button span { color:#0069ff; }
+.admin-table td { padding:15px 16px; border-bottom:1px solid #edf1f6; max-width:320px; overflow-wrap:anywhere; color:#243b58; }
+.admin-table .is-clickable { cursor:pointer; }
+.admin-table tbody tr:hover { background:#f5f9ff; }
+.admin-table.is-dense td { padding-block:8px; }
+.admin-table input[type=checkbox] { accent-color:#0069ff; }
+.admin-table .RaNumberField-root { font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600; }
+.admin-table .MuiChip-root { border-radius:5px; font-size:11px; }
+.admin-table .admin-row-open { border:0; color:#0069ff; font-size:18px; }
+.admin-table-empty { padding:48px 20px; text-align:center; color:#718096; }
+.admin-table-pagination { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding:14px 18px; background:#fff; border-top:1px solid #e4eaf2; font-size:12px; color:#63748b; flex-shrink:0; }
+.admin-table-pagination label,.admin-table-pagination>div { display:flex; align-items:center; gap:12px; }
+.admin-table-pagination select { border:1px solid #e1e7ef; border-radius:6px; padding:6px 10px; background:#fff; color:#243b58; }
+.admin-table-pagination button:disabled { opacity:.4; cursor:default; }
+.admin-visually-hidden { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+@media(min-width:901px) and (min-height:650px) { .admin-page-content>.admin-resource-list .admin-table-scroll { max-height:none; } }
+.propella-admin .admin-resource-list .RaFilterForm-form { gap:12px; align-items:center; }
+.propella-admin .admin-resource-list .filter-field { align-items:center; margin:0; }
+.propella-admin .admin-resource-list .filter-field .MuiFormControl-root { width:220px; min-width:0; margin:0; }
+.propella-admin .admin-resource-list .filter-field .MuiInputBase-root { min-height:42px; height:42px; border-radius:8px; font-size:13px; }
+.propella-admin .admin-resource-list .filter-field .MuiAutocomplete-inputRoot { padding-block:0; }
+.propella-admin .admin-resource-list .filter-field .MuiInputBase-input { box-sizing:border-box; padding-block:10px; }
+.propella-admin .admin-resource-list .filter-field .MuiInputLabel-root:not(.MuiInputLabel-shrink) { transform:translate(14px,11px) scale(1); font-size:13px; }
+.propella-admin .admin-resource-list .RaFilterFormInput-spacer { display:none; }
+.propella-admin .admin-resource-list .RaFilterFormInput-hideButton { margin-bottom:0; }
+@media(max-width:600px) { .propella-admin .admin-resource-list .filter-field,.propella-admin .admin-resource-list .filter-field .MuiFormControl-root { width:100%; } }
+.propella-admin .admin-main { height:100dvh; box-sizing:border-box; overflow:auto; scrollbar-gutter:stable; }
+.admin-page-content { width:100%; }
+.propella-admin .admin-resource-list { min-width:0; }
+.propella-admin .RaList-content { border-radius:10px; box-shadow:none; }
+.propella-admin .RaList-actions { align-items:center; gap:12px; flex-wrap:wrap; padding:0; margin-bottom:16px; }
+.propella-admin .RaFilterForm-form { align-items:flex-start; gap:8px; flex-wrap:wrap; }
+.propella-admin .admin-resource-list .MuiInputBase-root { background:#fff; font-size:13px; border-radius:8px; }
+.propella-admin .RaDatagrid-root { min-width:0; }
+.propella-admin .RaDatagrid-tableWrapper { overflow:auto; max-height:60dvh; overscroll-behavior:contain; scrollbar-gutter:stable; }
+.propella-admin .RaDatagrid-table { border-collapse:separate; border-spacing:0; }
+.propella-admin .RaDatagrid-thead .MuiTableCell-root { position:sticky; top:0; z-index:2; background:#f8fafc; font-size:12px; text-transform:none; letter-spacing:0; white-space:nowrap; border-bottom:1px solid #e4eaf2; }
+.propella-admin .RaDatagrid-rowCell { max-width:340px; overflow-wrap:anywhere; }
+.propella-admin .RaDatagrid-rowCell .RaNumberField-root { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.propella-admin .RaDatagrid-rowCell .MuiChip-root { border-radius:5px; font-size:11px; }
+.propella-admin .admin-resource-list .MuiTablePagination-root { flex-shrink:0; background:#fff; }
+.propella-admin .RaSimpleForm-form { padding:24px; gap:8px; }
+.propella-admin .RaEdit-main,.propella-admin .RaCreate-main { max-width:1200px; margin-inline:auto; }
+.propella-admin .RaToolbar-root { position:sticky; bottom:0; z-index:3; border-top:1px solid #e4eaf2; background:#fff; gap:12px; }
+@media(min-width:901px) and (min-height:650px) {
+  .admin-page-content:has(>.admin-resource-list) { height:100%; display:flex; flex-direction:column; min-height:0; }
+  .admin-page-content>.admin-section-header { flex-shrink:0; }
+  .admin-page-content>.admin-resource-list { flex:1; min-height:0; display:flex; flex-direction:column; }
+  .admin-page-content>.admin-resource-list .RaList-main { flex:1; min-height:0; display:flex; flex-direction:column; }
+  .admin-page-content>.admin-resource-list .RaList-content { flex:1; min-height:0; display:flex; flex-direction:column; }
+  .admin-page-content>.admin-resource-list .RaDatagrid-root { flex:1; min-height:0; display:flex; flex-direction:column; }
+  .admin-page-content>.admin-resource-list .RaDatagrid-tableWrapper { flex:1; min-height:0; max-height:none; }
+  .admin-page-content>.admin-resource-list .finance-heading { flex-shrink:0; }
+}
+.admin-section-header { margin-bottom:20px; }
+.admin-section-header h1 { color:#132b4d; font-size:26px; font-weight:700; letter-spacing:-.6px; margin:0 0 8px; }
+.admin-section-header p { color:#6b7b91; font-size:13px; margin:0 0 22px; line-height:1.6; }
+.admin-section-tabs { display:flex; gap:26px; overflow-x:auto; border-bottom:1px solid #e4eaf2; }
+.admin-section-tabs a { display:flex; align-items:center; gap:8px; flex-shrink:0; padding:12px 0; border-bottom:2px solid transparent; color:#63748b; text-decoration:none; font-size:13px; font-weight:600; }
+.admin-section-tabs a:hover { color:#004aad; }
+.admin-section-tabs a.is-active { color:#004aad; border-bottom-color:#0069ff; }
+.admin-section-tabs a:focus-visible { outline:2px solid #0069ff; outline-offset:-2px; }
+.admin-section-tabs span { padding:2px 6px; border-radius:5px; font-size:11px; background:#e8f0ff; color:#004aad; }
+.finance-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:20px 22px; border-bottom:1px solid #e4eaf2; }
+.finance-heading h2 { margin:0 0 6px; font-size:17px; font-weight:650; color:#20324c; }
+.finance-heading p { margin:0; color:#6b7b91; font-size:12px; line-height:1.6; }
+.finance-heading>span { font-size:12px; color:#6b7b91; white-space:nowrap; padding-top:3px; }
+.propella-admin .finance-list .RaList-content { border-radius:10px; box-shadow:none; }
+.propella-admin .finance-list .RaList-actions { align-items:center; flex-wrap:wrap; gap:12px; padding:0; margin-bottom:16px; }
+.propella-admin .finance-list .RaFilterForm-form { align-items:flex-start; gap:8px; flex-wrap:wrap; padding:0; }
+.propella-admin .finance-list .MuiInputBase-root { background:#fff; font-size:13px; border-radius:8px; }
+.propella-admin .finance-list .MuiTableCell-head { background:#f8fafc; text-transform:none; letter-spacing:0; font-size:12px; padding:13px 16px; white-space:nowrap; }
+.propella-admin .finance-list .MuiTableCell-body { padding:16px; vertical-align:middle; }
+.propella-admin .finance-list .RaNumberField-root { font-variant-numeric:tabular-nums; font-weight:600; white-space:nowrap; }
+.propella-admin .finance-list .column-reference,.propella-admin .finance-list .column-fapshi_reference { max-width:190px; overflow-wrap:anywhere; color:#6b7b91; font-size:12px; }
+.propella-admin .finance-list .MuiChip-root { border-radius:5px; font-size:11px; height:24px; }
+.propella-admin .finance-list .MuiTablePagination-root { color:#6b7b91; }
+.propella-admin .finance-edit .RaSimpleForm-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 24px; padding:24px; }
+.finance-edit-title { grid-column:1/-1; margin:0 0 16px; font-size:20px; color:#20324c; }
+.propella-admin .finance-edit .RaSimpleForm-form>.MuiFormControl-fullWidth { grid-column:1/-1; }
+@media(max-width:768px) { .finance-heading { flex-direction:column; gap:8px; padding:16px; } .propella-admin .finance-list .RaList-content>.MuiStack-root { gap:0; padding:0 16px; } .propella-admin .finance-list .MuiCard-root { border:0; border-bottom:1px solid #e4eaf2; border-radius:0; } .propella-admin .finance-list .MuiCardContent-root { padding:16px 0; } .propella-admin .finance-edit .RaSimpleForm-form { grid-template-columns:minmax(0,1fr); padding:16px; } }
+.propella-admin:has(.admin-dashboard) { background:#fff; }
+.admin-dashboard-heading { margin-bottom:24px; }
+.admin-dashboard-heading h1 { font-size:26px; letter-spacing:-.6px; }
+.admin-dashboard-eyebrow { display:none; }
+.admin-metrics-strip { padding:20px 0; border-top:1px solid #e4eaf2; border-bottom:1px solid #e4eaf2; }
+.propella-admin .admin-metrics-strip .admin-stat-card { background:transparent; border:0; border-radius:0; box-shadow:none; overflow:visible; }
+.propella-admin .admin-metrics-strip .admin-stat-card + .admin-stat-card { border-left:1px solid #e4eaf2; }
+.propella-admin .admin-metrics-strip .MuiCardContent-root { padding:0 24px; }
+.propella-admin .admin-metrics-strip .admin-stat-card:first-child .MuiCardContent-root { padding-left:0; }
+.propella-admin .admin-metrics-strip .MuiAvatar-root { display:none; }
+.propella-admin .admin-metrics-strip .MuiTypography-caption { text-transform:none; letter-spacing:0; font-weight:500; }
+.propella-admin .admin-metrics-strip h4 { font-size:28px; }
+.propella-admin .admin-dashboard-section { background:transparent; border:0; border-radius:0; box-shadow:none; }
+.propella-admin .admin-dashboard-section>.MuiCardContent-root { padding:0; }
+.admin-operations { padding:4px 0 24px; }
+.propella-admin .admin-attention-section { padding-left:24px; border-left:1px solid #e4eaf2; }
+.propella-admin .admin-attention-section>.MuiCardContent-root>.MuiStack-root { gap:0; }
+.propella-admin .admin-recent-section { padding-top:24px; border-top:1px solid #e4eaf2; margin-top:0; }
+.admin-dashboard-section .MuiAvatar-root { background:transparent; width:24px; height:28px; }
+@media(max-width:1023px) { .propella-admin .admin-attention-section { border-left:0; border-top:1px solid #e4eaf2; padding:20px 0 0; } }
+@media(min-width:600px) and (max-width:1023px) { .propella-admin .admin-metrics-strip .admin-stat-card:nth-child(3) { border-left:0; } .propella-admin .admin-metrics-strip .admin-stat-card:nth-child(n+3) { margin-top:24px; } .propella-admin .admin-metrics-strip .admin-stat-card:nth-child(3) .MuiCardContent-root { padding-left:0; } }
+@media(max-width:599px) { .admin-metrics-strip { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)) !important; row-gap:22px !important; } .propella-admin .admin-metrics-strip .MuiCardContent-root { padding:0 12px; } .propella-admin .admin-metrics-strip .admin-stat-card:nth-child(3) { border-left:0; } .propella-admin .admin-metrics-strip .admin-stat-card:nth-child(3) .MuiCardContent-root { padding-left:0; } .propella-admin .admin-metrics-strip h4 { font-size:23px; } }

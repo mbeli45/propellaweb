@@ -8,6 +8,7 @@ import { useAgentVerification } from '@/hooks/useAgentVerification'
 import { ArrowLeft, Shield, CheckCircle, Clock, XCircle, Upload, Eye, Trash2, CreditCard } from 'lucide-react'
 import { useStorage } from '@/hooks/useStorage'
 import './Verification.css'
+import { FormSkeleton } from '@/components/skeletons'
 
 export default function ProfileVerification() {
   const { user } = useAuth()
@@ -113,19 +114,7 @@ export default function ProfileVerification() {
   }
 
   if (loading) {
-    return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        backgroundColor: Colors.neutral[50]
-      }}>
-        <div style={{ textAlign: 'center', color: Colors.neutral[600] }}>
-          {t('common.loading')}...
-        </div>
-      </div>
-    )
+    return <FormSkeleton fields={4} />
   }
 
   return (

@@ -10,6 +10,7 @@ import { useBadgeCounts } from '@/hooks/useBadgeCounts'
 import { Search, X, MessageCircle, CheckCircle2, MoreVertical } from 'lucide-react'
 import ChatDetail from '@/pages/chat/[id]'
 import './Messages.css'
+import { MessageListSkeleton } from '@/components/skeletons'
 
 export default function UserMessages() {
   const { id: selectedChatId } = useParams<{ id?: string }>()
@@ -208,9 +209,7 @@ export default function UserMessages() {
         {/* Conversations List */}
         <div className="messages-content">
           {loading && (
-            <div style={{ padding: '40px', textAlign: 'center', color: Colors.neutral[600] }}>
-              {t('common.loading')}...
-            </div>
+            <MessageListSkeleton count={6} />
           )}
 
           {error && (

@@ -1,15 +1,13 @@
+import { TextInput, SelectInput, BooleanInput } from '../components/ShadcnInputs';
+import { AdminTable, AdminPagination } from '../components/AdminTable';
 import {
   List,
-  Datagrid,
   TextField,
   EmailField,
   DateField,
   BooleanField,
   Edit,
   SimpleForm,
-  TextInput,
-  SelectInput,
-  BooleanInput,
   Filter,
   useRecordContext,
   FunctionField,
@@ -156,7 +154,7 @@ const ProfileCard = () => {
 };
 
 const ProfileDatagrid = () => (
-  <Datagrid rowClick="edit" bulkActionButtons={false}>
+  <AdminTable rowClick="edit" bulkActionButtons={false}>
     <FunctionField label="" render={() => <UserAvatar />} />
     <TextField source="full_name" />
     <EmailField source="email" />
@@ -167,11 +165,11 @@ const ProfileDatagrid = () => (
     <BooleanField source="is_admin" label="Admin" />
     <DateField source="created_at" />
     <DeleteUserButton />
-  </Datagrid>
+  </AdminTable>
 );
 
 export const ProfileList = () => (
-  <List
+  <List pagination={<AdminPagination />} className="admin-resource-list"
     sort={{ field: 'created_at', order: 'DESC' }}
     filters={<ProfileFilter />}
     sx={{ '& .RaList-content': { boxShadow: 'none' } }}

@@ -1,15 +1,13 @@
+import { TextInput, AutocompleteInput } from '../components/ShadcnInputs';
+import { AdminTable, AdminPagination } from '../components/AdminTable';
 import {
   List,
-  Datagrid,
   TextField,
-  TextInput,
   NumberField,
   DateField,
   ReferenceField,
   ReferenceInput,
-  AutocompleteInput,
   Filter,
-  ShowButton,
   useRecordContext,
 } from 'react-admin';
 
@@ -36,7 +34,7 @@ const PropertyViewFilter = (props: any) => (
 );
 
 export const PropertyViewList = () => (
-  <List
+  <List pagination={<AdminPagination />} className="admin-resource-list"
     sort={{ field: 'created_at', order: 'DESC' }}
     filters={<PropertyViewFilter />}
     sx={{
@@ -45,7 +43,7 @@ export const PropertyViewList = () => (
       },
     }}
   >
-    <Datagrid>
+    <AdminTable>
       <TextField source="id" label="ID" />
       <ReferenceField source="property_id" reference="properties" label="Property">
         <TextField source="title" />
@@ -56,7 +54,6 @@ export const PropertyViewList = () => (
       <TextField source="source" />
       <TextField source="device_type" />
       <DateField source="created_at" showTime />
-      <ShowButton />
-    </Datagrid>
+    </AdminTable>
   </List>
 );

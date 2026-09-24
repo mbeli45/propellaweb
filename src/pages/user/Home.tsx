@@ -10,11 +10,12 @@ import { useAgentVerification } from '@/hooks/useAgentVerification'
 import SearchBar from '@/components/SearchBar'
 import FilterModal, { FilterOptions, MAX_PRICE } from '@/components/FilterModal'
 import PropertyCard from '@/components/PropertyCard'
-import PropertyListSkeleton from '@/components/PropertyListSkeleton'
 import PropertyFeedView from '@/components/PropertyFeedView'
 import { MapPin, ArrowRight, Star, User as UserIcon, LayoutGrid, Compass } from 'lucide-react'
 import './Home.css'
+import '../HomeBrowse.css'
 import { POPULAR_TOWNS } from '@/utils/towns'
+import { PropertyCardSkeleton } from '@/components/skeletons'
 
 export default function UserHome() {
   const { user } = useAuth()
@@ -184,25 +185,25 @@ export default function UserHome() {
   return (
     <div className="home-container" style={{ backgroundColor: Colors.neutral[100] }}>
       {/* Welcome Section */}
-      <div className="welcome-section" style={{ 
+      <div className="welcome-section" style={{
         backgroundColor: Colors.white,
         borderBottom: `1px solid ${Colors.neutral[200]}`,
         padding: '14px 16px',
         marginBottom: '2px'
       }}>
-        <h1 style={{ 
-          fontSize: '20px', 
-          fontWeight: '700', 
-          color: Colors.neutral[900], 
+        <h1 style={{
+          fontSize: '20px',
+          fontWeight: '700',
+          color: Colors.neutral[900],
           marginBottom: '4px',
           fontFamily: 'Inter-Bold',
           margin: 0
         }}>
           {t('home.welcomeBack', { name: user?.full_name?.split(' ')[0] || t('common.user') })}
         </h1>
-        <p style={{ 
-          fontSize: '14px', 
-          color: Colors.neutral[600], 
+        <p style={{
+          fontSize: '14px',
+          color: Colors.neutral[600],
           fontFamily: 'Inter-Regular',
           margin: 0
         }}>
@@ -317,8 +318,8 @@ export default function UserHome() {
                 >
                   <div style={{ position: 'relative', marginBottom: '8px' }}>
                     {agent.avatar_url ? (
-                      <img 
-                        src={agent.avatar_url} 
+                      <img
+                        src={agent.avatar_url}
                         alt={agent.full_name}
                         style={{
                           width: '48px',
@@ -380,10 +381,16 @@ export default function UserHome() {
 
       {/* Loading State */}
       {isLoading && !displayProperties.length && (
-        <PropertyListSkeleton count={6} />
+        <PropertyCardSkeleton count={6} gridClassName="property-grid" />
       )}
 
       {/* Search Results Section */}
+      {!isLoading && !hasError && displayProperties.length === 0 && (
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <p>Cannot find the right home? Let our agency partners help.</p>
+          <button onClick={() => navigate('/user/deals')} style={{ padding: '12px 18px', borderRadius: '10px', border: 0, background: Colors.primary[600], color: '#fff', cursor: 'pointer' }}>Request a property</button>
+        </div>
+      )}
       {searchTerm && displayProperties.length > 0 && (
         <div className="properties-section">
           <div className="section-header">
@@ -439,7 +446,7 @@ export default function UserHome() {
               <ArrowRight size={16} />
             </button>
           </div>
-          
+
           {/* Scroll Left Button - Desktop Only */}
           <button
             onClick={() => {

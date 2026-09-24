@@ -1,41 +1,21 @@
+import { Dialog as UiDialog, DialogContent as UiDialogContent, DialogTitle as UiDialogTitle } from './ui/dialog';
+import { Button } from '@/admin/ui/button';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/admin/ui/dropdown-menu';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
-import { LayoutProps, Notification, UserMenu, Logout } from 'react-admin';
+import { LayoutProps, Notification, useLogout, useGetIdentity } from 'react-admin';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
-  Drawer,
   IconButton,
-  Typography,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Chip,
   Tooltip,
   useMediaQuery,
-  alpha,
 } from '@mui/material';
 import { Icon } from '@iconify/react';
-import { Colors } from '@/constants/Colors';
+import './admin.css';
+import './shadcn.css';
+import { navigation, matchesAdminPath, type AdminLink, type QueueKey } from './navigation';
 import { supabase } from '@/lib/supabase';
 
-// Layout B — traditional admin chrome.
-//
-// Structure:
-//   ┌─────────────────────────────────┐
-//   │ ☰  Logo  Propella Admin   🏠 👤 │ ← fixed full-width topbar
-//   ├──────────┬──────────────────────┤
-//   │ Sidebar  │                      │
-//   │ nav      │     Content          │
-//   │          │                      │
-//   └──────────┴──────────────────────┘
-//
-// We render this as a plain MUI flexbox without react-admin's <RALayout>, so
-// react-admin owns routing + data while we own the chrome.
-
-const SIDEBAR_WIDTH = 240;
-const SIDEBAR_WIDTH_COLLAPSED = 64;
-const TOPBAR_HEIGHT = 60;
 const COLLAPSED_KEY = 'admin-sidebar-collapsed';
 
 // Persist the collapse state across reloads so admins keep their preference.
@@ -122,335 +102,92 @@ const useQueueCounts = (): QueueCounts => {
   return counts;
 };
 
-// ----- Menu primitives ---------------------------------------------------
-
-const SectionLabel = ({ label }: { label: string }) => (
-  <Typography
-    variant="caption"
-    sx={{
-      display: 'block',
-      px: 2.5,
-      pt: 2,
-      pb: 0.5,
-      color: Colors.neutral[500],
-      fontWeight: 700,
-      letterSpacing: '0.6px',
-      textTransform: 'uppercase',
-      fontSize: '0.6875rem',
-    }}
-  >
-    {label}
-  </Typography>
-);
-
-interface NavItemProps {
-  to: string;
-  end?: boolean;
-  icon: string;
-  label: string;
-  badge?: number;
-  onClick?: () => void;
-  /** When true, render icon-only with the label as a tooltip and badge as a
-   *  small dot in the top-right corner. */
-  collapsed?: boolean;
-}
-
-const NavItem = ({ to, end, icon, label, badge, onClick, collapsed }: NavItemProps) => {
-  const location = useLocation();
-  const isActive = end ? location.pathname === to : location.pathname.startsWith(to);
-
-  const inner = (
-    <ListItemButton
-      component={NavLink}
-      to={to}
-      end={end}
-      onClick={onClick}
-      sx={{
-        height: collapsed ? 44 : 38,
-        px: collapsed ? 0 : 2.5,
-        gap: 1.5,
-        justifyContent: collapsed ? 'center' : 'flex-start',
-        position: 'relative',
-        color: isActive ? Colors.primary[700] : Colors.neutral[700],
-        backgroundColor: isActive ? Colors.primary[50] : 'transparent',
-        borderLeft: `3px solid ${isActive ? Colors.primary[600] : 'transparent'}`,
-        pl: collapsed ? 0 : 'calc(20px - 3px)',
-        '&:hover': {
-          backgroundColor: isActive ? Colors.primary[100] : Colors.neutral[50],
-        },
-        '& .MuiListItemIcon-root': {
-          minWidth: 0,
-          color: isActive ? Colors.primary[600] : Colors.neutral[500],
-        },
-      }}
-    >
-      <ListItemIcon>
-        <Icon icon={icon} width={collapsed ? 20 : 18} />
-      </ListItemIcon>
-      {!collapsed && (
-        <ListItemText
-          primary={label}
-          primaryTypographyProps={{
-            fontSize: '0.875rem',
-            fontWeight: isActive ? 600 : 500,
-          }}
-        />
-      )}
-      {!collapsed && badge !== undefined && badge > 0 && (
-        <Chip
-          size="small"
-          label={badge}
-          sx={{
-            height: 20,
-            fontSize: '0.6875rem',
-            fontWeight: 700,
-            bgcolor: Colors.warning[100],
-            color: Colors.warning[800],
-            '& .MuiChip-label': { px: 0.75 },
-          }}
-        />
-      )}
-      {collapsed && badge !== undefined && badge > 0 && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 8,
-            right: 14,
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            bgcolor: Colors.warning[600],
-            boxShadow: `0 0 0 2px ${Colors.white}`,
-          }}
-        />
-      )}
-    </ListItemButton>
-  );
-
-  return collapsed ? (
-    <Tooltip title={badge && badge > 0 ? `${label} (${badge})` : label} placement="right" arrow>
-      {inner}
-    </Tooltip>
-  ) : (
-    inner
-  );
-};
-
-// ----- Sidebar content (no brand block — brand lives in the topbar) ------
-
-// Compact separator used in collapsed mode where section labels would feel
-// cramped. Keeps the visual rhythm without the text.
-const SectionDivider = () => (
-  <Box sx={{ height: 1, bgcolor: Colors.neutral[200], mx: 1.5, my: 1 }} />
-);
-
-interface SidebarContentProps {
-  onNavigate?: () => void;
-  collapsed?: boolean;
-}
-
-const SidebarContent = ({ onNavigate, collapsed }: SidebarContentProps) => {
-  const base = useAdminBasePath();
-  const counts = useQueueCounts();
-  const p = (s: string) => `${base}${s}`;
-  const Section = collapsed ? SectionDivider : (props: { label: string }) => <SectionLabel {...props} />;
-
-  return (
-    <Box sx={{ height: '100%', overflowY: 'auto', overflowX: 'hidden', py: 1 }}>
-      <List dense disablePadding>
-        <NavItem to={p('/')} end icon="lucide:layout-dashboard" label="Dashboard" onClick={onNavigate} collapsed={collapsed} />
-
-        <Section label="Operations" />
-        <NavItem to={p('/properties')} icon="lucide:building-2" label="Properties" onClick={onNavigate} collapsed={collapsed} />
-        <NavItem to={p('/reservations')} icon="lucide:calendar-check" label="Reservations" badge={counts.reservations} onClick={onNavigate} collapsed={collapsed} />
-        <NavItem to={p('/profiles')} icon="lucide:users" label="Users" onClick={onNavigate} collapsed={collapsed} />
-        <NavItem to={p('/signup-stats')} icon="lucide:user-plus" label="Signup stats" onClick={onNavigate} collapsed={collapsed} />
-
-        <Section label="Money" />
-        <NavItem to={p('/transactions')} icon="lucide:credit-card" label="Transactions" onClick={onNavigate} collapsed={collapsed} />
-        <NavItem to={p('/wallets')} icon="lucide:wallet" label="Wallets" onClick={onNavigate} collapsed={collapsed} />
-        <NavItem to={p('/commission_payments')} icon="lucide:coins" label="Commissions" onClick={onNavigate} collapsed={collapsed} />
-        <NavItem to={p('/commission_disputes')} icon="lucide:alert-triangle" label="Disputes" badge={counts.commissionDisputes} onClick={onNavigate} collapsed={collapsed} />
-        <NavItem to={p('/withdrawal_requests')} icon="lucide:arrow-down-circle" label="Withdrawals" badge={counts.withdrawals} onClick={onNavigate} collapsed={collapsed} />
-
-        <Section label="Moderation" />
-        <NavItem to={p('/content_reports')} icon="lucide:flag" label="Reports" badge={counts.reports} onClick={onNavigate} collapsed={collapsed} />
-        <NavItem to={p('/agent_verifications')} icon="lucide:shield-check" label="Verifications" badge={counts.verifications} onClick={onNavigate} collapsed={collapsed} />
-        <NavItem to={p('/property_reviews')} icon="lucide:star" label="Reviews" onClick={onNavigate} collapsed={collapsed} />
-
-        <Section label="Content" />
-        <NavItem to={p('/notifications')} icon="lucide:bell" label="Notifications" onClick={onNavigate} collapsed={collapsed} />
-        <NavItem to={p('/property_views')} icon="lucide:bar-chart-3" label="Property views" onClick={onNavigate} collapsed={collapsed} />
-        <NavItem to={p('/storage-migration')} icon="lucide:database-backup" label="Storage" onClick={onNavigate} collapsed={collapsed} />
-      </List>
-    </Box>
-  );
-};
-
-// ----- Fixed full-width topbar -------------------------------------------
-
-interface TopbarProps {
-  onMenuClick: () => void;
-  onCollapseToggle: () => void;
-  isMobile: boolean;
-  isCollapsed: boolean;
-}
-
-const Topbar = ({ onMenuClick, onCollapseToggle, isMobile, isCollapsed }: TopbarProps) => {
-  const navigate = useNavigate();
-  return (
-    <Box
-      sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: TOPBAR_HEIGHT,
-        bgcolor: Colors.white,
-        borderBottom: `1px solid ${Colors.neutral[200]}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        px: { xs: 1.5, md: 3 },
-        zIndex: 1201,
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
-        {/* Mobile: hamburger opens the slide-in drawer.
-            Desktop: chevron toggles between full sidebar (240px) and rail (64px). */}
-        <Tooltip title={isMobile ? 'Open navigation' : isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
-          <IconButton
-            onClick={isMobile ? onMenuClick : onCollapseToggle}
-            edge="start"
-            sx={{ color: Colors.neutral[700], mr: 0.5 }}
-            aria-label={isMobile ? 'Open navigation' : 'Toggle sidebar'}
-          >
-            <Icon
-              icon={isMobile ? 'lucide:menu' : isCollapsed ? 'lucide:panel-left-open' : 'lucide:panel-left-close'}
-              width={22}
-            />
-          </IconButton>
-        </Tooltip>
-        <img src="/app-icon.png" alt="Propella" style={{ width: 28, height: 28, objectFit: 'cover', flexShrink: 0 }} />
-        <Typography
-          fontWeight={700}
-          color={Colors.primary[600]}
-          sx={{
-            fontSize: '1rem',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          Propella Admin
-        </Typography>
-      </Box>
-
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-        <Tooltip title="Back to app">
-          <IconButton
-            onClick={() => navigate('/user')}
-            sx={{
-              color: Colors.neutral[600],
-              '&:hover': { backgroundColor: alpha(Colors.primary[500], 0.08), color: Colors.primary[600] },
-            }}
-            aria-label="Back to user app"
-          >
-            <Icon icon="lucide:home" width={20} />
-          </IconButton>
-        </Tooltip>
-        <UserMenu>
-          <Logout />
-        </UserMenu>
-      </Box>
-    </Box>
-  );
-};
-
-// ----- Root layout -------------------------------------------------------
-
 export const Layout = (props: LayoutProps) => {
   const children: ReactNode = (props as any).children;
   const isMobile = useMediaQuery('(max-width: 900px)');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useSidebarCollapsed();
-
+  const [query, setQuery] = useState('');
+  const base = useAdminBasePath();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const counts = useQueueCounts();
+  const { data: identity } = useGetIdentity();
+  const logout = useLogout();
+  const seenKey = identity?.id ? `admin-seen-queues:${identity.id}` : null;
+  const [seen, setSeen] = useState<Partial<QueueCounts>>({});
   useEffect(() => {
-    if (!isMobile) setMobileOpen(false);
-  }, [isMobile]);
+    try { setSeen(seenKey ? JSON.parse(localStorage.getItem(seenKey) || '{}') : {}); }
+    catch { setSeen({}); }
+  }, [seenKey]);
+  const openQueue = navigation.flatMap(group=>group.links).flatMap(link=>link.tabs || [link]).find(item=>item.queue && matchesAdminPath(location.pathname,base,item.path))?.queue;
+  useEffect(() => {
+    if (!seenKey || !openQueue) return;
+    setSeen(previous => {
+      if (previous[openQueue] === counts[openQueue]) return previous;
+      const next = {...previous, [openQueue]: counts[openQueue]};
+      try { localStorage.setItem(seenKey, JSON.stringify(next)); } catch { /* Storage may be disabled. */ }
+      return next;
+    });
+  }, [seenKey, openQueue, counts]);
+  const badgeCount = (queue: QueueKey) => openQueue===queue || seen[queue]===counts[queue] ? 0 : counts[queue];
+  const compact = !isMobile && collapsed;
+  const width = compact ? 80 : 264;
+  const path = (link: AdminLink) => `${base}${link.path}`;
+  const selected = (link: AdminLink) => (link.tabs || [link]).some(item=>matchesAdminPath(location.pathname,base,item.path));
+  const current = navigation.flatMap(g => g.links).find(selected);
+  const activeTab = current?.tabs?.find(item=>matchesAdminPath(location.pathname,base,item.path));
+  const groups = navigation.map(group => ({ ...group, links: group.links.filter(link => `${link.label} ${group.label} ${link.tabs?.map(tab=>tab.label).join(' ') || ''}`.toLowerCase().includes(query.trim().toLowerCase())) })).filter(group => group.links.length);
+  useEffect(() => { setMobileOpen(false) }, [location.pathname]);
+  useEffect(() => { if (!isMobile) setMobileOpen(false) }, [isMobile]);
+  useEffect(() => { if (compact) setQuery('') }, [compact]);
 
-  // On mobile, the slide-in drawer should always show the full-width sidebar.
-  // The persisted `collapsed` flag is desktop-only.
-  const effectiveCollapsed = !isMobile && collapsed;
-  const effectiveWidth = effectiveCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH;
+  const sidebar = <div className={`admin-navigation ${compact ? 'is-compact' : ''}`}>
+    <NavLink to={`${base}/`} className="admin-brand" aria-label="Propella admin overview">
+      <img src="/app-icon.png" alt="" width="36" height="36" />
+      {!compact && <span>Propella<small>ADMIN WORKSPACE</small></span>}
+    </NavLink>
+    {isMobile && <IconButton className="admin-drawer-close" aria-label="Close navigation" onClick={() => setMobileOpen(false)}><Icon icon="lucide:x" width={20}/></IconButton>}
+    {!compact && <label className="admin-nav-search"><Icon icon="lucide:search" width={17}/><input aria-label="Find an admin page" placeholder="Find a page…" value={query} onChange={e=>setQuery(e.target.value)}/>{query && <button aria-label="Clear page search" onClick={()=>setQuery('')}><Icon icon="lucide:x" width={15}/></button>}</label>}
+    <nav className="admin-nav-scroll" aria-label="Admin navigation">
+      {groups.map(group=><section className="admin-nav-group" key={group.label}>
+        {!compact && <h2>{group.label}</h2>}
+        {group.links.map(link=>{
+          const count = (link.tabs || [link]).reduce((total,item)=>total+(item.queue ? badgeCount(item.queue) : 0),0);
+          return <Tooltip key={link.path} title={compact ? `${link.label}${count ? ` (${count})` : ''}` : ''} placement="right">
+            <NavLink to={path(link)} end={link.path==='/'} onClick={()=>setMobileOpen(false)} aria-current={selected(link) ? 'page' : undefined} aria-label={compact ? link.label : undefined} className={`admin-nav-link ${selected(link) ? 'is-active' : ''}`}>
+              <Icon icon={link.icon} width={20}/>{!compact && <span>{link.label}</span>}{count>0 && <b className={compact?'admin-queue-dot':'admin-queue-count'}>{!compact && (count>99?'99+':count)}</b>}
+            </NavLink>
+          </Tooltip>;
+        })}
+      </section>)}
+      {!groups.length && <p className="admin-nav-empty">No pages found. Try another name.</p>}
+    </nav>
+    <div className="admin-nav-footer">
+      {!compact && <div><Icon icon="lucide:shield-check" width={18}/><span>Propella operations<small>Manage your marketplace</small></span></div>}
+      {!isMobile && <Tooltip title={compact?'Expand sidebar':'Collapse sidebar'}><button aria-label={compact?'Expand sidebar':'Collapse sidebar'} onClick={()=>setCollapsed(c=>!c)}><Icon icon={compact?'lucide:panel-left-open':'lucide:panel-left-close'} width={20}/></button></Tooltip>}
+    </div>
+  </div>;
 
-  // borderRadius:0 overrides the global MuiPaper rounding from theme.ts so the
-  // drawer sits flush against the viewport edges.
-  const drawerPaperSx = {
-    width: effectiveWidth,
-    boxSizing: 'border-box' as const,
-    bgcolor: Colors.white,
-    borderRight: `1px solid ${Colors.neutral[200]}`,
-    borderRadius: 0,
-    top: TOPBAR_HEIGHT,
-    height: `calc(100vh - ${TOPBAR_HEIGHT}px)`,
-    // Smooth width transition when toggling collapse on desktop.
-    transition: 'width 180ms ease',
-    overflowX: 'hidden' as const,
-  };
-  const mobileDrawerPaperSx = { ...drawerPaperSx, width: SIDEBAR_WIDTH, transition: 'none' };
-
-  return (
-    <Box sx={{ minHeight: '100vh', bgcolor: Colors.neutral[50] }}>
-      <Topbar
-        onMenuClick={() => setMobileOpen(true)}
-        onCollapseToggle={() => setCollapsed((c) => !c)}
-        isMobile={isMobile}
-        isCollapsed={collapsed}
-      />
-
-      {/* Permanent sidebar for desktop */}
-      {!isMobile && (
-        <Drawer
-          variant="permanent"
-          sx={{
-            width: effectiveWidth,
-            flexShrink: 0,
-            transition: 'width 180ms ease',
-            '& .MuiDrawer-paper': drawerPaperSx,
-          }}
-        >
-          <SidebarContent collapsed={effectiveCollapsed} />
-        </Drawer>
-      )}
-
-      {/* Temporary slide-in drawer for mobile (always full-width) */}
-      {isMobile && (
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={() => setMobileOpen(false)}
-          ModalProps={{ keepMounted: true }}
-          sx={{ '& .MuiDrawer-paper': mobileDrawerPaperSx }}
-        >
-          <SidebarContent onNavigate={() => setMobileOpen(false)} />
-        </Drawer>
-      )}
-
-      {/* Main content offset by the topbar (always) and the sidebar (desktop) */}
-      <Box
-        component="main"
-        sx={{
-          pt: `${TOPBAR_HEIGHT}px`,
-          pl: { xs: 0, md: `${effectiveWidth}px` },
-          minHeight: '100vh',
-          transition: 'padding-left 180ms ease',
-        }}
-      >
-        <Box sx={{ p: { xs: 1.5, md: 3 } }}>{children}</Box>
-      </Box>
-
-      <Notification />
-    </Box>
-  );
+  return <Box className="propella-admin" sx={{minHeight:'100vh',background:'#F5F7FB'}}>
+    <a className="admin-skip-link" href="#admin-main">Skip to content</a>
+    {isMobile ? <UiDialog open={mobileOpen} onOpenChange={setMobileOpen}><UiDialogContent className="admin-mobile-sidebar" aria-describedby={undefined}><UiDialogTitle className="sr-only">Admin navigation</UiDialogTitle>{sidebar}</UiDialogContent></UiDialog> : <aside className="admin-desktop-sidebar" style={{width}}>{sidebar}</aside>}
+    <header className="admin-topbar" style={{left:isMobile?0:width}}>
+      <div className="admin-topbar-context">
+        {isMobile && <IconButton aria-label="Open navigation" onClick={()=>setMobileOpen(true)}><Icon icon="lucide:menu" width={22}/></IconButton>}
+        <div><span className="admin-breadcrumb">Workspace <span>/</span></span><strong>{current?.label || 'Administration'}</strong></div>
+      </div>
+      <div className="admin-topbar-actions"><button className="admin-app-link" onClick={()=>navigate('/user')}><Icon icon="lucide:arrow-up-right" width={17}/><span>Open Propella</span></button><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost">{identity?.fullName || 'My account'}<span>⌄</span></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Admin workspace</DropdownMenuLabel><DropdownMenuSeparator/><DropdownMenuItem onSelect={()=>void logout()}>Sign out</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div>
+    </header>
+    <main id="admin-main" tabIndex={-1} className="admin-main" style={{marginLeft:isMobile?0:width}}><div className="admin-page-content">
+      {current?.tabs && <section className="admin-section-header" aria-label={`${current.label} navigation`}>
+        <h1>{current.label}</h1><p>{current.description}</p>
+        <nav className="admin-section-tabs" aria-label={`${current.label} pages`}>
+          {current.tabs.map(tab=><NavLink key={tab.path} to={`${base}${tab.path}`} aria-current={activeTab===tab?'page':undefined} className={activeTab===tab?'is-active':''}>{tab.label}{tab.queue && badgeCount(tab.queue)>0 && <span>{badgeCount(tab.queue)}</span>}</NavLink>)}
+        </nav>
+      </section>}
+      {children}
+    </div></main>
+    <Notification/>
+  </Box>;
 };

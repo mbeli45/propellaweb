@@ -10,6 +10,7 @@ import UserReservations from '@/pages/user/Reservations'
 import UserProfile from '@/pages/user/Profile'
 import UserExplore from '@/pages/user/Explore'
 import UserCommissions from '@/pages/user/Commissions'
+import Deals from '@/pages/Deals'
 import UserSaved from '@/pages/user/Saved'
 import ChatDetail from '@/pages/chat/[id]'
 import ProfileSettings from '@/pages/profile/Settings'
@@ -31,6 +32,7 @@ export default function UserLayout() {
 
   const navItems = [
     { path: '/user', icon: Home as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.home' },
+    { path: '/user/deals', icon: CalendarDays, label: 'My deals' },
     { path: '/user/map', icon: Map as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.map' },
     { path: '/user/reservations', icon: CalendarDays as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.reservations', badge: reservationBadgeCount > 0 ? reservationBadgeCount : undefined },
     { path: '/user/messages', icon: MessageCircle as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.messages', badge: messageBadgeCount > 0 ? messageBadgeCount : undefined },
@@ -50,6 +52,7 @@ export default function UserLayout() {
             <Route path="reservations" element={<UserReservations />} />
             <Route path="explore" element={<UserExplore />} />
             <Route path="commissions" element={<UserCommissions />} />
+            <Route path="deals" element={<Deals />} />
             <Route path="saved" element={<UserSaved />} />
             <Route path="profile" element={<UserProfile />} />
             <Route path="profile/settings" element={<ProfileSettings />} />

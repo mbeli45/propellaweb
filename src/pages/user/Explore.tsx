@@ -9,6 +9,7 @@ import FilterModal, { FilterOptions, MAX_PRICE } from '@/components/FilterModal'
 import MapView from '@/components/MapView'
 import { Search, Map as MapIcon, List, Filter, X } from 'lucide-react'
 import './Explore.css'
+import { PropertyCardSkeleton, MapSkeleton } from '@/components/skeletons'
 
 export default function UserExplore() {
   const { colorScheme } = useThemeMode()
@@ -281,15 +282,7 @@ export default function UserExplore() {
           overflow: 'hidden'
         }}>
           {loading ? (
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              height: '100%',
-              color: Colors.neutral[600] 
-            }}>
-              {t('common.loading')}...
-            </div>
+            <MapSkeleton />
           ) : (
             <MapView 
               properties={filteredProperties}
@@ -300,9 +293,7 @@ export default function UserExplore() {
       ) : (
         <div style={{ padding: '16px' }}>
           {loading && (
-            <div style={{ textAlign: 'center', padding: '40px', color: Colors.neutral[600] }}>
-              {t('common.loading')}...
-            </div>
+            <PropertyCardSkeleton count={6} gridClassName="explore-properties-grid" />
           )}
 
           {error && (

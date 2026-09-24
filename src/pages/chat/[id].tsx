@@ -12,6 +12,7 @@ import { Send, Paperclip, ArrowLeft, Check, CheckCheck, Clock, AlertCircle } fro
 import ModerationActions from '@/components/moderation/ModerationActions'
 import { supabase } from '@/lib/supabase'
 import './Chat.css'
+import { ChatSkeleton } from '@/components/skeletons'
 
 interface ChatDetailProps {
   counterpartId?: string
@@ -166,19 +167,7 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
   }
 
   if (profileLoading || messagesLoading) {
-    return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        backgroundColor: Colors.neutral[50]
-      }}>
-        <div style={{ textAlign: 'center', color: Colors.neutral[600] }}>
-          {t('common.loading')}...
-        </div>
-      </div>
-    )
+    return <ChatSkeleton />
   }
 
   if (messagesError || !counterpartProfile) {

@@ -1,0 +1,32 @@
+/*
+ * Skeleton placeholders. Colours come from the theme CSS variables that
+ * ThemeContext writes on :root, so light/dark switch without re-rendering.
+ * The dark palette inverts the neutral scale, so --color-neutral-200 is a
+ * subtle grey on both light and dark surfaces.
+ */
+.skeleton {
+  display: block;
+  flex-shrink: 0;
+  background-color: var(--color-neutral-200, #e5e7eb);
+  border-radius: 6px;
+  /* Every block shares one keyframe timeline, so placeholders on screen
+     pulse together instead of drifting out of sync. */
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+  animation-delay: calc(var(--skeleton-sync, 0) * 1ms);
+}
+
+.skeleton--rectangular { border-radius: 0; }
+.skeleton--rounded { border-radius: 12px; }
+.skeleton--circular { border-radius: 9999px; }
+.skeleton--static { animation: none; opacity: 0.7; }
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; opacity: 0.7; }
+}
+
+.skeleton-group { display: block; }

@@ -6,6 +6,7 @@
 }
 
 .app-content {
+  min-width: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -24,6 +25,7 @@
 /* Desktop: sidebar visible, content has left margin */
 @media (min-width: 1025px) {
   .app-content {
+  min-width: 0;
     margin-left: var(--sidebar-width, 260px);
     padding-left: 0;
     transition: margin-left 0.3s ease;
@@ -39,6 +41,7 @@
 /* Mobile/Tablet: sidebar hidden, bottom nav visible */
 @media (max-width: 1024px) {
   .app-content {
+  min-width: 0;
     margin-left: 0;
   }
 

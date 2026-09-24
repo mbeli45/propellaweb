@@ -1,6 +1,7 @@
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from './ShadcnDialog';
 import { useState } from 'react';
 import { useDelete, useRecordContext, useNotify, useRedirect, useResourceContext } from 'react-admin';
-import { IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, Tooltip } from '@mui/material';
+import { IconButton, Tooltip } from '@mui/material';
 import { Colors } from '@/constants/Colors';
 import { Icon } from '@iconify/react';
 
@@ -18,6 +19,7 @@ export const DeleteButtonWithConfirm = (props: any) => {
   };
 
   const handleClose = () => {
+    if (isLoading) return;
     setOpen(false);
   };
 
@@ -46,6 +48,7 @@ export const DeleteButtonWithConfirm = (props: any) => {
     <>
       <Tooltip title="Delete">
         <IconButton
+          aria-label="Delete record"
           onClick={handleClickOpen}
           size="small"
           sx={{
@@ -74,6 +77,8 @@ export const DeleteButtonWithConfirm = (props: any) => {
         </DialogContent>
         <DialogActions sx={{ padding: '16px 24px' }}>
           <Button
+            autoFocus
+            disabled={isLoading}
             onClick={handleClose}
             sx={{
               color: Colors.neutral[700],
@@ -94,7 +99,6 @@ export const DeleteButtonWithConfirm = (props: any) => {
                 backgroundColor: Colors.error[700],
               },
             }}
-            autoFocus
           >
             {isLoading ? 'Deleting...' : 'Delete'}
           </Button>

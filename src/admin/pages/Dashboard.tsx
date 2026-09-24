@@ -11,6 +11,7 @@ import {
   Avatar,
   IconButton,
   Tooltip,
+  Button,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
@@ -106,7 +107,7 @@ const toneToColors = {
 const KpiCard = ({ icon, label, value, delta, tone = 'primary', loading }: KpiCardProps) => {
   const c = toneToColors[tone];
   return (
-    <Card sx={{ height: '100%' }}>
+    <Card className="admin-stat-card" sx={{ height: '100%' }}>
       <CardContent>
         <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={1}>
           <Stack spacing={1}>
@@ -261,27 +262,31 @@ const Dashboard = () => {
   }, [todayIso]);
 
   return (
-    <Box>
+    <Box className="admin-dashboard">
       <Title title="Dashboard" />
 
       {/* Heading */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-        <Box>
-          <Typography variant="h5" fontWeight={700}>
-            Overview
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+      <div className="admin-dashboard-heading">
+        <div>
+          <span className="admin-dashboard-eyebrow">Overview</span>
+          <h1>Marketplace overview</h1>
+          <p>
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-          </Typography>
-        </Box>
-      </Stack>
+          </p>
+        </div>
+        <div className="admin-dashboard-links">
+          <Button variant="outlined" onClick={() => navigate(`${base}/properties`)}>View properties</Button>
+          <Button variant="contained" startIcon={<Icon icon="lucide:handshake" width={18}/>} onClick={() => navigate(`${base}/deals`)}>Requests & deals</Button>
+        </div>
+      </div>
 
       {/* KPI row */}
       <Box
+        className="admin-metrics-strip"
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
-          gap: 2,
+          gap: 0,
           mb: 3,
         }}
       >
@@ -317,14 +322,16 @@ const Dashboard = () => {
 
       {/* Action queue + recent activity */}
       <Box
+        className="admin-operations"
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' },
-          gap: 2,
+          gap: 3,
+          alignItems: 'start',
         }}
       >
         {/* Refund queue */}
-        <Card>
+        <Card className="admin-dashboard-section">
           <CardContent>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
               <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -419,7 +426,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Moderation summary */}
-        <Card>
+        <Card className="admin-dashboard-section admin-attention-section">
           <CardContent>
             <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
               Needs attention
@@ -463,7 +470,7 @@ const Dashboard = () => {
       </Box>
 
       {/* Recent reservations */}
-      <Card sx={{ mt: 2 }}>
+      <Card className="admin-dashboard-section admin-recent-section" sx={{ mt: 2 }}>
         <CardContent>
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
             <Typography variant="subtitle1" fontWeight={700}>

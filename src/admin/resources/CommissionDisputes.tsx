@@ -1,19 +1,16 @@
+import { TextInput, SelectInput, AutocompleteInput } from '../components/ShadcnInputs';
+import { AdminTable, AdminPagination } from '../components/AdminTable';
 import {
   List,
-  Datagrid,
   TextField,
   DateField,
   Edit,
   SimpleForm,
-  SelectInput,
   SelectField,
-  TextInput,
   ReferenceField,
   ReferenceInput,
-  AutocompleteInput,
   Filter,
   EditButton,
-  ShowButton,
   useRecordContext,
 } from 'react-admin';
 import { EditToolbar } from '../components/EditToolbar';
@@ -47,7 +44,7 @@ const CommissionDisputeFilter = (props: any) => (
 );
 
 export const CommissionDisputeList = () => (
-  <List
+  <List pagination={<AdminPagination />} className="admin-resource-list"
     sort={{ field: 'created_at', order: 'DESC' }}
     filterDefaultValues={{ status: 'pending' }}
     filters={<CommissionDisputeFilter />}
@@ -57,7 +54,7 @@ export const CommissionDisputeList = () => (
       },
     }}
   >
-    <Datagrid rowClick="edit">
+    <AdminTable rowClick="edit">
       <TextField source="id" label="ID" />
       <ReferenceField source="commission_payment_id" reference="commission_payments" label="Payment ID">
         <TextField source="id" />
@@ -77,8 +74,7 @@ export const CommissionDisputeList = () => (
       <DateField source="created_at" showTime />
       <DateField source="resolved_at" showTime />
       <EditButton />
-      <ShowButton />
-    </Datagrid>
+    </AdminTable>
   </List>
 );
 

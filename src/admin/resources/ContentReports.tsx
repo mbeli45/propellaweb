@@ -1,17 +1,15 @@
+import { TextInput, SelectInput, AutocompleteInput } from '../components/ShadcnInputs';
+import { AdminTable, AdminPagination } from '../components/AdminTable';
 import { useState } from 'react';
 import {
   List,
-  Datagrid,
   TextField,
   DateField,
   Edit,
   SimpleForm,
-  SelectInput,
   SelectField,
-  TextInput,
   ReferenceField,
   ReferenceInput,
-  AutocompleteInput,
   Filter,
   useRecordContext,
   useNotify,
@@ -122,7 +120,7 @@ const ContentReportCard = () => {
 };
 
 const ContentReportDatagrid = () => (
-  <Datagrid rowClick="edit" bulkActionButtons={false}>
+  <AdminTable rowClick="edit" bulkActionButtons={false}>
     <SelectField source="content_type" choices={CONTENT_TYPE_CHOICES} />
     <SelectField source="reason" choices={REASON_CHOICES} />
     <ReferenceField source="reporter_id" reference="profiles" label="Reporter" link={false}>
@@ -134,11 +132,11 @@ const ContentReportDatagrid = () => (
     <FunctionField label="Status" render={() => <StatusChip source="status" />} />
     <DateField source="created_at" />
     <DateField source="reviewed_at" />
-  </Datagrid>
+  </AdminTable>
 );
 
 export const ContentReportList = () => (
-  <List
+  <List pagination={<AdminPagination />} className="admin-resource-list"
     sort={{ field: 'created_at', order: 'DESC' }}
     filterDefaultValues={{ status: 'pending' }}
     filters={<ContentReportFilter />}

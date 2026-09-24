@@ -11,6 +11,7 @@ import { formatLastVerified, isAvailabilityStale } from '@/hooks/usePropertyAvai
 import { useAuth } from '@/hooks/useAuth'
 import { isReservedByViewer } from '@/lib/propertyVisibility'
 import './PropertyCard.css'
+import VideoThumbnail from './VideoThumbnail'
 
 export interface PropertyData {
   id: string
@@ -110,69 +111,42 @@ export default function PropertyCard({
     if (firstImage) return { url: firstImage, isVideo: false }
     const firstVideo = candidates.find((url) => url && isVideoUrl(url))
     if (firstVideo) return { url: firstVideo, isVideo: true }
-    return { url: '/placeholder-property.jpg', isVideo: false }
+    return { url: '/property-video-placeholder.svg', isVideo: false }
   }, [property.image, property.images])
 
-  const getCategoryColor = useMemo(() => {
-    switch (property.category) {
-      case 'budget':
-        return Colors.neutral[600]
-      case 'standard':
-        return Colors.primary[800]
-      case 'premium':
-        return Colors.success[700]
-      case 'luxury':
-        return Colors.error[700]
-      default:
-        return Colors.neutral[600]
-    }
-  }, [property.category, Colors])
 
   return (
     <div
       className={`property-card ${horizontal ? 'horizontal' : ''}`}
       onClick={handleClick}
+      tabIndex={0}
+      role="link"
+      aria-label={property.title || t('propertyCard.untitledProperty')}
+      onKeyDown={(event) => {
+        if (event.target === event.currentTarget && event.key === 'Enter') handleClick()
+      }}
       style={{
         backgroundColor: Colors.white,
         borderRadius: '16px',
         overflow: 'hidden',
         cursor: 'pointer',
-        boxShadow: colorScheme === 'dark' 
-          ? '0 2px 8px rgba(0, 0, 0, 0.3)' 
+        boxShadow: colorScheme === 'dark'
+          ? '0 2px 8px rgba(0, 0, 0, 0.3)'
           : '0 2px 8px rgba(0, 0, 0, 0.08)',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)'
-        e.currentTarget.style.boxShadow = colorScheme === 'dark'
-          ? '0 4px 12px rgba(0, 0, 0, 0.4)'
-          : '0 4px 12px rgba(0, 0, 0, 0.12)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)'
-        e.currentTarget.style.boxShadow = colorScheme === 'dark'
-          ? '0 2px 8px rgba(0, 0, 0, 0.3)'
-          : '0 2px 8px rgba(0, 0, 0, 0.08)'
       }}
     >
       <div
         className="property-card-image-container"
         style={{
           position: 'relative',
-          height: horizontal ? '120px' : '200px',
+          aspectRatio: '16 / 10',
           overflow: 'hidden',
         }}
       >
         {displayMedia.isVideo ? (
           <>
-            <video
-              src={`${displayMedia.url}#t=0.5`}
-              className="property-card-image"
-              preload="metadata"
-              muted
-              playsInline
-              poster="/placeholder-property.jpg"
-            />
+            <VideoThumbnail src={displayMedia.url} alt={property.title} className="property-card-image" />
             <div
               style={{
                 position: 'absolute',
@@ -201,102 +175,13 @@ export default function PropertyCard({
             loading="lazy"
             decoding="async"
             onError={(e) => {
-              e.currentTarget.src = '/placeholder-property.jpg'
+              e.currentTarget.src = '/property-video-placeholder.svg'
             }}
           />
         )}
         {/* Gradient Overlay */}
         <div className="property-card-gradient-overlay" />
-        
-        {/* Badges Row */}
-        <div
-          className="property-card-badges"
-          style={{
-            position: 'absolute',
-            top: '12px',
-            left: '12px',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '6px',
-            // Leave room for the action row (badge + up to three buttons).
-            maxWidth: 'calc(100% - 150px)',
-            zIndex: 3,
-          }}
-        >
-          {/* Status Badge - Only show for owner */}
-          {isOwner && property.status && (
-            <span
-              style={{
-                backgroundColor: property.status === 'reserved' 
-                  ? Colors.warning[600] 
-                  : property.status === 'sold' 
-                  ? Colors.error[600] 
-                  : property.status === 'available'
-                  ? Colors.success[600]
-                  : Colors.success[600],
-                color: '#FFFFFF',
-                fontSize: horizontal ? '10px' : '11px',
-                fontWeight: '600',
-                padding: horizontal ? '3px 8px' : '4px 10px',
-                borderRadius: '20px',
-                textTransform: 'capitalize',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
-            </span>
-          )}
-          
-          {/* Category Badge */}
-          <span
-            style={{
-              backgroundColor: getCategoryColor,
-              color: '#FFFFFF',
-              fontSize: horizontal ? '10px' : '11px',
-              fontWeight: '600',
-              padding: horizontal ? '3px 8px' : '4px 10px',
-              borderRadius: '20px',
-              textTransform: 'capitalize',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {(property.category || 'standard').charAt(0).toUpperCase() + (property.category || 'standard').slice(1)}
-          </span>
-          
-          {/* Type Badge (For Rent/For Sale) */}
-          <span
-            style={{
-              backgroundColor: Colors.primary[700],
-              color: '#FFFFFF',
-              fontSize: horizontal ? '10px' : '11px',
-              fontWeight: '600',
-              padding: horizontal ? '3px 8px' : '4px 10px',
-              borderRadius: '20px',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {property.type === 'rent' ? t('property.forRent') : t('property.forSale')}
-          </span>
 
-          {/* This listing is hidden from everyone else - say why it is still
-              here rather than leaving it looking un-booked. */}
-          {isReservedByViewer(property, user?.id) && (
-            <span
-              style={{
-                backgroundColor: Colors.success[600],
-                color: '#FFFFFF',
-                fontSize: horizontal ? '10px' : '11px',
-                fontWeight: '600',
-                padding: horizontal ? '3px 8px' : '4px 10px',
-                borderRadius: '20px',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {t('propertyCard.bookedByYou', 'Booked by you')}
-            </span>
-          )}
-        </div>
-        
         {/* Watermark */}
         <div
           style={{
@@ -350,8 +235,8 @@ export default function PropertyCard({
                     onEdit()
                   }}
                   style={{
-                    backgroundColor: colorScheme === 'dark' 
-                      ? 'rgba(24, 24, 27, 0.9)' 
+                    backgroundColor: colorScheme === 'dark'
+                      ? 'rgba(24, 24, 27, 0.9)'
                       : 'rgba(255, 255, 255, 0.9)',
                     border: 'none',
                     borderRadius: '20px',
@@ -376,8 +261,8 @@ export default function PropertyCard({
                     onDelete()
                   }}
                   style={{
-                    backgroundColor: colorScheme === 'dark' 
-                      ? 'rgba(24, 24, 27, 0.9)' 
+                    backgroundColor: colorScheme === 'dark'
+                      ? 'rgba(24, 24, 27, 0.9)'
                       : 'rgba(255, 255, 255, 0.9)',
                     border: 'none',
                     borderRadius: '20px',
@@ -425,6 +310,7 @@ export default function PropertyCard({
             </button>
           )}
           <button
+            aria-label={t('common.share', 'Share property')}
             onClick={handleShare}
             style={{
               backgroundColor: colorScheme === 'dark'
@@ -528,6 +414,41 @@ export default function PropertyCard({
           padding: horizontal ? '12px' : '20px',
         }}
       >
+        {/* Badges Row */}
+        <div
+          className="property-card-badges"
+        >
+          {/* Status Badge - Only show for owner */}
+          {isOwner && property.status && (
+            <span
+            >
+              {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
+            </span>
+          )}
+
+          {/* Category Badge */}
+          <span
+          >
+            {(property.category || 'standard').charAt(0).toUpperCase() + (property.category || 'standard').slice(1)}
+          </span>
+
+          {/* Type Badge (For Rent/For Sale) */}
+          <span
+          >
+            {property.type === 'rent' ? t('property.forRent') : t('property.forSale')}
+          </span>
+
+          {/* This listing is hidden from everyone else - say why it is still
+              here rather than leaving it looking un-booked. */}
+          {isReservedByViewer(property, user?.id) && (
+            <span
+            >
+              {t('propertyCard.bookedByYou', 'Booked by you')}
+            </span>
+          )}
+        </div>
+
+
         {property.type === 'rent' ? (() => {
           const { monthlyPrice, yearlyPrice } = calculateRentPrices(property.price, property.rent_period)
           return (
@@ -592,7 +513,9 @@ export default function PropertyCard({
             lineHeight: horizontal ? '18px' : '22px',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
           }}
         >
           {property.title || t('propertyCard.untitledProperty')}

@@ -7,6 +7,7 @@ import { useCommissionPayment } from '@/hooks/useCommissionPayment'
 import { Shield, Clock, CheckCircle, AlertTriangle, DollarSign, Filter } from 'lucide-react'
 import { formatPrice } from '@/utils/shareUtils'
 import './Commissions.css'
+import { ListItemSkeleton } from '@/components/skeletons'
 
 export default function UserCommissions() {
   const { user } = useAuth()
@@ -190,9 +191,7 @@ export default function UserCommissions() {
 
         {/* Payments List */}
         {loading && (
-          <div style={{ textAlign: 'center', padding: '40px', color: Colors.neutral[600] }}>
-            {t('common.loading')}...
-          </div>
+          <ListItemSkeleton count={4} leading="thumbnail" lines={3} trailing="text" appearance="card" />
         )}
 
         {!loading && filteredPayments.length === 0 && (

@@ -43,7 +43,8 @@ export function getNavigationState() {
 }
 
 export interface NotificationData {
-  type: 'chat' | 'reservation' | 'property';
+  type: 'chat' | 'reservation' | 'property' | 'deal';
+  dealId?: string;
   messageId?: string;
   senderId?: string;
   receiverId?: string;
@@ -111,6 +112,9 @@ export function handleNotificationNavigation(data: NotificationData, currentUser
 
   try {
     switch (data.type) {
+      case 'deal':
+        router.push(userRole === 'agent' || userRole === 'landlord' ? '/agent/deals' : '/user/deals');
+        break;
       case 'chat':
         handleChatNotification(data, currentUserId, userRole);
         break;

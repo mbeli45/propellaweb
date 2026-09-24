@@ -1,12 +1,13 @@
+import { AutocompleteInput } from '../components/ShadcnInputs';
+import { AdminTable, AdminPagination } from '../components/AdminTable';
+import { FinanceHeading } from '../components/FinanceHeading';
 import {
   List,
-  Datagrid,
   TextField,
   NumberField,
   DateField,
   ReferenceField,
   ReferenceInput,
-  AutocompleteInput,
   Filter,
   FunctionField,
 } from 'react-admin';
@@ -80,7 +81,7 @@ const WalletCard = () => {
 };
 
 const WalletDatagrid = () => (
-  <Datagrid bulkActionButtons={false}>
+  <AdminTable bulkActionButtons={false}>
     <ReferenceField source="user_id" reference="profiles" label="User" link={false}>
       <TextField source="full_name" />
     </ReferenceField>
@@ -101,15 +102,16 @@ const WalletDatagrid = () => (
     <NumberField source="total_earned" options={{ style: 'currency', currency: 'XAF' }} />
     <NumberField source="total_withdrawn" options={{ style: 'currency', currency: 'XAF' }} />
     <DateField source="updated_at" showTime />
-  </Datagrid>
+  </AdminTable>
 );
 
 export const WalletList = () => (
-  <List
+  <List pagination={<AdminPagination />} className="admin-resource-list finance-list"
     sort={{ field: 'updated_at', order: 'DESC' }}
     filters={<WalletFilter />}
     sx={{ '& .RaList-content': { boxShadow: 'none' } }}
   >
-    <ResponsiveList desktop={<WalletDatagrid />} card={<WalletCard />} rowClick={false} />
+
+    <FinanceHeading title="Wallet balances" description="Available funds, locked balances, and lifetime earnings by account." />    <ResponsiveList desktop={<WalletDatagrid />} card={<WalletCard />} rowClick={false} />
   </List>
 );

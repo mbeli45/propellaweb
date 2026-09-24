@@ -1,19 +1,15 @@
+import { TextInput, NumberInput, SelectInput, BooleanInput, AutocompleteInput } from '../components/ShadcnInputs';
+import { AdminTable, AdminPagination } from '../components/AdminTable';
 import {
   List,
-  Datagrid,
   TextField,
   NumberField,
   DateField,
   BooleanField,
   Edit,
   SimpleForm,
-  TextInput,
-  SelectInput,
-  BooleanInput,
-  NumberInput,
   ReferenceField,
   ReferenceInput,
-  AutocompleteInput,
   Filter,
   useRecordContext,
   FunctionField,
@@ -117,7 +113,7 @@ const VerificationCard = () => {
 };
 
 const VerificationDatagrid = () => (
-  <Datagrid rowClick="edit" bulkActionButtons={false}>
+  <AdminTable rowClick="edit" bulkActionButtons={false}>
     <ReferenceField source="agent_id" reference="profiles" label="Agent" link={false}>
       <TextField source="full_name" />
     </ReferenceField>
@@ -128,11 +124,11 @@ const VerificationDatagrid = () => (
     <DateField source="created_at" />
     <DateField source="verified_at" />
     <DeleteButtonWithConfirm />
-  </Datagrid>
+  </AdminTable>
 );
 
 export const AgentVerificationList = () => (
-  <List
+  <List pagination={<AdminPagination />} className="admin-resource-list"
     sort={{ field: 'created_at', order: 'DESC' }}
     filters={<VerificationFilter />}
     sx={{ '& .RaList-content': { boxShadow: 'none' } }}

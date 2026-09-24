@@ -12,7 +12,10 @@ import { Calendar, Clock, MapPin, CheckCircle2, X, MessageCircle, Home, ChevronR
 import { formatPrice } from '@/utils/shareUtils'
 import ReviewModal from '@/components/ReviewModal'
 import CommissionPaymentModal from '@/components/CommissionPaymentModal'
+import { ReservationCardSkeleton } from '@/components/skeletons'
 import './Reservations.css'
+import VideoThumbnail from '@/components/VideoThumbnail'
+import { isVideoUrl } from '@/utils/videoUtils'
 
 // Shared button shapes, so the row reads as one control group rather than four
 // unrelated pills.
@@ -49,6 +52,15 @@ export default function UserReservations() {
 
   const { clearReservationBadge } = useBadgeCounts(user?.id || '', user?.role)
   const { isMonitoring, monitoringProgress, currentStatus, timeRemaining } = useFapshiPayment()
+
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [search, setSearch] = useState('')
+  const visibleReservations = useMemo(() => reservations.filter(reservation => {
+    const matchesStatus = statusFilter === 'all' || reservation.status === statusFilter
+    const query = search.trim().toLocaleLowerCase()
+    return matchesStatus && (!query || [reservation.property?.title, reservation.property?.location, reservation.id]
+      .some(value => value?.toLocaleLowerCase().includes(query)))
+  }), [reservations, statusFilter, search])
 
   const [requestingRefund, setRequestingRefund] = useState<string | null>(null)
   const [completingVisit, setCompletingVisit] = useState<string | null>(null)
@@ -178,6 +190,7 @@ export default function UserReservations() {
   const formatVisitSlot = (reservation: any) => {
     const locale = currentLanguage === 'fr' ? 'fr-FR' : 'en-US'
     const date = new Date(reservation.reservation_date).toLocaleDateString(locale, {
+      year: 'numeric',
       weekday: 'short',
       day: 'numeric',
       month: 'short',
@@ -208,8 +221,8 @@ export default function UserReservations() {
   }
 
   return (
-    <div className="reservations-container" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh' }}>
-      <div style={{ padding: '20px 16px' }}>
+    <div className="reservations-container reservations-workspace" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh' }}>
+      <div className="reservations-heading">
         <h1 style={{ 
           fontSize: '24px', 
           fontWeight: '700', 
@@ -223,9 +236,30 @@ export default function UserReservations() {
           color: Colors.neutral[600],
           marginBottom: '20px'
         }}>
-          {t('reservations.myReservations')}
+          {currentLanguage === 'fr' ? 'Retrouvez vos visites, paiements et prochaines étapes.' : 'Keep track of your visits, payments, and next steps.'}
         </p>
       </div>
+
+      <div className="reservation-tools">
+        <div className="reservation-tabs" aria-label={t('reservations.title')}>
+          {['all', 'confirmed', 'pending', 'completed', 'cancelled'].map(status => (
+            <button key={status} type="button" aria-pressed={statusFilter === status}
+              onClick={() => setStatusFilter(status)}>
+              {status === 'all' ? (currentLanguage === 'fr' ? 'Toutes' : 'All') : getStatusLabel(status)}
+              <span>{status === 'all' ? reservations.length : reservations.filter(item => item.status === status).length}</span>
+            </button>
+          ))}
+        </div>
+        <input type="search" value={search} onChange={event => setSearch(event.target.value)}
+          aria-label={currentLanguage === 'fr' ? 'Rechercher une réservation' : 'Search reservations'}
+          placeholder={currentLanguage === 'fr' ? 'Rechercher un bien ou une référence' : 'Search property or booking reference'} />
+      </div>
+      {!loading && !error && reservations.length > 0 && visibleReservations.length === 0 && (
+        <div className="reservation-no-results">
+          <p>{currentLanguage === 'fr' ? 'Aucune réservation correspondante.' : 'No reservations match your filters.'}</p>
+          <button onClick={() => { setSearch(''); setStatusFilter('all') }}>{currentLanguage === 'fr' ? 'Effacer les filtres' : 'Clear filters'}</button>
+        </div>
+      )}
 
       {/* Payment Monitoring */}
       {isMonitoring && (
@@ -289,9 +323,7 @@ export default function UserReservations() {
       )}
 
       {loading && (
-        <div style={{ padding: '40px', textAlign: 'center', color: Colors.neutral[600] }}>
-          {t('common.loading')}...
-        </div>
+        <ReservationCardSkeleton count={3} />
       )}
 
       {error && (
@@ -320,7 +352,7 @@ export default function UserReservations() {
 
       {!loading && !error && reservations.length > 0 && (
         <div className="reservations-list">
-          {reservations.map((reservation) => {
+          {visibleReservations.map((reservation) => {
             const property = reservation.property
             if (!property) return null
 
@@ -340,6 +372,9 @@ export default function UserReservations() {
                     opens the listing - a booked property is out of the public
                     feed, so this row is the only route back to it. */}
                 <div
+                  className="reservation-property"
+                  role="link" tabIndex={0}
+                  onKeyDown={event => { if (event.key === 'Enter' && property?.id) navigate(`/property/${property.id}`) }}
                   onClick={() => property?.id && navigate(`/property/${property.id}`)}
                   style={{
                     display: 'flex',
@@ -347,7 +382,9 @@ export default function UserReservations() {
                     cursor: property?.id ? 'pointer' : 'default'
                   }}
                 >
-                  {property?.images?.[0] ? (
+                  {property?.images?.[0] && isVideoUrl(property.images[0]) ? (
+                    <VideoThumbnail src={property.images[0]} alt={property.title || ''} className="reservation-thumbnail" />
+                  ) : property?.images?.[0] ? (
                     <img
                       src={property.images[0]}
                       alt={property.title || ''}
@@ -433,7 +470,7 @@ export default function UserReservations() {
                 </div>
 
                 {/* Date, time and amount were three separate rows of pills. */}
-                <div style={{
+                <div className="reservation-meta" style={{
                   display: 'flex',
                   alignItems: 'center',
                   marginTop: '12px',
@@ -478,7 +515,7 @@ export default function UserReservations() {
 
                 {/* At most two actions: reaching the agent, and whatever this
                     reservation's status actually allows next. */}
-                <div style={{
+                <div className="reservation-actions" style={{
                   display: 'flex',
                   gap: '8px',
                   marginTop: '12px',

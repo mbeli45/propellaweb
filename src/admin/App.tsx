@@ -24,6 +24,7 @@ import { PropertyViewList } from './resources/PropertyViews';
 // import StorageMigrationPage from './pages/StorageMigration';
 import Dashboard from './pages/Dashboard';
 import UserSignupStats from './pages/UserSignupStats';
+import Deals from '../pages/Deals';
 
 // Menu icons - Using Lucide and Heroicons for better design
 const PropertyIcon = () => <Icon icon="lucide:building-2" width={24} />;
@@ -63,6 +64,7 @@ const AdminApp = () => {
       requireAuth
     >
       <CustomRoutes>
+        <Route path="/deals" element={<Deals workspace="admin" />} />
         <Route path="/signup-stats" element={<UserSignupStats />} />
       </CustomRoutes>
       <Resource

@@ -13,6 +13,8 @@ interface NavItem {
   icon: React.ComponentType<{ size?: number; color?: string }>
   label: string
   badge?: number
+  /** Extra routes that should keep this tab highlighted */
+  activePaths?: string[]
 }
 
 interface BottomNavigationProps {
@@ -78,15 +80,17 @@ export default function BottomNavigation({ items, transparent = false }: BottomN
         WebkitBackdropFilter: isFeedMode ? 'blur(10px)' : 'none',
       }}
     >
-      {items.map((item) => (
+      {items.map((item) => {
+        const matchesExtra = item.activePaths?.some((p) => location.pathname.startsWith(p)) ?? false
+        return (
         <NavLink
           key={item.path}
           to={item.path}
           className={({ isActive }) =>
-            `nav-item ${isActive ? 'active' : ''}`
+            `nav-item ${isActive || matchesExtra ? 'active' : ''}`
           }
           style={({ isActive }) => ({
-            color: isActive 
+            color: isActive || matchesExtra
               ? (isFeedMode ? Colors.white : Colors.primary[800]) 
               : (isFeedMode ? 'rgba(255,255,255,0.7)' : Colors.neutral[400]),
           })}
@@ -99,7 +103,8 @@ export default function BottomNavigation({ items, transparent = false }: BottomN
           </div>
           <span className="nav-label">{t(item.label)}</span>
         </NavLink>
-      ))}
+        )
+      })}
     </nav>
   )
 }

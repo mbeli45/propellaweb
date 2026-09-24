@@ -13,6 +13,8 @@ interface NavItem {
   icon: React.ComponentType<{ size?: number; color?: string }>
   label: string
   badge?: number
+  /** Extra routes that should keep this item highlighted */
+  activePaths?: string[]
 }
 
 interface SidebarProps {
@@ -176,6 +178,7 @@ export default function Sidebar({ items, userRole = 'user' }: SidebarProps) {
         {items.map((item) => {
           // Determine if this is a parent route that should only match exactly
           const isParentRoute = item.path === '/user' || item.path === '/agent'
+          const matchesExtra = item.activePaths?.some((p) => location.pathname.startsWith(p)) ?? false
           
           return (
             <NavLink
@@ -184,8 +187,8 @@ export default function Sidebar({ items, userRole = 'user' }: SidebarProps) {
               end={isParentRoute}
               className="sidebar-nav-item"
               style={({ isActive }) => ({
-                color: isActive ? Colors.primary[800] : Colors.neutral[600],
-                backgroundColor: isActive ? Colors.primary[50] : 'transparent',
+                color: isActive || matchesExtra ? Colors.primary[800] : Colors.neutral[600],
+                backgroundColor: isActive || matchesExtra ? Colors.primary[50] : 'transparent',
                 justifyContent: isCollapsed ? 'center' : 'flex-start',
               })}
               title={isCollapsed ? t(item.label) : ''}

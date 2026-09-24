@@ -6,6 +6,7 @@ import { getColors } from '@/constants/Colors'
 import { usePropertyViews } from '@/hooks/usePropertyViews'
 import { BarChart3, Eye, TrendingUp, Users, Calendar, Star } from 'lucide-react'
 import './Analytics.css'
+import { DashboardSkeleton } from '@/components/skeletons'
 
 export default function AgentAnalytics() {
   const { user } = useAuth()
@@ -48,19 +49,7 @@ export default function AgentAnalytics() {
   }
 
   if (loading) {
-    return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        backgroundColor: Colors.neutral[50]
-      }}>
-        <div style={{ textAlign: 'center', color: Colors.neutral[600] }}>
-          {t('loading.loadingAnalytics') || 'Loading analytics...'}
-        </div>
-      </div>
-    )
+    return <DashboardSkeleton showHeader statCount={4} listCount={4} />
   }
 
   return (

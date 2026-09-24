@@ -8,6 +8,7 @@ import { useAgentPropertyReservations } from '@/hooks/useReservations'
 import { supabase } from '@/lib/supabase'
 import { Clock, MapPin, CreditCard, MessageCircle, Calendar } from 'lucide-react'
 import { formatPrice } from '@/utils/shareUtils'
+import SectionSwitch from '@/components/SectionSwitch'
 import '../user/Reservations.css'
 
 export default function AgentReservations() {
@@ -99,6 +100,13 @@ export default function AgentReservations() {
   return (
     <div className="reservations-container" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh' }}>
       <div style={{ padding: '20px 16px' }}>
+        <SectionSwitch
+          label={t('navigation.bookings')}
+          items={[
+            { to: '/agent/reservations', label: t('navigation.bookings') },
+            { to: '/agent/deals', label: 'Deals' },
+          ]}
+        />
         <h1 style={{ 
           fontSize: '24px', 
           fontWeight: '700', 

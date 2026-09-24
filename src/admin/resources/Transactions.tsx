@@ -1,15 +1,14 @@
+import { TextInput, SelectInput, AutocompleteInput } from '../components/ShadcnInputs';
+import { AdminTable, AdminPagination } from '../components/AdminTable';
+import { FinanceHeading } from '../components/FinanceHeading';
 import {
   List,
-  Datagrid,
   TextField,
   NumberField,
   DateField,
   Filter,
-  SelectInput,
-  TextInput,
   ReferenceField,
   ReferenceInput,
-  AutocompleteInput,
   FunctionField,
 } from 'react-admin';
 import { Box, Stack, Typography, Divider } from '@mui/material';
@@ -106,7 +105,7 @@ const TransactionCard = () => {
 };
 
 const TransactionDatagrid = () => (
-  <Datagrid bulkActionButtons={false}>
+  <AdminTable bulkActionButtons={false}>
     <ReferenceField source="user_id" reference="profiles" label="User" link={false}>
       <TextField source="full_name" />
     </ReferenceField>
@@ -132,15 +131,16 @@ const TransactionDatagrid = () => (
     <FunctionField label="Status" render={() => <StatusChip source="status" />} />
     <TextField source="reference" />
     <DateField source="created_at" showTime />
-  </Datagrid>
+  </AdminTable>
 );
 
 export const TransactionList = () => (
-  <List
+  <List pagination={<AdminPagination />} className="admin-resource-list finance-list"
     sort={{ field: 'created_at', order: 'DESC' }}
     filters={<TransactionFilter />}
     sx={{ '& .RaList-content': { boxShadow: 'none' } }}
   >
-    <ResponsiveList desktop={<TransactionDatagrid />} card={<TransactionCard />} rowClick={false} />
+
+    <FinanceHeading title="Transactions" description="Review payment activity and trace each transaction by reference." />    <ResponsiveList desktop={<TransactionDatagrid />} card={<TransactionCard />} rowClick={false} />
   </List>
 );

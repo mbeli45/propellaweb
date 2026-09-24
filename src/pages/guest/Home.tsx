@@ -8,13 +8,14 @@ import { useSearch } from '@/hooks/useSearch'
 import SearchBar from '@/components/SearchBar'
 import FilterModal, { FilterOptions, MAX_PRICE } from '@/components/FilterModal'
 import PropertyCard from '@/components/PropertyCard'
-import PropertyListSkeleton from '@/components/PropertyListSkeleton'
 import PropertyFeedView from '@/components/PropertyFeedView'
 import SEO from '@/components/SEO'
 import { generateHomepageStructuredData } from '@/utils/seoUtils'
 import { MapPin, ArrowRight, LayoutGrid, Compass } from 'lucide-react'
 import './Home.css'
+import '../HomeBrowse.css'
 import { POPULAR_TOWNS } from '@/utils/towns'
+import { PropertyCardSkeleton } from '@/components/skeletons'
 
 export default function GuestHome() {
   const { colorScheme } = useThemeMode()
@@ -229,7 +230,7 @@ export default function GuestHome() {
 
       {/* Loading State */}
       {isLoading && !displayProperties.length && (
-        <PropertyListSkeleton count={6} />
+        <PropertyCardSkeleton count={6} gridClassName="property-grid" />
       )}
 
       {/* Search Results Section */}

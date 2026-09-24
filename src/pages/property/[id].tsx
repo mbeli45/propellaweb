@@ -34,12 +34,14 @@ import { useFapshiPayment } from '@/hooks/useFapshiPayment'
 import { formatPrice, calculateRentPrices, createPropertyUrl } from '@/utils/shareUtils'
 import { generatePropertyStructuredData, getCanonicalBaseUrl } from '@/utils/seoUtils'
 import { getPaymentStatus } from '@/lib/fapshi'
-import { isVideoUrl, separateMedia, generateVideoThumbnail } from '@/utils/videoUtils'
+import { isVideoUrl, separateMedia } from '@/utils/videoUtils'
 import PropertyCard from '@/components/PropertyCard'
+import VideoThumbnail from '@/components/VideoThumbnail'
 import ReservationModal from '@/components/ReservationModal'
 import VideoPlayer from '@/components/VideoPlayer'
 import SEO from '@/components/SEO'
 import './PropertyDetail.css'
+import { PropertyDetailSkeleton, ListItemSkeleton } from '@/components/skeletons'
 
 type PaymentMethod = 'mtn' | 'orange'
 
@@ -84,7 +86,7 @@ export default function PropertyDetail() {
   const [waitingForPayment, setWaitingForPayment] = useState(false)
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [videoThumbnails, setVideoThumbnails] = useState<Record<string, string>>({})
+  const videoThumbnails: Record<string, string> = {}
   const [playingVideo, setPlayingVideo] = useState<string | null>(null)
 
   const allMedia = useMemo(() => {
@@ -103,32 +105,6 @@ export default function PropertyDetail() {
   const { videos, images } = useMemo(() => {
     return separateMedia(allMedia)
   }, [allMedia])
-
-  // Generate thumbnails for videos
-  useEffect(() => {
-    const generateThumbnails = async () => {
-      const thumbnails: Record<string, string> = {}
-      for (const videoUrl of videos) {
-        if (!videoThumbnails[videoUrl]) {
-          try {
-            const thumbnail = await generateVideoThumbnail(videoUrl)
-            if (thumbnail) {
-              thumbnails[videoUrl] = thumbnail
-            }
-          } catch (error) {
-            console.error('Failed to generate thumbnail for', videoUrl, error)
-          }
-        }
-      }
-      if (Object.keys(thumbnails).length > 0) {
-        setVideoThumbnails(prev => ({ ...prev, ...thumbnails }))
-      }
-    }
-    
-    if (videos.length > 0) {
-      generateThumbnails()
-    }
-  }, [videos])
 
   const rentPrices = useMemo(() => {
     if (!property || property.type !== 'rent') return null
@@ -321,15 +297,7 @@ export default function PropertyDetail() {
   const isOwner = user?.id === property?.owner_id
 
   if (loading) {
-    return (
-      <div style={{ 
-        padding: '40px', 
-        textAlign: 'center', 
-        color: Colors.neutral[600] 
-      }}>
-        {t('common.loading')}...
-      </div>
-    )
+    return <PropertyDetailSkeleton />
   }
 
   if (error || !property) {
@@ -400,7 +368,7 @@ export default function PropertyDetail() {
         type="article"
         structuredData={structuredData}
       />
-      <div className="property-detail" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh', paddingBottom: '100px' }}>
+      <div className="property-detail" style={{ backgroundColor: Colors.white, minHeight: '100vh', paddingBottom: '100px' }}>
       {/* Header with Back Button */}
       <div className="property-header" style={{ 
         position: 'sticky',
@@ -474,7 +442,7 @@ export default function PropertyDetail() {
 
       {/* Media Gallery (Videos + Images) */}
       {allMedia.length > 0 && (
-        <div className="property-images">
+        <div className="property-images" data-media-count={allMedia.length}>
           <div className="main-image-container">
             {playingVideo === allMedia[currentMediaIndex] ? (
               <VideoPlayer
@@ -509,12 +477,9 @@ export default function PropertyDetail() {
                     }}
                   />
                 ) : (
-                  <video
-                    src={`${allMedia[currentMediaIndex]}#t=0.5`}
+                  <VideoThumbnail src={allMedia[currentMediaIndex]}
+                    alt="Property video"
                     className="main-image"
-                    preload="metadata"
-                    muted
-                    playsInline
                     style={{
                       width: '100%',
                       height: '100%',
@@ -602,11 +567,8 @@ export default function PropertyDetail() {
                     style={{ position: 'relative' }}
                   >
                     {isVideo && !thumbnail ? (
-                      <video
-                        src={`${media}#t=0.5`}
-                        preload="metadata"
-                        muted
-                        playsInline
+                      <VideoThumbnail src={media}
+                        alt="Property video"
                         style={{
                           width: '100%',
                           height: '100%',
@@ -653,8 +615,7 @@ export default function PropertyDetail() {
         </div>
       )}
 
-      {/* Property Info */}
-      <div className="property-content">
+      <section className="property-summary">
         {/* Price and Title */}
         <div style={{ marginBottom: '16px' }}>
           {property.type === 'rent' && rentPrices ? (
@@ -685,14 +646,7 @@ export default function PropertyDetail() {
               {formatPrice(property.price)}
             </div>
           )}
-          <h2 style={{ 
-            fontSize: '20px', 
-            fontWeight: '600', 
-            color: Colors.neutral[900],
-            marginTop: '8px'
-          }}>
-            {property.title}
-          </h2>
+
         </div>
 
         {/* Location */}
@@ -793,6 +747,115 @@ export default function PropertyDetail() {
           </span>
         </div>
 
+      {/* Bottom Action Bar */}
+      <div className="property-bottom-bar" style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        padding: '16px',
+        backgroundColor: Colors.white,
+        borderTop: `1px solid ${Colors.neutral[200]}`,
+        boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.1)',
+        zIndex: 100
+      }}>
+        <button
+          onClick={handleToggleSaved}
+          disabled={savingProperty}
+          title={isSaved ? t('saved.removeFromSaved') : t('saved.addToSaved')}
+          aria-label={isSaved ? t('saved.removeFromSaved') : t('saved.addToSaved')}
+          aria-pressed={isSaved}
+          style={{
+            width: '56px',
+            height: '56px',
+            borderRadius: '16px',
+            border: `1px solid ${isSaved ? Colors.primary[800] : Colors.neutral[200]}`,
+            backgroundColor: Colors.white,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: savingProperty ? 'default' : 'pointer',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = Colors.neutral[50]
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = Colors.white
+          }}
+        >
+          <Bookmark
+            size={24}
+            color={Colors.primary[800]}
+            fill={isSaved ? Colors.primary[800] : 'transparent'}
+          />
+        </button>
+        {!isOwner && (
+          hasActiveBooking ? (
+            <button
+              onClick={() => navigate(`/chat/${property.owner_id}?propertyId=${property.id}`)}
+              style={{
+                flex: 1,
+                padding: '16px',
+                backgroundColor: Colors.primary[600],
+                color: Colors.white,
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = Colors.primary[700]
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = Colors.primary[600]
+              }}
+            >
+              {t('propertyDetails.messageAgent')}
+            </button>
+          ) : (
+            <button
+              onClick={handleReserve}
+              disabled={reservationLoading || paymentLoading}
+              style={{
+                flex: 1,
+                padding: '16px',
+                backgroundColor: Colors.primary[600],
+                color: Colors.white,
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: (reservationLoading || paymentLoading) ? 'not-allowed' : 'pointer',
+                opacity: (reservationLoading || paymentLoading) ? 0.6 : 1,
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                if (!reservationLoading && !paymentLoading) {
+                  e.currentTarget.style.backgroundColor = Colors.primary[700]
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!reservationLoading && !paymentLoading) {
+                  e.currentTarget.style.backgroundColor = Colors.primary[600]
+                }
+              }}
+            >
+              {reservationLoading || paymentLoading ? t('buttons.processing') : t('propertyDetails.bookSiteVisit')}
+            </button>
+          )
+        )}
+      </div>
+
+      </section>
+
+      {/* Property Info */}
+      <div className="property-content">
         {/* Description */}
         {property.description && (
           <div style={{ 
@@ -1003,7 +1066,7 @@ export default function PropertyDetail() {
           </h3>
 
           {reviewsLoading ? (
-            <p style={{ color: Colors.neutral[500] }}>{t('loading.loadingReviews', 'Loading reviews...')}</p>
+            <ListItemSkeleton count={2} leading="avatar" lines={3} flush />
           ) : propertyReviews.length === 0 ? (
             <p style={{ color: Colors.neutral[500] }}>{t('property.noReviewsYet', 'No reviews yet')}</p>
           ) : (
@@ -1017,7 +1080,7 @@ export default function PropertyDetail() {
                 </div>
               )}
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="detail-reviews-grid">
                 {propertyReviews.slice(0, 5).map((review) => (
                   <div
                     key={review.id}
@@ -1171,111 +1234,6 @@ export default function PropertyDetail() {
           {saveError}
         </div>
       )}
-
-      {/* Bottom Action Bar */}
-      <div className="property-bottom-bar" style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '16px',
-        padding: '16px',
-        backgroundColor: Colors.white,
-        borderTop: `1px solid ${Colors.neutral[200]}`,
-        boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.1)',
-        zIndex: 100
-      }}>
-        <button
-          onClick={handleToggleSaved}
-          disabled={savingProperty}
-          title={isSaved ? t('saved.removeFromSaved') : t('saved.addToSaved')}
-          aria-label={isSaved ? t('saved.removeFromSaved') : t('saved.addToSaved')}
-          aria-pressed={isSaved}
-          style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '16px',
-            border: `1px solid ${isSaved ? Colors.primary[800] : Colors.neutral[200]}`,
-            backgroundColor: Colors.white,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: savingProperty ? 'default' : 'pointer',
-            transition: 'all 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = Colors.neutral[50]
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = Colors.white
-          }}
-        >
-          <Bookmark
-            size={24}
-            color={Colors.primary[800]}
-            fill={isSaved ? Colors.primary[800] : 'transparent'}
-          />
-        </button>
-        {!isOwner && (
-          hasActiveBooking ? (
-            <button
-              onClick={() => navigate(`/chat/${property.owner_id}?propertyId=${property.id}`)}
-              style={{
-                flex: 1,
-                padding: '16px',
-                backgroundColor: Colors.primary[600],
-                color: Colors.white,
-                border: 'none',
-                borderRadius: '12px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'background 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = Colors.primary[700]
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = Colors.primary[600]
-              }}
-            >
-              {t('propertyDetails.messageAgent')}
-            </button>
-          ) : (
-            <button
-              onClick={handleReserve}
-              disabled={reservationLoading || paymentLoading}
-              style={{
-                flex: 1,
-                padding: '16px',
-                backgroundColor: Colors.primary[600],
-                color: Colors.white,
-                border: 'none',
-                borderRadius: '12px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: (reservationLoading || paymentLoading) ? 'not-allowed' : 'pointer',
-                opacity: (reservationLoading || paymentLoading) ? 0.6 : 1,
-                transition: 'background 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                if (!reservationLoading && !paymentLoading) {
-                  e.currentTarget.style.backgroundColor = Colors.primary[700]
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!reservationLoading && !paymentLoading) {
-                  e.currentTarget.style.backgroundColor = Colors.primary[600]
-                }
-              }}
-            >
-              {reservationLoading || paymentLoading ? t('buttons.processing') : t('propertyDetails.bookSiteVisit')}
-            </button>
-          )
-        )}
-      </div>
 
       {/* Reservation Modal */}
       <ReservationModal

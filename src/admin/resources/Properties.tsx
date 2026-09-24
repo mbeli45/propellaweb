@@ -1,6 +1,7 @@
+import { TextInput, NumberInput, SelectInput, BooleanInput, AutocompleteInput } from '../components/ShadcnInputs';
+import { AdminTable, AdminPagination } from '../components/AdminTable';
 import {
   List,
-  Datagrid,
   TextField,
   NumberField,
   DateField,
@@ -8,16 +9,11 @@ import {
   Edit,
   Create,
   SimpleForm,
-  TextInput,
-  NumberInput,
-  BooleanInput,
-  SelectInput,
   Filter,
   EditButton,
   useRecordContext,
   ReferenceField,
   ReferenceInput,
-  AutocompleteInput,
   FunctionField,
 } from 'react-admin';
 import { Box, Stack, Typography, Divider } from '@mui/material';
@@ -130,7 +126,7 @@ const PropertyCard = () => {
 };
 
 const PropertyDatagrid = () => (
-  <Datagrid rowClick="edit" bulkActionButtons={false}>
+  <AdminTable rowClick="edit" bulkActionButtons={false}>
     <TextField source="title" />
     <FunctionField
       label="Price"
@@ -146,11 +142,11 @@ const PropertyDatagrid = () => (
     <DateField source="created_at" />
     <EditButton />
     <DeleteButtonWithConfirm />
-  </Datagrid>
+  </AdminTable>
 );
 
 export const PropertyList = () => (
-  <List
+  <List pagination={<AdminPagination />} className="admin-resource-list"
     sort={{ field: 'created_at', order: 'DESC' }}
     filters={<PropertyFilter />}
     sx={{ '& .RaList-content': { boxShadow: 'none' } }}

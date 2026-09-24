@@ -10,6 +10,7 @@ import { useFapshiWithdrawal } from '@/hooks/useFapshiWithdrawal'
 import { Wallet, ArrowDown, ArrowUp, CreditCard, TrendingUp, X, AlertCircle } from 'lucide-react'
 import { formatPrice } from '@/utils/shareUtils'
 import './Wallet.css'
+import { ListItemSkeleton } from '@/components/skeletons'
 
 export default function AgentWallet() {
   const { user } = useAuth()
@@ -285,9 +286,7 @@ export default function AgentWallet() {
           </h2>
 
           {loading && (
-            <div style={{ textAlign: 'center', padding: '40px', color: Colors.neutral[600] }}>
-              {t('common.loading')}...
-            </div>
+            <ListItemSkeleton count={4} leading="avatar" lines={2} trailing="text" flush />
           )}
 
           {error && (
@@ -331,14 +330,14 @@ export default function AgentWallet() {
                     width: '40px',
                     height: '40px',
                     borderRadius: '20px',
-                    backgroundColor: (transaction.type === 'deposit' || transaction.type === 'payment') 
+                    backgroundColor: (['deposit', 'payment', 'deal_commission_income'].includes(transaction.type))
                       ? Colors.success[100] 
                       : Colors.error[100],
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>
-                    {(transaction.type === 'deposit' || transaction.type === 'payment') ? (
+                    {(['deposit', 'payment', 'deal_commission_income'].includes(transaction.type)) ? (
                       <ArrowUp size={20} color={Colors.success[600]} />
                     ) : (
                       <ArrowDown size={20} color={Colors.error[600]} />
@@ -351,7 +350,7 @@ export default function AgentWallet() {
                       color: Colors.neutral[900],
                       marginBottom: '4px'
                     }}>
-                      {transaction.description || t('wallet.transactions')}
+                      {transaction.type === 'deal_commission_income' ? 'Property deal commission' : transaction.type.replace(/_/g, ' ')}
                     </div>
                     <div style={{
                       fontSize: '12px',
@@ -363,11 +362,11 @@ export default function AgentWallet() {
                   <div style={{
                     fontSize: '16px',
                     fontWeight: '600',
-                    color: (transaction.type === 'deposit' || transaction.type === 'payment')
+                    color: (['deposit', 'payment', 'deal_commission_income'].includes(transaction.type))
                       ? Colors.success[600] 
                       : Colors.error[600]
                   }}>
-                    {(transaction.type === 'deposit' || transaction.type === 'payment') ? '+' : '-'}
+                    {(['deposit', 'payment', 'deal_commission_income'].includes(transaction.type)) ? '+' : '-'}
                     {formatPrice(Math.abs(transaction.amount))}
                   </div>
                 </div>

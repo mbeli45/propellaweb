@@ -42,15 +42,16 @@ export const DetailHero = ({
 }: DetailHeroProps) => {
   const navigate = useNavigate();
   return (
-    <Box sx={{ mb: 4 }}>
+    <Box className="admin-detail-hero" sx={{ mb: 4 }}>
       <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 2, color: Colors.neutral[600] }}>
         <Box
+          component="button" type="button"
           onClick={() => (backTo ? navigate(backTo) : navigate(-1))}
           sx={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: 0.5,
-            cursor: 'pointer',
+            cursor: 'pointer', background: 'transparent', border: 0, padding: '6px 0', color: 'inherit', fontFamily: 'inherit',
             fontSize: '0.8125rem',
             fontWeight: 500,
             '&:hover': { color: Colors.primary[600] },
@@ -334,6 +335,7 @@ export const BackBar = ({ title, backTo, right }: BackBarProps) => {
     >
       <Stack direction="row" alignItems="center" spacing={1.5} sx={{ minWidth: 0 }}>
         <Box
+          component="button" type="button"
           onClick={() => (backTo ? navigate(backTo) : navigate(-1))}
           sx={{
             display: 'inline-flex',

@@ -1,9 +1,7 @@
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from './ShadcnDialog';
 import { useState } from 'react';
 import { useRecordContext, useNotify, useRefresh } from 'react-admin';
-import {
-  IconButton, Dialog, DialogTitle, DialogContent, DialogContentText,
-  DialogActions, Button, Tooltip, Alert,
-} from '@mui/material';
+import { IconButton, Tooltip, Alert } from '@mui/material';
 import { Colors } from '@/constants/Colors';
 import { Icon } from '@iconify/react';
 import { supabase } from '@/lib/supabase';
@@ -109,6 +107,7 @@ export const DeleteUserButton = () => {
         </DialogContent>
         <DialogActions sx={{ padding: '16px 24px' }}>
           <Button
+            autoFocus
             onClick={handleClose}
             disabled={loading}
             sx={{ color: Colors.neutral[700], '&:hover': { backgroundColor: Colors.neutral[100] } }}
@@ -123,7 +122,7 @@ export const DeleteUserButton = () => {
               backgroundColor: Colors.error[600],
               '&:hover': { backgroundColor: Colors.error[700] },
             }}
-            autoFocus
+
           >
             {loading
               ? 'Deleting...'

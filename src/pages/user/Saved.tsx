@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useSavedProperties } from '@/hooks/useSavedProperties'
 import PropertyCard from '@/components/PropertyCard'
 import './Saved.css'
+import { PropertyCardSkeleton } from '@/components/skeletons'
 
 export default function SavedProperties() {
   const { colorScheme } = useThemeMode()
@@ -63,9 +64,7 @@ export default function SavedProperties() {
             navigate('/auth/login')
           )
         ) : loading ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: Colors.neutral[600] }}>
-            {t('common.loading')}
-          </div>
+          <PropertyCardSkeleton count={6} gridClassName="saved-properties-grid" />
         ) : error ? (
           <div style={{ textAlign: 'center', padding: '40px', color: Colors.error[600] }}>
             <p>{error}</p>

@@ -9,6 +9,7 @@ import UserMessages from '@/pages/user/Messages'
 import AgentWallet from '@/pages/agent/Wallet'
 import AgentProfile from '@/pages/agent/Profile'
 import AgentAnalytics from '@/pages/agent/Analytics'
+import Deals from '@/pages/Deals'
 import UserSaved from '@/pages/user/Saved'
 import ChatDetail from '@/pages/chat/[id]'
 import PropertyDetail from '@/pages/property/[id]'
@@ -33,7 +34,8 @@ export default function AgentLayout() {
 
   const navItems = [
     { path: '/agent', icon: List, label: 'navigation.listings' },
-    { path: '/agent/reservations', icon: CalendarDays, label: 'navigation.bookings', badge: reservationBadgeCount > 0 ? reservationBadgeCount : undefined },
+    // Deals live under the Bookings tab (switch inside the page) to keep the mobile nav to 5 items
+    { path: '/agent/reservations', icon: CalendarDays, label: 'navigation.bookings', badge: reservationBadgeCount > 0 ? reservationBadgeCount : undefined, activePaths: ['/agent/deals'] },
     { path: '/agent/messages', icon: MessageCircle, label: 'navigation.messages', badge: messageBadgeCount > 0 ? messageBadgeCount : undefined },
     { path: '/agent/wallet', icon: Wallet, label: 'navigation.wallet' },
     { path: '/agent/profile', icon: User, label: 'navigation.profile' },
@@ -50,6 +52,7 @@ export default function AgentLayout() {
             <Route path="messages/:id" element={<ChatDetail />} />
             <Route path="wallet" element={<AgentWallet />} />
             <Route path="analytics" element={<AgentAnalytics />} />
+            <Route path="deals" element={<Deals workspace="agent" />} />
             <Route path="saved" element={<UserSaved />} />
             <Route path="profile" element={<AgentProfile />} />
             <Route path="profile/settings" element={<ProfileSettings />} />

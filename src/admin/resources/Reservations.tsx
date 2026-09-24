@@ -1,22 +1,19 @@
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button as MuiButton } from '../components/ShadcnDialog';
+import { TextInput, NumberInput, SelectInput, BooleanInput, AutocompleteInput } from '../components/ShadcnInputs';
+import { AdminTable, AdminPagination } from '../components/AdminTable';
 import { useEffect, useState } from 'react';
 import {
   List,
-  Datagrid,
   TextField,
   NumberField,
   DateField,
   Edit,
   SimpleForm,
-  SelectInput,
   DateInput,
   TimeInput,
-  NumberInput,
-  TextInput,
   ReferenceField,
   ReferenceInput,
-  AutocompleteInput,
   Filter,
-  BooleanInput,
   useRecordContext,
   useNotify,
   useRefresh,
@@ -24,11 +21,6 @@ import {
   FunctionField,
 } from 'react-admin';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button as MuiButton,
   TextField as MuiTextField,
   Stack,
   Typography,
@@ -179,7 +171,7 @@ const ProcessRefundButton = () => {
         color={failed ? 'warning' : 'primary'}
         startIcon={<Icon icon="lucide:undo-2" width={16} />}
       />
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog open={open} onClose={() => { if (!submitting) setOpen(false); }} maxWidth="xs" fullWidth>
         <DialogTitle>Process refund</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
@@ -332,7 +324,7 @@ const ReservationCard = () => {
 // ----- List page ---------------------------------------------------------
 
 const ReservationDatagrid = () => (
-  <Datagrid rowClick="edit" bulkActionButtons={false}>
+  <AdminTable rowClick="edit" bulkActionButtons={false}>
     <ReferenceField source="property_id" reference="properties" label="Property" link={false}>
       <TextField source="title" />
     </ReferenceField>
@@ -362,11 +354,11 @@ const ReservationDatagrid = () => (
       )}
     />
     <DeleteButtonWithConfirm />
-  </Datagrid>
+  </AdminTable>
 );
 
 export const ReservationList = () => (
-  <List
+  <List pagination={<AdminPagination />} className="admin-resource-list"
     sort={{ field: 'created_at', order: 'DESC' }}
     filters={<ReservationFilter />}
     sx={{ '& .RaList-content': { boxShadow: 'none' } }}

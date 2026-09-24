@@ -12,6 +12,7 @@ import { useSavedProperty } from '@/hooks/useSavedProperties'
 import { usePropertyLike } from '@/hooks/usePropertyLikes'
 import { isReservedByViewer } from '@/lib/propertyVisibility'
 import { formatLastVerified, isAvailabilityStale } from '@/hooks/usePropertyAvailability'
+import VideoPlayer from './VideoPlayer'
 import './PropertyFeedView.css'
 
 const RENDER_WINDOW = 2 // Only render properties within ±2 of current index
@@ -193,6 +194,7 @@ export default function PropertyFeedView({
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
   const [feedSearchQuery, setFeedSearchQuery] = useState(searchValue)
   const containerRef = useRef<HTMLDivElement>(null)
+  const [requestedVideo, setRequestedVideo] = useState<string | null>(null)
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({})
   const touchStartX = useRef<number>(0)
   const touchStartY = useRef<number>(0)
@@ -505,83 +507,8 @@ export default function PropertyFeedView({
     }
   }, [goToNextProperty, goToPreviousProperty])
 
-  // Auto-play video when media becomes active (TikTok-style)
-  useEffect(() => {
-    if (!currentProperty || !isCurrentVideo) {
-      // If current media is not a video, pause all videos
-      Object.values(videoRefs.current).forEach(video => {
-        if (video) {
-          video.pause()
-          video.currentTime = 0
-        }
-      })
-      return
-    }
-
-    const videoKey = `${currentProperty.id}-${currentMediaUrl}`
-    const video = videoRefs.current[videoKey]
-    
-    if (video) {
-      // Ensure video is ready and play immediately
-      const playVideo = async () => {
-        try {
-          // Reset video to start
-          video.currentTime = 0
-          
-          // Ensure video is loaded
-          if (video.readyState < 2) {
-            video.load()
-            await new Promise((resolve) => {
-              video.oncanplay = resolve
-            })
-          }
-          
-          // Play video
-          await video.play()
-        } catch (err) {
-          console.log('Video autoplay prevented:', err)
-          // Try again after a short delay
-          setTimeout(() => {
-            video.play().catch(() => {})
-          }, 200)
-        }
-      }
-      
-      playVideo()
-    }
-
-    // Pause videos from other properties
-    properties.forEach((prop, propIndex) => {
-      if (propIndex !== currentPropertyIndex) {
-        const propMedia = getPropertyMedia(prop)
-        propMedia.forEach(media => {
-          if (isVideoUrl(media)) {
-            const videoKey = `${prop.id}-${media}`
-            const video = videoRefs.current[videoKey]
-            if (video) {
-              video.pause()
-              video.currentTime = 0
-            }
-          }
-        })
-      }
-    })
-
-    // Pause other media from same property
-    if (currentProperty) {
-      const allMedia = getPropertyMedia(currentProperty)
-      allMedia.forEach((media, idx) => {
-        if (idx !== currentMediaIdx && isVideoUrl(media)) {
-          const videoKey = `${currentProperty.id}-${media}`
-          const video = videoRefs.current[videoKey]
-          if (video) {
-            video.pause()
-            video.currentTime = 0
-          }
-        }
-      })
-    }
-  }, [currentPropertyIndex, currentMediaIdx, currentProperty, isCurrentVideo, currentMediaUrl, properties, getPropertyMedia])
+  // Each slide requires a fresh play action; leaving it unmounts the player.
+  useEffect(() => { setRequestedVideo(null) }, [currentPropertyIndex, currentMediaIdx])
 
   // Reset media index when property changes
   useEffect(() => {
@@ -592,28 +519,6 @@ export default function PropertyFeedView({
       }))
     }
   }, [currentPropertyIndex, currentProperty])
-
-  // Preload first image of adjacent properties
-  useEffect(() => {
-    const nextProp = properties[currentPropertyIndex + 1]
-    if (nextProp) {
-      const nextMedia = getPropertyMedia(nextProp)
-      const firstImage = nextMedia.find(m => !isVideoUrl(m))
-      if (firstImage) {
-        const img = new Image()
-        img.src = firstImage
-      }
-    }
-    const prevProp = properties[currentPropertyIndex - 1]
-    if (prevProp) {
-      const prevMedia = getPropertyMedia(prevProp)
-      const firstImage = prevMedia.find(m => !isVideoUrl(m))
-      if (firstImage) {
-        const img = new Image()
-        img.src = firstImage
-      }
-    }
-  }, [currentPropertyIndex, properties, getPropertyMedia])
 
   if (properties.length === 0 && !loading) {
     return (
@@ -823,41 +728,19 @@ export default function PropertyFeedView({
                       }}
                     >
                       {isMediaVideo ? (
-                        <video
-                          ref={(el) => {
-                            if (el) {
-                              videoRefs.current[`${property.id}-${mediaItem}`] = el
-                            }
-                          }}
-                          src={mediaItem}
-                          className="feed-video"
-                          playsInline
-                          muted
-                          loop
-                          autoPlay
-                          preload="auto"
-                          onLoadedData={(e) => {
-                            if (propIndex === currentPropertyIndex && mediaItemIndex === mediaIdx) {
-                              const video = e.currentTarget
-                              video.play().catch(() => {
-                                setTimeout(() => video.play().catch(() => {}), 100)
-                              })
-                            }
-                          }}
-                          onPlay={() => {
-                            if (propIndex === currentPropertyIndex && mediaItemIndex === mediaIdx) {
-                              const video = videoRefs.current[`${property.id}-${mediaItem}`]
-                              if (video && video.paused) {
-                                video.play().catch(() => {})
-                              }
-                            }
-                          }}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover'
-                          }}
-                        />
+                        isCurrentMediaItem ? (
+                          requestedVideo === `${property.id}-${mediaItem}` ? <VideoPlayer
+                            key={`${property.id}-${mediaItem}`}
+                            src={mediaItem}
+                            autoPlay
+                            controls
+                          /> : <button
+                            type="button"
+                            aria-label={t('property.playVideo', 'Play property video')}
+                            onClick={(event) => { event.stopPropagation(); setRequestedVideo(`${property.id}-${mediaItem}`) }}
+                            style={{width:'100%',height:'100%',background:'#111',color:'#fff',display:'grid',placeContent:'center',fontSize:18}}
+                          >▶ {t('property.playVideo', 'Play property video')}</button>
+                        ) : null
                       ) : (() => {
                         const imgKey = `${property.id}-${mediaItem}`
                         const isImgLoaded = loadedImages.has(imgKey)
@@ -876,7 +759,7 @@ export default function PropertyFeedView({
                               </div>
                             )}
                             <img
-                              src={mediaItem}
+                              src={isCurrentMediaItem ? mediaItem : undefined}
                               alt={property.title || 'Property'}
                               fetchPriority={isCurrentMediaItem ? 'high' : 'auto'}
                               decoding="async"

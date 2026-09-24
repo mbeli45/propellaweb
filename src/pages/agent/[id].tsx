@@ -9,9 +9,10 @@ import { supabase } from '@/lib/supabase'
 import PropertyCard from '@/components/PropertyCard'
 import SEO from '@/components/SEO'
 import { generateAgentStructuredData, getCanonicalBaseUrl } from '@/utils/seoUtils'
-import { Star, User as UserIcon, Phone, ArrowRight, CheckCircle2, ArrowLeft, X } from 'lucide-react'
+import { Star, User as UserIcon, ArrowRight, CheckCircle2, ArrowLeft, X } from 'lucide-react'
 import ModerationActions from '@/components/moderation/ModerationActions'
 import './AgentProfile.css'
+import { AgentProfileSkeleton } from '@/components/skeletons'
 
 export default function AgentProfile() {
   const { id: agentId } = useParams<{ id: string }>()
@@ -40,23 +41,11 @@ export default function AgentProfile() {
 
   const structuredData = useMemo(() => {
     if (!agent) return undefined
-    return generateAgentStructuredData(agent, properties.length, reviews.length, averageRating)
+    return generateAgentStructuredData({ ...agent, phone: undefined, email: undefined }, properties.length, reviews.length, averageRating)
   }, [agent, properties.length, reviews.length, averageRating])
 
   if (loading) {
-    return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        backgroundColor: Colors.neutral[50]
-      }}>
-        <div style={{ textAlign: 'center', color: Colors.neutral[600] }}>
-          {t('loading.loadingAgentProfile') || 'Loading agent profile...'}
-        </div>
-      </div>
-    )
+    return <AgentProfileSkeleton />
   }
 
   if (error || !agent) {
@@ -178,8 +167,8 @@ export default function AgentProfile() {
         type="profile"
         structuredData={structuredData}
       />
-      <div style={{ 
-      backgroundColor: Colors.neutral[50], 
+      <div className="agent-profile-container" style={{ 
+      backgroundColor: Colors.white, 
       minHeight: '100vh',
       paddingBottom: '24px'
     }}>
@@ -212,101 +201,114 @@ export default function AgentProfile() {
         </button>
       </div>
 
-      {/* Profile Card */}
-      <div style={{
-        backgroundColor: Colors.white,
-        padding: '24px 16px',
-        textAlign: 'center',
-        margin: '16px',
-        borderRadius: '16px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
-      }}>
-        <div style={{
-          width: '80px',
-          height: '80px',
-          borderRadius: '40px',
-          backgroundColor: Colors.neutral[200],
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 12px',
-          fontSize: '32px',
-          fontWeight: '600',
-          color: Colors.neutral[500]
-        }}>
-          {agent.avatar_url ? (
-            <img
-              src={agent.avatar_url}
-              alt={agent.full_name || ''}
-              style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: '40px',
-                objectFit: 'cover'
-              }}
-            />
-          ) : (
-            agent.full_name?.charAt(0).toUpperCase() || 'A'
-          )}
-        </div>
-        <h1 style={{
-          fontSize: '22px',
-          fontWeight: '700',
-          color: Colors.neutral[900],
-          marginBottom: '4px',
-          margin: '0 0 4px 0'
-        }}>
-          {agent.full_name || t('common.user')}
-        </h1>
-        <div style={{
-          fontSize: '15px',
-          color: Colors.primary[700],
-          marginBottom: '8px'
-        }}>
-          {agent.role === 'agent' ? t('agentProfile.verifiedAgent') : 'User'}
-        </div>
-        {agent.bio && (
-          <p style={{
-            fontSize: '15px',
-            color: Colors.neutral[700],
-            marginTop: '8px',
-            marginBottom: '12px',
-            lineHeight: '1.5'
-          }}>
-            {agent.bio}
-          </p>
-        )}
-        
-        {/* Contact Info */}
-        <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          gap: '16px',
-          marginTop: '12px'
-        }}>
-          {agent.phone && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Phone size={16} color={Colors.primary[700]} />
-              <span style={{ fontSize: '14px', color: Colors.neutral[700] }}>{agent.phone}</span>
+      <section className="agent-hero" style={{ backgroundColor: Colors.white, color: Colors.neutral[900] }}>
+        <div className="agent-hero-identity">
+          <div className="agent-hero-avatar">
+            {agent.avatar_url ? <img src={agent.avatar_url} alt={agent.full_name || ''} /> : <UserIcon size={40} />}
+          </div>
+          <div className="agent-hero-copy">
+            <span className="agent-eyebrow">{t('propertyDetails.propertyAgent', 'Property agent')}</span>
+            <h1>{agent.full_name || t('common.user')}</h1>
+            <div className="agent-credentials">
+              {agent.is_verified_agent ? <span><CheckCircle2 size={16} /> {t('agentProfile.verifiedAgent', 'Verified agent')}</span> : <span>{agent.role === 'agent' ? 'Agent' : 'Property owner'}</span>}
+              {averageRating !== null && <span><Star size={16} /> {averageRating.toFixed(1)} · {reviews.length} reviews</span>}
             </div>
-          )}
+            {agent.bio && <p className="agent-bio">{agent.bio}</p>}
+          </div>
         </div>
-
-        {/* Moderation actions: report / block agent (App Store guideline 1.2) */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
-          <ModerationActions
-            targetUserId={agentId}
-            targetUserName={agent.full_name}
-            contentType="profile"
-            contentId={agentId}
-            onBlocked={() => navigate(-1)}
-          />
+        <div className="agent-hero-footer">
+          <div className="agent-quick-links">
+            <a href="#agent-listings">{properties.length} properties <ArrowRight size={16} /></a>
+            <a href="#agent-reviews">{reviews.length} reviews</a>
+          </div>
+          <ModerationActions targetUserId={agentId} targetUserName={agent.full_name}
+            contentType="profile" contentId={agentId} onBlocked={() => navigate(-1)} />
         </div>
-      </div>
+      </section>
 
+      <section id="agent-listings" className="agent-listings">
+      {/* Properties Section */}
+      {properties.length === 0 ? (
+        <div style={{
+          textAlign: 'center',
+          padding: '48px 32px',
+          margin: '0 16px'
+        }}>
+          <p style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            color: Colors.neutral[600],
+            marginBottom: '8px',
+            margin: '0 0 8px 0'
+          }}>
+            No properties listed by this agent yet.
+          </p>
+          <p style={{
+            fontSize: '14px',
+            color: Colors.neutral[500],
+            margin: 0
+          }}>
+            This agent hasn't added any properties yet.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Section Header */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '0 16px',
+            marginTop: '24px',
+            marginBottom: '12px'
+          }}>
+            <h2 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: Colors.neutral[800],
+              margin: 0
+            }}>
+              Properties by {agent.full_name || 'this agent'}
+            </h2>
+            {properties.length > 6 && (
+              <button
+                onClick={() => setShowAllProperties(!showAllProperties)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: Colors.primary[800],
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '0'
+                }}
+              >
+                <span>{showAllProperties ? 'Show Less' : 'See All'}</span>
+                <ArrowRight size={16} />
+              </button>
+            )}
+          </div>
+          
+          {/* Properties Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
+            gap: '16px',
+            padding: '0 16px'
+          }}>
+            {displayedProperties.map((property) => (
+              <PropertyCard key={property.id} property={{ ...property, image: property.images?.[0] || '' }} />
+            ))}
+          </div>
+        </>
+      )}
+
+      </section>
       {/* Reviews Section */}
-      <div style={{
+      <div id="agent-reviews" className="agent-reviews-section" style={{
         backgroundColor: Colors.white,
         borderRadius: '16px',
         padding: '20px 16px',
@@ -378,10 +380,11 @@ export default function AgentProfile() {
         {reviews.length === 0 ? (
           <p style={{ color: Colors.neutral[500], fontSize: '14px' }}>No reviews yet.</p>
         ) : (
-          <>
+          <div className="agent-reviews-grid">
             {displayedReviews.map((review) => (
               <div
                 key={review.id}
+                className="detail-review"
                 style={{
                   padding: '12px',
                   marginBottom: '12px',
@@ -474,88 +477,9 @@ export default function AgentProfile() {
                 {showAllReviews ? 'Show Less' : 'See All Reviews'}
               </button>
             )}
-          </>
+          </div>
         )}
       </div>
-
-      {/* Properties Section */}
-      {properties.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '48px 32px',
-          margin: '0 16px'
-        }}>
-          <p style={{
-            fontSize: '18px',
-            fontWeight: '600',
-            color: Colors.neutral[600],
-            marginBottom: '8px',
-            margin: '0 0 8px 0'
-          }}>
-            No properties listed by this agent yet.
-          </p>
-          <p style={{
-            fontSize: '14px',
-            color: Colors.neutral[500],
-            margin: 0
-          }}>
-            This agent hasn't added any properties yet.
-          </p>
-        </div>
-      ) : (
-        <>
-          {/* Section Header */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '0 16px',
-            marginTop: '24px',
-            marginBottom: '12px'
-          }}>
-            <h2 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: Colors.neutral[800],
-              margin: 0
-            }}>
-              Properties by {agent.full_name || 'this agent'}
-            </h2>
-            {properties.length > 3 && (
-              <button
-                onClick={() => setShowAllProperties(!showAllProperties)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: Colors.primary[800],
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '0'
-                }}
-              >
-                <span>{showAllProperties ? 'Show Less' : 'See All'}</span>
-                <ArrowRight size={16} />
-              </button>
-            )}
-          </div>
-          
-          {/* Properties Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
-            gap: '16px',
-            padding: '0 16px'
-          }}>
-            {displayedProperties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))}
-          </div>
-        </>
-      )}
 
       {/* Review Modal */}
       {showReviewModal && (
