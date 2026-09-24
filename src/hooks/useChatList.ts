@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Database } from '@/types/supabase';
 import { useMessages } from './useMessages';
@@ -20,6 +20,7 @@ export function useChatList(currentUserId: string) {
     serverMessages,
     loading: messagesLoading,
     refreshMessages,
+    markConversationAsRead,
   } = useMessages(currentUserId);
 
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
@@ -82,10 +83,23 @@ export function useChatList(currentUserId: string) {
       });
   }, [serverMessages, messagesLoading, currentUserId]);
 
+  // Unread messages per counterpart, from the messages already loaded - so
+  // list screens don't need a second useMessages subscription.
+  const unreadCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    serverMessages.forEach((m: any) => {
+      if (m.isOptimistic || m.read || m.receiver_id !== currentUserId) return;
+      counts[m.sender_id] = (counts[m.sender_id] || 0) + 1;
+    });
+    return counts;
+  }, [serverMessages, currentUserId]);
+
   return {
     conversations,
     loading,
     error,
+    unreadCounts,
+    markConversationAsRead,
     refresh: () => refreshMessages(),
   };
 }

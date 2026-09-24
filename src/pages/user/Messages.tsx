@@ -1,408 +1,354 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { BadgeCheck, Check, CheckCheck, Image as ImageIcon, MessageCircle, Mic, Paperclip, Search, X } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
-import { getColors } from '@/constants/Colors'
-import { useChatList } from '@/hooks/useChatList'
-import { useMessages } from '@/hooks/useMessages'
+import { useChatList, ConversationSummary } from '@/hooks/useChatList'
+import { useChatVisitContext, ChatVisit } from '@/hooks/useChatVisitContext'
 import { useBadgeCounts } from '@/hooks/useBadgeCounts'
-import { Search, X, MessageCircle, CheckCircle2, MoreVertical } from 'lucide-react'
+import { isVisitToday, reservationRef } from '@/components/reservations/ReservationUI'
+import { MessageListSkeleton } from '@/components/skeletons'
 import ChatDetail from '@/pages/chat/[id]'
 import './Messages.css'
-import { MessageListSkeleton } from '@/components/skeletons'
 
+type Filter = 'all' | 'unread' | 'visits' | 'people'
+
+const formatTimestamp = (timestamp: string | null, yesterdayLabel: string, locale: string) => {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  const now = new Date()
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  const startOfThatDay = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
+  const dayDiff = Math.round((startOfToday - startOfThatDay) / 86400000)
+  if (dayDiff <= 0) return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  if (dayDiff === 1) return yesterdayLabel
+  return date.toLocaleDateString(locale, { month: 'short', day: '2-digit' })
+}
+
+const getInitials = (name: string) =>
+  name
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0))
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+
+/**
+ * Chats list (web). Mirrors propella/components/MessagesListScreen.tsx; on wide
+ * screens the selected conversation opens in the right-hand pane.
+ */
 export default function UserMessages() {
   const { id: selectedChatId } = useParams<{ id?: string }>()
   const { user } = useAuth()
-  const { colorScheme } = useThemeMode()
-  const { t } = useLanguage()
-  const Colors = getColors(colorScheme)
+  const { t, currentLanguage } = useLanguage()
+  const locale = currentLanguage === 'fr' ? 'fr-FR' : 'en-US'
   const navigate = useNavigate()
+  const location = useLocation()
+  // Mounted under both /user and /agent.
+  const basePath = location.pathname.startsWith('/agent') ? '/agent/messages' : '/user/messages'
+  const audience: 'customer' | 'agent' = user?.role === 'agent' || user?.role === 'landlord' ? 'agent' : 'customer'
 
-  const { conversations, loading, error, refresh } = useChatList(user?.id || '')
-  const { markConversationAsRead } = useMessages(user?.id || '')
+  const { conversations, loading, error, refresh, unreadCounts, markConversationAsRead } = useChatList(user?.id || '')
+  const visits = useChatVisitContext(user?.id, audience)
   const { clearMessageBadge } = useBadgeCounts(user?.id || '', user?.role)
+  const searchRef = useRef<HTMLInputElement>(null)
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [activeFilter, setActiveFilter] = useState<Filter>('all')
+  const [readConversations, setReadConversations] = useState<Set<string>>(new Set())
   const [localSelectedChatId, setLocalSelectedChatId] = useState<string | null>(null)
-
   const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024)
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsLargeScreen(window.innerWidth >= 1024)
-    }
+    const handleResize = () => setIsLargeScreen(window.innerWidth >= 1024)
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Initialize local selected chat from URL param on large screens
+  // On large screens keep the chat inline: adopt the :id from the URL, then
+  // return the URL to the list route.
   useEffect(() => {
-    if (isLargeScreen && selectedChatId && !localSelectedChatId) {
+    if (isLargeScreen && selectedChatId) {
       setLocalSelectedChatId(selectedChatId)
+      if (window.location.pathname.includes('/messages/')) window.history.replaceState({}, '', basePath)
     }
-  }, [isLargeScreen, selectedChatId, localSelectedChatId])
+  }, [isLargeScreen, selectedChatId, basePath])
 
-  // On large screens, if we're on /user/messages/:id route, redirect to /user/messages
-  // to keep everything inline
   useEffect(() => {
-    if (isLargeScreen && selectedChatId && window.location.pathname.includes('/messages/')) {
-      // Replace the URL to /user/messages but keep the chat selected via local state
-      window.history.replaceState({}, '', '/user/messages')
-      setLocalSelectedChatId(selectedChatId)
-    }
-  }, [isLargeScreen, selectedChatId])
-
-  // Clear message badge when screen is opened
-  useEffect(() => {
-    if (user?.id) {
-      clearMessageBadge()
-    }
+    if (user?.id) clearMessageBadge()
   }, [clearMessageBadge, user?.id])
 
-  // Filter conversations based on search query
-  const filteredConversations = useMemo(() => {
-    if (!searchQuery.trim()) return conversations
-    
-    return conversations.filter(conversation => 
-      conversation.counterpart.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conversation.lastMessage.content?.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }, [conversations, searchQuery])
+  const isUnread = (c: ConversationSummary) => c.unread && !readConversations.has(c.counterpart.id)
+  const unreadConversationIds = useMemo(
+    () => conversations.filter(isUnread).map((c) => c.counterpart.id),
+    [conversations, readConversations],
+  )
+  const unreadCount = unreadConversationIds.length
 
-  const handleConversationClick = useCallback(async (counterpartId: string) => {
-    if (!user?.id) return
-    
-    // Mark messages as read
-    try {
-      await markConversationAsRead(user.id, counterpartId)
-    } catch (error) {
-      console.error('Error marking conversation as read:', error)
+  // Customers filter to the agents/landlords they talk to; agents to their clients.
+  const isPerson = (c: ConversationSummary) =>
+    audience === 'customer'
+      ? ['agent', 'landlord'].includes(c.counterpart.role || '')
+      : !['agent', 'landlord'].includes(c.counterpart.role || '')
+  const visitCount = conversations.filter((c) => visits.byCounterpart.has(c.counterpart.id)).length
+  const peopleCount = conversations.filter(isPerson).length
+
+  const filters: { key: Filter; label: string; count?: number; dot?: string }[] = [
+    { key: 'all', label: t('messages.all') },
+    ...(unreadCount > 0 ? [{ key: 'unread' as Filter, label: t('messages.unread'), count: unreadCount, dot: 'var(--chats-primary)' }] : []),
+    ...(visitCount > 0 ? [{ key: 'visits' as Filter, label: t('messages.activeVisits'), count: visitCount, dot: 'var(--chats-success)' }] : []),
+    ...(peopleCount > 0
+      ? [{ key: 'people' as Filter, label: audience === 'customer' ? t('messages.agentsFilter') : t('messages.clientsFilter'), count: peopleCount }]
+      : []),
+  ]
+
+  // Drop a filter that no longer matches anything (e.g. after "mark all read").
+  useEffect(() => {
+    if (!filters.some((f) => f.key === activeFilter)) setActiveFilter('all')
+  }, [filters.length, activeFilter])
+
+  const filteredConversations = useMemo(() => {
+    let list = conversations
+    if (activeFilter === 'unread') list = list.filter(isUnread)
+    else if (activeFilter === 'visits') list = list.filter((c) => visits.byCounterpart.has(c.counterpart.id))
+    else if (activeFilter === 'people') list = list.filter(isPerson)
+    const query = searchQuery.trim().toLowerCase()
+    if (query) {
+      list = list.filter(
+        (c) =>
+          (c.counterpart.full_name || '').toLowerCase().includes(query) ||
+          (c.lastMessage.content || '').toLowerCase().includes(query),
+      )
     }
-    
-    // On large screens, use local state to show chat inline (no navigation)
-    // On small screens, navigate to full page chat
+    // Chats with a visit today come first, then the usual most-recent order.
+    return [...list].sort(
+      (a, b) =>
+        (isVisitToday(visits.byCounterpart.get(b.counterpart.id)) ? 1 : 0) -
+        (isVisitToday(visits.byCounterpart.get(a.counterpart.id)) ? 1 : 0),
+    )
+  }, [conversations, searchQuery, activeFilter, readConversations, visits.byCounterpart])
+
+  const markRead = useCallback(
+    async (ids: string[]) => {
+      if (!user?.id || ids.length === 0) return
+      await Promise.all(ids.map((id) => markConversationAsRead(user.id, id)))
+      setReadConversations((prev) => new Set([...prev, ...ids]))
+      setTimeout(() => refresh(), 100)
+    },
+    [user?.id, markConversationAsRead, refresh],
+  )
+
+  const openConversation = (counterpartId: string, unread: boolean) => {
+    if (unread) markRead([counterpartId]).catch((err) => console.error('Error marking conversation as read:', err))
     if (isLargeScreen) {
       setLocalSelectedChatId(counterpartId)
-      // Update URL without causing navigation
-      window.history.pushState({}, '', `/user/messages/${counterpartId}`)
+      window.history.pushState({}, '', `${basePath}/${counterpartId}`)
     } else {
-      // Navigate to full page chat on mobile
       navigate(`/chat/${counterpartId}`)
     }
-  }, [user?.id, markConversationAsRead, navigate, isLargeScreen])
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const minutes = Math.floor(diff / 60000)
-    const hours = Math.floor(diff / 3600000)
-    const days = Math.floor(diff / 86400000)
-
-    if (minutes < 1) return 'Just now'
-    if (minutes < 60) return `${minutes}m ago`
-    if (hours < 24) return `${hours}h ago`
-    if (days < 7) return `${days}d ago`
-    return date.toLocaleDateString()
   }
 
-  const renderRoleBadge = (role: string) => {
-    let bgColor = Colors.neutral[100]
-    let textColor = Colors.neutral[600]
-    
-    switch(role) {
-      case 'agent':
-        bgColor = Colors.primary[100]
-        textColor = Colors.primary[700]
-        break
-      case 'landlord':
-        bgColor = Colors.success[100]
-        textColor = Colors.success[700]
-        break
+  const visitTag = (visit: ChatVisit | undefined) => {
+    if (!visit) return null
+    if (isVisitToday(visit) && visit.status === 'confirmed') {
+      const time = visit.reservation_time
+        ? new Date(`2000-01-01T${visit.reservation_time}`).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+        : ''
+      return { label: time ? t('messages.visitAt', { time }) : t('reservations.liveToday'), live: true }
     }
-    
-    return (
-      <span style={{
-        backgroundColor: bgColor,
-        color: textColor,
-        padding: '2px 8px',
-        borderRadius: '12px',
-        fontSize: '11px',
-        fontWeight: '500',
-        textTransform: 'capitalize'
-      }}>
-        {role}
-      </span>
-    )
+    return { label: reservationRef(visit.id), live: false }
   }
+
+  const previewFor = (item: ConversationSummary): { icon: LucideIcon | null; text: string } => {
+    const m = item.lastMessage
+    if (m.voice_url) return { icon: Mic, text: t('messages.voiceMessage') }
+    if (m.attachment_url && !m.content) {
+      const isImage = (m.attachment_type || '').startsWith('image')
+      return { icon: isImage ? ImageIcon : Paperclip, text: isImage ? t('messages.photo') : t('messages.attachment') }
+    }
+    return { icon: null, text: m.content }
+  }
+
+  const activeChatId = isLargeScreen ? localSelectedChatId : selectedChatId
+  const showSkeleton = loading && conversations.length === 0
+  const emptyIsFiltered = searchQuery || activeFilter !== 'all'
 
   return (
-    <div className="messages-container" style={{ 
-      backgroundColor: Colors.white, 
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: isLargeScreen ? 'row' : 'column',
-      height: '100vh',
-      overflow: 'hidden'
-    }}>
-      {/* Chat List Sidebar */}
-      <div className="messages-list-container" style={{
-        width: isLargeScreen ? '400px' : '100%',
-        flexShrink: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        borderRight: isLargeScreen ? `1px solid ${Colors.neutral[200]}` : 'none',
-        backgroundColor: Colors.white
-      }}>
-        {/* Header */}
-        <div className="messages-header" style={{ 
-          backgroundColor: Colors.primary[600],
-          padding: '20px 16px 16px',
-          color: Colors.white
-        }}>
-          <h1 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '16px' }}>
-            {t('messages.title')}
-          </h1>
-          
-          {/* Search Bar */}
-          <div className="messages-search-container">
-            <div 
-              className="messages-search-input-wrapper"
-              style={{
-                backgroundColor: Colors.white,
-                borderColor: isSearchFocused ? Colors.primary[400] : Colors.neutral[200],
-              }}
-            >
-              <Search size={20} color={Colors.neutral[400]} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
-                placeholder={t('messages.searchOrStartNewChat')}
-                className="messages-search-input"
-                style={{ color: Colors.neutral[800] }}
-              />
-              {searchQuery.length > 0 && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}
-                >
-                  <X size={16} color={Colors.neutral[400]} />
-                </button>
-              )}
+    <div className="chats">
+      <section className="chats-list" aria-label={t('messages.chats')}>
+        <header className="chats-header">
+          <div className="chats-header-top">
+            <div className="chats-title-row">
+              <h1 className="chats-title">{t('messages.chats')}</h1>
+              {unreadCount > 0 && <span className="chats-unread-pill">{t('messages.unreadChats', { num: unreadCount })}</span>}
             </div>
+            <button type="button" className="chats-icon-btn" aria-label={t('messages.searchOrStartNewChat')} onClick={() => searchRef.current?.focus()}>
+              <Search size={20} />
+            </button>
           </div>
-        </div>
 
-        {/* Conversations List */}
-        <div className="messages-content">
-          {loading && (
+          <label className="chats-search">
+            <Search size={18} aria-hidden="true" />
+            <input
+              ref={searchRef}
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('messages.searchOrStartNewChat')}
+              aria-label={t('messages.searchOrStartNewChat')}
+            />
+            {searchQuery && (
+              <button type="button" className="chats-clear" onClick={() => setSearchQuery('')} aria-label={t('messages.clearSearch')}>
+                <X size={16} />
+              </button>
+            )}
+          </label>
+
+          <div className="chats-filters" role="group" aria-label={t('messages.chats')}>
+            {filters.map((option) => (
+              <button
+                key={option.key}
+                type="button"
+                className="chats-filter"
+                aria-pressed={activeFilter === option.key}
+                onClick={() => setActiveFilter(option.key)}
+              >
+                {option.dot && <span className="chats-filter-dot" style={{ background: option.dot }} />}
+                {option.label}
+                {option.count != null ? ` (${option.count})` : ''}
+              </button>
+            ))}
+          </div>
+        </header>
+
+        {conversations.length > 0 && (
+          <div className="chats-strip">
+            <span className="chats-strip-text">
+              {unreadCount > 0 ? t('messages.unreadSummary', { count: unreadCount }) : t('messages.allCaughtUp')}
+            </span>
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                className="chats-link"
+                onClick={() => markRead(unreadConversationIds).catch((err) => console.error('Error marking all as read:', err))}
+              >
+                {t('messages.markAllRead')}
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="chats-scroll">
+          {showSkeleton ? (
             <MessageListSkeleton count={6} />
-          )}
-
-          {error && (
-            <div style={{ padding: '40px', textAlign: 'center', color: Colors.error[600] }}>
+          ) : error && conversations.length === 0 ? (
+            <p className="chats-error" role="alert">
               {error}
-            </div>
-          )}
-
-          {!loading && !error && filteredConversations.length === 0 && (
-            <div className="messages-empty-state">
-              <MessageCircle size={64} color={Colors.neutral[400]} />
-              <h2 style={{ color: Colors.neutral[800], marginTop: '16px', marginBottom: '8px' }}>
-                {t('messages.noConversations')}
-              </h2>
-              <p style={{ color: Colors.neutral[600] }}>
-                {t('messages.startChattingWithAgents')}
-              </p>
-            </div>
-          )}
-
-          {!loading && !error && filteredConversations.length > 0 && (
-            <div className="messages-list">
-              {filteredConversations.map((conversation) => {
-                const counterpart = conversation.counterpart
-                const lastMessage = conversation.lastMessage
-                const isUnread = conversation.unread
-                const isSelected = (isLargeScreen ? localSelectedChatId : selectedChatId) === counterpart.id
-                
+            </p>
+          ) : filteredConversations.length === 0 ? (
+            emptyIsFiltered ? (
+              <div className="chats-empty">
+                <p>{t('messages.noMatches')}</p>
+              </div>
+            ) : (
+              <div className="chats-empty">
+                <span className="chats-empty-icon" aria-hidden="true">
+                  <MessageCircle size={40} />
+                </span>
+                <h2>{t('messages.noConversations')}</h2>
+                <p>{audience === 'agent' ? t('messages.startChattingWithClients') : t('messages.startChattingWithAgents')}</p>
+                <button
+                  type="button"
+                  className="chats-cta"
+                  onClick={() => navigate(audience === 'agent' ? '/agent' : '/user/explore')}
+                >
+                  {audience === 'agent' ? t('agent.viewListings') : t('agent.exploreProperties')}
+                </button>
+              </div>
+            )
+          ) : (
+            <ul className="chats-rows">
+              {filteredConversations.map((item) => {
+                const counterpart = item.counterpart
+                const unread = isUnread(item)
+                const count = unread ? unreadCounts[counterpart.id] || 1 : 0
+                const outgoing = item.lastMessage.sender_id === user?.id
+                const verified = Boolean(counterpart.is_verified_agent || (counterpart as any).verified)
+                const visit = visits.byCounterpart.get(counterpart.id)
+                const tag = visitTag(visit)
+                const preview = previewFor(item)
+                const PreviewIcon = preview.icon
+                const avatar = typeof counterpart.avatar_url === 'string' ? counterpart.avatar_url : null
+                const classes = ['chats-row', unread && 'is-unread', activeChatId === counterpart.id && 'is-selected']
+                  .filter(Boolean)
+                  .join(' ')
                 return (
-                  <div
-                    key={counterpart.id}
-                    onClick={() => handleConversationClick(counterpart.id)}
-                    className="messages-item"
-                    style={{
-                      backgroundColor: isSelected ? Colors.primary[50] : Colors.white,
-                      borderBottom: `1px solid ${Colors.neutral[200]}`,
-                      borderLeft: isSelected ? `4px solid ${Colors.primary[600]}` : '4px solid transparent',
-                    }}
-                  >
-                    <div className="messages-item-avatar">
-                      {counterpart.avatar_url ? (
-                        <img
-                          src={counterpart.avatar_url}
-                          alt={counterpart.full_name || ''}
-                          style={{
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: '24px',
-                            objectFit: 'cover'
-                          }}
-                        />
-                      ) : (
-                        <div style={{
-                          width: '48px',
-                          height: '48px',
-                          borderRadius: '24px',
-                          backgroundColor: Colors.neutral[200],
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: Colors.neutral[500],
-                          fontSize: '18px',
-                          fontWeight: '600'
-                        }}>
-                          {counterpart.full_name?.charAt(0).toUpperCase() || 'U'}
-                        </div>
-                      )}
-                      {isUnread && (
-                        <span style={{
-                          position: 'absolute',
-                          top: '-2px',
-                          right: '-2px',
-                          width: '12px',
-                          height: '12px',
-                          borderRadius: '6px',
-                          backgroundColor: Colors.primary[600],
-                          border: `2px solid ${Colors.white}`
-                        }} />
-                      )}
-                    </div>
-
-                    <div className="messages-item-content">
-                      <div className="messages-item-header">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
-                          <span style={{
-                            fontSize: '16px',
-                            fontWeight: isUnread ? '600' : '500',
-                            color: Colors.neutral[900]
-                          }}>
-                            {counterpart.full_name || t('common.user')}
-                          </span>
-                          {counterpart.is_verified_agent && (
-                            <CheckCircle2 size={16} color={Colors.success[600]} />
-                          )}
-                          {counterpart.role && renderRoleBadge(counterpart.role)}
-                        </div>
-                        <span style={{
-                          fontSize: '12px',
-                          color: isUnread ? Colors.primary[600] : Colors.neutral[500],
-                          fontWeight: isUnread ? '500' : '400'
-                        }}>
-                          {lastMessage.created_at ? formatTime(lastMessage.created_at) : ''}
-                        </span>
-                      </div>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginTop: '4px'
-                      }}>
-                        <p style={{
-                          fontSize: '14px',
-                          color: Colors.neutral[600],
-                          margin: 0,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          flex: 1
-                        }}>
-                          {lastMessage.attachment_url 
-                            ? `📎 ${t('messages.attachment') || 'Attachment'}`
-                            : lastMessage.content || t('messages.noMessages') || 'No message'
-                          }
-                        </p>
-                        {isUnread && (
-                          <span style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '4px',
-                            backgroundColor: Colors.primary[600],
-                            marginLeft: '8px'
-                          }} />
-                        )}
-                      </div>
-                    </div>
-
+                  <li key={counterpart.id}>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        // Handle more options
-                      }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: '8px',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
+                      type="button"
+                      className={classes}
+                      aria-current={activeChatId === counterpart.id ? 'true' : undefined}
+                      aria-label={[counterpart.full_name, tag?.label, preview.text, count ? t('messages.unreadMessagesA11y', { count }) : '']
+                        .filter(Boolean)
+                        .join(', ')}
+                      onClick={() => openConversation(counterpart.id, unread)}
                     >
-                      <MoreVertical size={20} color={Colors.neutral[400]} />
+                      <span className="chats-avatar-wrap">
+                        <span className="chats-avatar">
+                          {avatar ? <img src={avatar} alt="" loading="lazy" /> : getInitials(counterpart.full_name || '')}
+                        </span>
+                        {/* Green dot = an active visit with this person (not online presence). */}
+                        {visit && <span className="chats-visit-dot" />}
+                      </span>
+                      <span className="chats-body">
+                        <span className="chats-name-row">
+                          <span className="chats-name-group">
+                            <span className="chats-name">{counterpart.full_name || t('common.user')}</span>
+                            {verified && <BadgeCheck size={15} aria-hidden="true" />}
+                            {tag && <span className={`chats-tag${tag.live ? ' is-live' : ''}`}>{tag.label}</span>}
+                          </span>
+                          <span className="chats-time">{formatTimestamp(item.lastMessage.created_at, t('messages.yesterday'), locale)}</span>
+                        </span>
+                        <span className="chats-preview-row">
+                          <span className="chats-preview">
+                            {outgoing &&
+                              (item.lastMessage.read ? (
+                                <CheckCheck size={16} className="chats-read" aria-label={t('messages.readReceipt')} />
+                              ) : (
+                                <Check size={16} className="chats-sent" aria-label={t('messages.sentReceipt')} />
+                              ))}
+                            {PreviewIcon && <PreviewIcon size={15} aria-hidden="true" />}
+                            <span>{preview.text}</span>
+                          </span>
+                          {count > 0 && <span className="chats-badge">{count > 9 ? '9+' : count}</span>}
+                        </span>
+                      </span>
                     </button>
-                  </div>
+                  </li>
                 )
               })}
-            </div>
+            </ul>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* Chat Detail - Show on large screens or when route has ID */}
-      <div className="messages-chat-container" style={{
-        flex: 1,
-        display: isLargeScreen || selectedChatId ? 'flex' : 'none',
-        flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden'
-      }}>
-        {(isLargeScreen ? localSelectedChatId : selectedChatId) ? (
-          <ChatDetail counterpartId={isLargeScreen ? localSelectedChatId! : selectedChatId!} hideBackButton={isLargeScreen} />
+      <section className={`chats-pane${selectedChatId ? ' is-open' : ''}`} aria-label={t('messages.title')}>
+        {activeChatId ? (
+          <ChatDetail counterpartId={activeChatId} hideBackButton={isLargeScreen} />
         ) : isLargeScreen ? (
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: Colors.neutral[50],
-            color: Colors.neutral[500],
-            textAlign: 'center',
-            padding: '40px'
-          }}>
-            <div>
-              <MessageCircle size={64} color={Colors.neutral[400]} style={{ marginBottom: '16px', opacity: 0.5 }} />
-              <p style={{ fontSize: '18px', fontWeight: '500', marginBottom: '8px' }}>
-                {t('messages.selectConversation')}
-              </p>
-              <p style={{ fontSize: '14px' }}>
-                {t('messages.selectConversationHint')}
-              </p>
+          <div className="chats-pane-empty">
+            <div className="chats-empty">
+              <span className="chats-empty-icon" aria-hidden="true">
+                <MessageCircle size={40} />
+              </span>
+              <h2>{t('messages.selectConversation')}</h2>
+              <p>{t('messages.selectConversationHint')}</p>
             </div>
           </div>
         ) : null}
-      </div>
+      </section>
     </div>
   )
 }
