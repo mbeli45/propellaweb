@@ -1,420 +1,249 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { CalendarClock, Eye, HeartHandshake as Handshake, History, Home as HomeIcon, MapPin, MessageCircle, Navigation } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
-import { getColors } from '@/constants/Colors'
 import { useAgentPropertyReservations } from '@/hooks/useReservations'
-import { supabase } from '@/lib/supabase'
-import { Clock, MapPin, CreditCard, MessageCircle, Calendar } from 'lucide-react'
-import { formatPrice } from '@/utils/shareUtils'
+import { useReservationDeals, dealNeedsAction } from '@/hooks/useReservationDeals'
+import { statusLabel as dealStatusLabel } from '@/lib/deals'
 import SectionSwitch from '@/components/SectionSwitch'
-import '../user/Reservations.css'
+import { ReservationCardSkeleton } from '@/components/skeletons'
+import {
+  Banner,
+  CardAction,
+  CardButton,
+  DealStrip,
+  ReservationCard,
+  ReservationSectionView,
+  ReservationToolbar,
+  ReservationsHeader,
+  ReservationsPage,
+  formatFcfa,
+  formatVisitSlot,
+  groupReservations,
+  isVisitToday,
+  reservationRef,
+  sectionOf,
+} from '@/components/reservations/ReservationUI'
+
+const STATUS_FILTERS = ['confirmed', 'pending', 'completed', 'cancelled'] as const
 
 export default function AgentReservations() {
   const { user } = useAuth()
-  const { colorScheme } = useThemeMode()
-  const { t } = useLanguage()
-  const Colors = getColors(colorScheme)
+  const { t, currentLanguage } = useLanguage()
   const navigate = useNavigate()
-  const [userProfiles, setUserProfiles] = useState<Record<string, any>>({})
+  const locale = currentLanguage === 'fr' ? 'fr-FR' : 'en-US'
 
-  // Agent sees reservations for their properties
+  // The query joins each visitor's profile (name, email, phone, avatar), so no
+  // per-reservation profile lookups are needed.
   const { reservations, loading, error, refetch } = useAgentPropertyReservations(user?.id || '')
+  const reservationDeals = useReservationDeals(user?.id)
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
-    if (user?.id) {
-      refetch()
-    }
+    if (user?.id) refetch()
   }, [user?.id, refetch])
 
-  // Fetch user profiles for all reservations
-  useEffect(() => {
-    const fetchUserProfiles = async () => {
-      if (reservations.length === 0) return
-      
-      const userIds = [...new Set(reservations.map(r => r.user_id).filter(Boolean))]
-      const profiles: Record<string, any> = {}
-      
-      for (const userId of userIds) {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('id, full_name, email, phone, avatar_url')
-            .eq('id', userId)
-            .single()
-          
-          if (data && !error) {
-            profiles[userId] = data
-          }
-        } catch (err) {
-          console.error('Error fetching user profile:', err)
-        }
-      }
-      
-      setUserProfiles(profiles)
+  const visibleReservations = useMemo(() => reservations.filter((reservation: any) => {
+    const query = search.trim().toLocaleLowerCase()
+    const matchesFilter =
+      statusFilter === 'all' ||
+      (statusFilter === 'today' ? sectionOf(reservation) === 'today' : reservation.status === statusFilter)
+    return matchesFilter && (!query ||
+      [
+        reservation.property?.title,
+        reservation.property?.location,
+        reservation.user?.full_name,
+        reservation.user?.email,
+        reservation.user?.phone,
+        reservation.id,
+        reservationRef(reservation.id),
+      ].some((value: string | undefined) => value?.toLocaleLowerCase().includes(query)))
+  }), [reservations, statusFilter, search])
+
+  const groups = useMemo(() => groupReservations(visibleReservations), [visibleReservations])
+
+  const filterOptions = useMemo(() => [
+    { key: 'all', label: t('reservations.filterAll'), count: reservations.length },
+    { key: 'today', label: t('reservations.filterToday'), count: reservations.filter((r: any) => sectionOf(r) === 'today').length },
+    ...STATUS_FILTERS.map(status => ({
+      key: status,
+      label: t(`reservations.${status}`),
+      count: reservations.filter((r: any) => r.status === status).length,
+    })),
+  ], [reservations, t])
+
+  const statusLabel = (status: string) => {
+    const key = `reservations.${status}`
+    const label = t(key)
+    return label === key ? status.charAt(0).toUpperCase() + status.slice(1) : label
+  }
+
+  const paymentLabel = (reservation: any) => {
+    if (reservation.payment_status === 'failed') return t('reservations.failed')
+    if (reservation.payment_status === 'pending') return t('reservations.paymentPending')
+    return t('reservations.paid')
+  }
+
+  const propertyIdOf = (reservation: any) => reservation.property?.id || reservation.property_id || null
+
+  const handleDirections = (reservation: any) => {
+    const location = reservation.property?.location
+    if (!location) return
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`, '_blank', 'noopener')
+  }
+
+  const openDeal = (reservationId?: string) =>
+    navigate(reservationId ? `/agent/deals?reservation=${reservationId}` : '/agent/deals')
+
+  const renderDeal = (reservation: any) => {
+    const deal = reservationDeals.byReservation.get(reservation.id)
+    if (!deal) return undefined
+    const attention = !!user?.id && dealNeedsAction(deal, user.id)
+    return (
+      <DealStrip
+        icon={Handshake}
+        label={t('reservations.dealLabel')}
+        status={dealStatusLabel(deal.status)}
+        actionLabel={attention ? t('reservations.dealActionNeeded') : t('reservations.trackDeal')}
+        attention={attention}
+        onClick={() => openDeal(reservation.id)}
+      />
+    )
+  }
+
+  const renderCard = (reservation: any, variant: 'hero' | 'compact') => {
+    const propertyId = propertyIdOf(reservation)
+    const actions: CardAction[] = []
+    if (reservation.user_id) {
+      actions.push({
+        key: 'message',
+        label: t('agentReservations.messageVisitor'),
+        icon: MessageCircle,
+        tone: variant === 'hero' ? 'primary' : 'secondary',
+        onClick: () => navigate(`/agent/messages/${reservation.user_id}`),
+      })
     }
-    
-    fetchUserProfiles()
-  }, [reservations])
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return Colors.success[600]
-      case 'pending':
-        return Colors.warning[600]
-      case 'cancelled':
-        return Colors.error[600]
-      case 'completed':
-        return Colors.primary[600]
-      default:
-        return Colors.neutral[600]
+    if (propertyId) {
+      actions.push({ key: 'listing', label: t('reservations.viewDetails'), icon: Eye, tone: 'neutral', onClick: () => navigate(`/property/${propertyId}`) })
     }
+    // Agents cannot complete a visit - the visitor does, and that is what
+    // releases the agent's share of the fee - so explain rather than offer it.
+    const hint =
+      reservation.status === 'confirmed'
+        ? t('agentReservations.completionHint')
+        : reservation.status === 'pending'
+          ? t('agentReservations.pendingHint')
+          : undefined
+
+    return (
+      <ReservationCard
+        key={reservation.id}
+        reservation={reservation}
+        variant={variant}
+        statusLabel={statusLabel(reservation.status)}
+        heroBadge={isVisitToday(reservation) ? t('reservations.heroToday') : t('reservations.heroDue')}
+        person={{
+          name: reservation.user?.full_name || t('reservations.unknownUser'),
+          subtitle: reservation.user?.phone || reservation.user?.email || t('agentReservations.visitor'),
+          avatarUrl: typeof reservation.user?.avatar_url === 'string' ? reservation.user.avatar_url : null,
+        }}
+        schedule={{ label: t('reservations.scheduled'), value: formatVisitSlot(reservation, locale) }}
+        amount={{ label: paymentLabel(reservation), value: formatFcfa(reservation.amount) }}
+        hint={hint}
+        deal={renderDeal(reservation)}
+        actions={actions}
+        footerAction={variant === 'hero' && reservation.property?.location ? {
+          key: 'directions',
+          label: t('reservations.getDirections'),
+          icon: Navigation,
+          tone: 'ghost',
+          onClick: () => handleDirections(reservation),
+        } : undefined}
+        onOpen={propertyId ? () => navigate(`/property/${propertyId}`) : undefined}
+      />
+    )
   }
 
-  const getStatusLabel = (status: string) => {
-    return t(`reservations.${status}`) || status
-  }
-
-  const getPaymentLabel = (paymentStatus: string) => {
-    return t(`reservations.${paymentStatus}` as any) || paymentStatus
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
-
-  const formatTime = (timeString: string | null) => {
-    if (!timeString) return ''
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
+  const showSkeleton = loading && reservations.length === 0
 
   return (
-    <div className="reservations-container" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh' }}>
-      <div style={{ padding: '20px 16px' }}>
+    <ReservationsPage label={t('agentReservations.pageTitle')}>
+      <ReservationsHeader
+        title={t('agentReservations.pageTitle')}
+        count={reservations.length}
+        subtitle={t('agentReservations.subtitle')}
+      >
+        {/* Deals share the Bookings tab; the badge counts deals waiting on the agent. */}
         <SectionSwitch
           label={t('navigation.bookings')}
           items={[
             { to: '/agent/reservations', label: t('navigation.bookings') },
-            { to: '/agent/deals', label: 'Deals' },
+            { to: '/agent/deals', label: t('reservations.dealsButton'), badge: reservationDeals.needsActionCount },
           ]}
         />
-        <h1 style={{ 
-          fontSize: '24px', 
-          fontWeight: '700', 
-          color: Colors.neutral[900],
-          marginBottom: '4px'
-        }}>
-          {t('agentReservations.pageTitle')}
-        </h1>
-        <p style={{ 
-          fontSize: '14px', 
-          color: Colors.neutral[600],
-          marginBottom: '20px'
-        }}>
-          {t('agentReservations.pageSubtitle', { count: reservations.length })}
-        </p>
-      </div>
+      </ReservationsHeader>
 
-      {loading && (
-        <div style={{ padding: '40px', textAlign: 'center', color: Colors.neutral[600] }}>
-          {t('common.loading')}...
-        </div>
+      {reservations.length > 0 && (
+        <ReservationToolbar
+          search={search}
+          onSearch={setSearch}
+          placeholder={t('reservations.searchPlaceholder')}
+          options={filterOptions}
+          value={statusFilter}
+          onChange={setStatusFilter}
+          label={t('agentReservations.pageTitle')}
+        />
       )}
 
-      {error && (
-        <div style={{ padding: '40px', textAlign: 'center', color: Colors.error[600] }}>
-          {error}
-        </div>
+      {reservationDeals.needsActionCount > 0 && (
+        <Banner
+          icon={Handshake}
+          title={t('agentReservations.dealsTitle')}
+          body={t('agentReservations.dealsBodyActive', { count: reservationDeals.activeCount })}
+          attention={t('reservations.dealsNeedAction', { count: reservationDeals.needsActionCount })}
+          primary={{ label: t('agentReservations.openDeals'), onClick: () => openDeal() }}
+        />
       )}
 
-      {!loading && !error && reservations.length === 0 && (
-        <div style={{
-          padding: '48px 24px',
-          textAlign: 'center',
-          backgroundColor: Colors.white,
-          margin: '0 16px',
-          borderRadius: '12px'
-        }}>
-          <Calendar size={64} color={Colors.neutral[400]} style={{ marginBottom: '16px' }} />
-          <h2 style={{ color: Colors.neutral[800], marginBottom: '8px' }}>
-            {t('agentReservations.emptyBookingsTitle')}
-          </h2>
-          <p style={{ color: Colors.neutral[600] }}>
-            {t('agentReservations.emptyBookingsBody')}
-          </p>
+      {showSkeleton ? (
+        <div style={{ marginTop: 20 }}>
+          <ReservationCardSkeleton count={3} />
         </div>
-      )}
-
-      {!loading && !error && reservations.length > 0 && (
-        <div style={{ padding: '0 16px 20px' }}>
-          {reservations.map((reservation) => {
-                const property = reservation.property
-                const userProfile = userProfiles[reservation.user_id]
-                if (!property) return null
-
-                return (
-                  <div
-                    key={reservation.id}
-                    style={{
-                      backgroundColor: Colors.white,
-                      borderRadius: '12px',
-                      padding: '20px',
-                      marginBottom: '16px',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-                      border: `1px solid ${Colors.neutral[200]}`
-                    }}
-                  >
-                    {/* Header: Status and Date */}
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'flex-start',
-                      marginBottom: '16px',
-                      paddingBottom: '12px',
-                      borderBottom: `1px solid ${Colors.neutral[100]}`
-                    }}>
-                      <div style={{
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        color: Colors.neutral[700],
-                        lineHeight: 1.45,
-                        maxWidth: '65%',
-                      }}>
-                        <span style={{ color: getStatusColor(reservation.status), fontWeight: 600 }}>
-                          {getStatusLabel(reservation.status)}
-                        </span>
-                        {reservation.payment_status ? (
-                          <>
-                            <span style={{ color: Colors.neutral[400], margin: '0 6px' }}>·</span>
-                            <span
-                              style={{
-                                fontWeight: 600,
-                                color:
-                                  reservation.payment_status === 'paid'
-                                    ? Colors.success[700]
-                                    : reservation.payment_status === 'pending'
-                                      ? Colors.warning[700]
-                                      : reservation.payment_status === 'failed'
-                                        ? Colors.error[700]
-                                        : Colors.neutral[700],
-                              }}
-                            >
-                              {getPaymentLabel(reservation.payment_status)}
-                            </span>
-                          </>
-                        ) : null}
-                      </div>
-                      <span style={{ 
-                        fontSize: '12px', 
-                        color: Colors.neutral[600],
-                        fontWeight: '500',
-                        flexShrink: 0,
-                      }}>
-                        {formatDate(reservation.reservation_date)}
-                      </span>
-                    </div>
-
-                    {/* Property and Client Info - Side by Side */}
-                    <div style={{ 
-                      display: 'grid',
-                      gridTemplateColumns: 'auto 1fr',
-                      gap: '16px',
-                      marginBottom: '16px'
-                    }}>
-                      {/* Property Image */}
-                      {property.images?.[0] && (
-                        <img 
-                          src={property.images[0]} 
-                          alt={property.title}
-                          onClick={() => navigate(`/property/${property.id}`)}
-                          style={{
-                            width: '90px',
-                            height: '90px',
-                            borderRadius: '8px',
-                            objectFit: 'cover',
-                            cursor: 'pointer',
-                            flexShrink: 0
-                          }}
-                        />
-                      )}
-                      
-                      {/* Property and Client Details */}
-                      <div style={{ minWidth: 0 }}>
-                        {/* Property Name */}
-                        <h3 
-                          onClick={() => navigate(`/property/${property.id}`)}
-                          style={{
-                            fontSize: '15px',
-                            fontWeight: '600',
-                            color: Colors.neutral[900],
-                            marginBottom: '6px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {property.title}
-                        </h3>
-                        
-                        {/* Property Location */}
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          marginBottom: '10px'
-                        }}>
-                          <MapPin size={12} color={Colors.neutral[500]} />
-                          <span style={{ fontSize: '12px', color: Colors.neutral[600] }}>
-                            {property.location}
-                          </span>
-                        </div>
-                        
-                        {/* Client Info - Compact */}
-                        <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '10px',
-                          padding: '8px 12px',
-                          backgroundColor: Colors.neutral[50],
-                          borderRadius: '8px'
-                        }}>
-                          <div style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '16px',
-                            backgroundColor: Colors.primary[100],
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            color: Colors.primary[700],
-                            flexShrink: 0
-                          }}>
-                            {userProfile?.avatar_url ? (
-                              <img 
-                                src={userProfile.avatar_url} 
-                                alt={userProfile.full_name}
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  borderRadius: '16px',
-                                  objectFit: 'cover'
-                                }}
-                              />
-                            ) : (
-                              (userProfile?.full_name?.charAt(0) || 'U').toUpperCase()
-                            )}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ 
-                              fontSize: '13px', 
-                              fontWeight: '600', 
-                              color: Colors.neutral[900],
-                              marginBottom: '2px',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
-                            }}>
-                              {userProfile?.full_name || t('reservations.unknownUser')}
-                            </div>
-                            {userProfile?.phone && (
-                              <div style={{ 
-                                fontSize: '11px',
-                                color: Colors.neutral[600],
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                              }}>
-                                {userProfile.phone}
-                              </div>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => navigate(`/agent/messages/${reservation.user_id}`)}
-                            style={{
-                              padding: '6px 10px',
-                              backgroundColor: Colors.primary[600],
-                              color: Colors.white,
-                              border: 'none',
-                              borderRadius: '6px',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              flexShrink: 0
-                            }}
-                          >
-                            <MessageCircle size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Visit Time and Amount - Compact Row */}
-                    <div style={{
-                      display: 'flex',
-                      gap: '10px',
-                      justifyContent: 'space-between'
-                    }}>
-                      {reservation.reservation_time && (
-                        <div style={{
-                          flex: 1,
-                          padding: '10px',
-                          backgroundColor: Colors.neutral[50],
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}>
-                          <Clock size={16} color={Colors.neutral[600]} />
-                          <div>
-                            <div style={{ fontSize: '11px', color: Colors.neutral[600], marginBottom: '2px' }}>
-                              {t('reservations.visitTime') || 'Time'}
-                            </div>
-                            <div style={{ fontSize: '13px', fontWeight: '600', color: Colors.neutral[900] }}>
-                              {formatTime(reservation.reservation_time)}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      <div style={{
-                        flex: 1,
-                        padding: '10px',
-                        backgroundColor: Colors.success[50],
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}>
-                        <CreditCard size={16} color={Colors.success[700]} />
-                        <div>
-                          <div style={{ fontSize: '11px', color: Colors.success[700], marginBottom: '2px' }}>
-                            {t('wallet.amount')}
-                          </div>
-                          <div style={{ fontSize: '13px', fontWeight: '600', color: Colors.success[700] }}>
-                            {formatPrice(reservation.amount || 0)} FCFA
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+      ) : error && reservations.length === 0 ? (
+        <p className="rsv-error" role="alert">{error}</p>
+      ) : reservations.length === 0 ? (
+        <div className="rsv-empty">
+          <span className="rsv-empty-icon" aria-hidden="true"><CalendarClock size={40} /></span>
+          <h2>{t('agentReservations.emptyBookingsTitle')}</h2>
+          <p>{t('agentReservations.emptyBookingsBody')}</p>
+          <CardButton label={t('agentReservations.myListings')} icon={HomeIcon} tone="primary" onClick={() => navigate('/agent')} />
         </div>
+      ) : visibleReservations.length === 0 ? (
+        <div className="rsv-empty">
+          <p>{t('reservations.noMatches')}</p>
+          <CardButton label={t('reservations.filterAll')} tone="ghost" onClick={() => { setSearch(''); setStatusFilter('all') }} />
+        </div>
+      ) : (
+        <>
+          {groups.today.length > 0 && (
+            <ReservationSectionView icon={MapPin} title={t('reservations.sectionToday')} live={t('reservations.liveToday')} hero>
+              {groups.today.map((r: any) => renderCard(r, 'hero'))}
+            </ReservationSectionView>
+          )}
+          {groups.upcoming.length > 0 && (
+            <ReservationSectionView icon={CalendarClock} title={t('reservations.sectionUpcoming')} meta={t('reservations.sectionCount', { count: groups.upcoming.length })}>
+              {groups.upcoming.map((r: any) => renderCard(r, 'compact'))}
+            </ReservationSectionView>
+          )}
+          {groups.past.length > 0 && (
+            <ReservationSectionView icon={History} title={t('reservations.sectionPast')} meta={t('reservations.sectionCount', { count: groups.past.length })}>
+              {groups.past.map((r: any) => renderCard(r, 'compact'))}
+            </ReservationSectionView>
+          )}
+        </>
       )}
-    </div>
+    </ReservationsPage>
   )
 }

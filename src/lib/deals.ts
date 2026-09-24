@@ -12,6 +12,10 @@ export interface Deal {
   quote_version: number; accepted_version: number | null; closing_note: string;
   customer_closed_at: string | null; platform_amount: number | null; agent_amount: number | null;
   paid_at: string | null; provider_fee: number; follow_up_at: string; updated_at: string;
+  // Embedded by useDeals so a deal can render like a property card.
+  property?: { id: string; title: string | null; location: string | null; images: string[] | null } | null;
+  customer?: { full_name: string | null; avatar_url: string | null } | null;
+  agent?: { full_name: string | null; avatar_url: string | null; is_verified_agent: boolean | null } | null;
 }
 export interface Partner { id: string; owner_id: string | null; name: string; regions: string; status: string; platform_bps: number }
 export interface PropertyRequest { id: string; customer_id: string | null; source: string; location: string; requirements: string; purpose: string; budget: number; contact_note: string; consent_at: string | null }

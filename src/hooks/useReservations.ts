@@ -50,7 +50,8 @@ export function useReservations(userId: string) {
             price,
             bedrooms,
             bathrooms,
-            area
+            area,
+            owner:owner_id(full_name, avatar_url, is_verified_agent)
           )
         `)
         .eq('user_id', userId)
@@ -400,7 +401,7 @@ export function useAgentPropertyReservations(agentId: string) {
       // 2. Get all reservations for those properties, join with user and property info
       const { data: reservationsData, error: resError } = await supabase
         .from('reservations')
-        .select(`*, property:property_id(*), user: user_id(full_name, email, avatar_url)`) // join property and user
+        .select(`*, property:property_id(*), user: user_id(full_name, email, phone, avatar_url)`) // join property and user
         .in('property_id', propertyIds)
         .order('created_at', { ascending: false });
       if (resError) throw resError;

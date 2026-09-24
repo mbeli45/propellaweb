@@ -1,44 +1,57 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { useDialog } from '@/contexts/DialogContext'
-import { getColors } from '@/constants/Colors'
 import { useReservations } from '@/hooks/useReservations'
+import { useReservationDeals, dealNeedsAction } from '@/hooks/useReservationDeals'
 import { useFapshiPayment } from '@/hooks/useFapshiPayment'
 import { useBadgeCounts } from '@/hooks/useBadgeCounts'
-import { Calendar, Clock, MapPin, CheckCircle2, X, MessageCircle, Home, ChevronRight } from 'lucide-react'
-import { formatPrice } from '@/utils/shareUtils'
+import {
+  CalendarClock,
+  CheckCircle2,
+  Compass,
+  Eye,
+  HeartHandshake as Handshake,
+  History,
+  MapPin,
+  MessageCircle,
+  Navigation,
+  RotateCcw,
+  Star,
+  X,
+} from 'lucide-react'
+import { statusLabel as dealStatusLabel } from '@/lib/deals'
 import ReviewModal from '@/components/ReviewModal'
 import CommissionPaymentModal from '@/components/CommissionPaymentModal'
 import { ReservationCardSkeleton } from '@/components/skeletons'
-import './Reservations.css'
-import VideoThumbnail from '@/components/VideoThumbnail'
-import { isVideoUrl } from '@/utils/videoUtils'
+import {
+  Banner,
+  CardAction,
+  CardButton,
+  DealStrip,
+  PaymentMonitorBanner,
+  ReservationCard,
+  ReservationSectionView,
+  ReservationToolbar,
+  ReservationsHeader,
+  ReservationsPage,
+  formatFcfa,
+  formatVisitSlot,
+  groupReservations,
+  isVisitToday,
+  reservationRef,
+  sectionOf,
+} from '@/components/reservations/ReservationUI'
 
-// Shared button shapes, so the row reads as one control group rather than four
-// unrelated pills.
-const actionBase: React.CSSProperties = {
-  padding: '9px 14px',
-  borderRadius: '8px',
-  fontSize: '13px',
-  fontWeight: 500,
-  cursor: 'pointer',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '6px',
-  border: 'none',
-  whiteSpace: 'nowrap',
-}
+const STATUS_FILTERS = ['confirmed', 'pending', 'completed', 'cancelled'] as const
 
 export default function UserReservations() {
   const { user } = useAuth()
-  const { colorScheme } = useThemeMode()
   const { t, currentLanguage } = useLanguage()
   const { confirm, alert } = useDialog()
-  const Colors = getColors(colorScheme)
   const navigate = useNavigate()
+  const locale = currentLanguage === 'fr' ? 'fr-FR' : 'en-US'
 
   const {
     reservations,
@@ -49,28 +62,46 @@ export default function UserReservations() {
     requestRefund,
     refreshReservations,
   } = useReservations(user?.id || '')
+  const reservationDeals = useReservationDeals(user?.id)
 
   const { clearReservationBadge } = useBadgeCounts(user?.id || '', user?.role)
   const { isMonitoring, monitoringProgress, currentStatus, timeRemaining } = useFapshiPayment()
 
   const [statusFilter, setStatusFilter] = useState('all')
   const [search, setSearch] = useState('')
-  const visibleReservations = useMemo(() => reservations.filter(reservation => {
-    const matchesStatus = statusFilter === 'all' || reservation.status === statusFilter
-    const query = search.trim().toLocaleLowerCase()
-    return matchesStatus && (!query || [reservation.property?.title, reservation.property?.location, reservation.id]
-      .some(value => value?.toLocaleLowerCase().includes(query)))
-  }), [reservations, statusFilter, search])
-
   const [requestingRefund, setRequestingRefund] = useState<string | null>(null)
   const [completingVisit, setCompletingVisit] = useState<string | null>(null)
   const [reviewReservation, setReviewReservation] = useState<any>(null)
+  // Only a review offered straight after completing a visit leads on to the
+  // commission prompt; rating an older visit from "Past visits" does not.
+  const [reviewLeadsToCommission, setReviewLeadsToCommission] = useState(false)
   const [commissionReservation, setCommissionReservation] = useState<any>(null)
+
+  const visibleReservations = useMemo(() => reservations.filter(reservation => {
+    const query = search.trim().toLocaleLowerCase()
+    const matchesFilter =
+      statusFilter === 'all' ||
+      (statusFilter === 'today' ? sectionOf(reservation) === 'today' : reservation.status === statusFilter)
+    return matchesFilter && (!query ||
+      [reservation.property?.title, reservation.property?.location, reservation.id, reservationRef(reservation.id)]
+        .some(value => value?.toLocaleLowerCase().includes(query)))
+  }), [reservations, statusFilter, search])
+
+  const groups = useMemo(() => groupReservations(visibleReservations), [visibleReservations])
+
+  const filterOptions = useMemo(() => [
+    { key: 'all', label: t('reservations.filterAll'), count: reservations.length },
+    { key: 'today', label: t('reservations.filterToday'), count: reservations.filter(r => sectionOf(r) === 'today').length },
+    ...STATUS_FILTERS.map(status => ({
+      key: status,
+      label: t(`reservations.${status}`),
+      count: reservations.filter(r => r.status === status).length,
+    })),
+  ], [reservations, t])
 
   // Mirrors the mobile gate: a paid, confirmed booking whose visit day has
   // arrived. reservation_date is a DATE, so it parses as UTC midnight - the
   // button appears from the start of the visit day rather than after it.
-  // "confirmed" is the booking status; completing is what ends the visit.
   const canCompleteVisit = (reservation: any) =>
     reservation.status === 'confirmed' &&
     new Date() >= new Date(reservation.reservation_date)
@@ -82,23 +113,12 @@ export default function UserReservations() {
     }
   }, [user?.id, clearReservationBadge, refreshReservations])
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return Colors.success[600]
-      case 'pending':
-        return Colors.warning[600]
-      case 'cancelled':
-        return Colors.error[600]
-      case 'completed':
-        return Colors.primary[600]
-      default:
-        return Colors.neutral[600]
-    }
-  }
-
-  const getStatusLabel = (status: string) => {
-    return t(`reservations.${status}`) || status
+  // Status strings come from the database, so fall back to the raw value
+  // rather than rendering a missing translation key.
+  const statusLabel = (status: string) => {
+    const key = `reservations.${status}`
+    const label = t(key)
+    return label === key ? status.charAt(0).toUpperCase() + status.slice(1) : label
   }
 
   const handleCancel = async (reservationId: string) => {
@@ -107,9 +127,7 @@ export default function UserReservations() {
       message: t('reservations.cancelReservationMessage') || 'Are you sure you want to cancel this reservation?',
       variant: 'warning',
     })
-    
     if (!confirmed) return
-    
     try {
       await cancelReservation(reservationId)
       alert(t('reservations.reservationCancelledSuccess') || 'Reservation cancelled successfully', 'success')
@@ -125,9 +143,7 @@ export default function UserReservations() {
       message: t('reservations.requestRefundConfirmMessage') || t('reservations.requestRefundMessage') || 'Are you sure you want to request a refund for this reservation?',
       variant: 'warning',
     })
-    
     if (!confirmed) return
-    
     setRequestingRefund(reservationId)
     try {
       await requestRefund(reservationId)
@@ -148,14 +164,15 @@ export default function UserReservations() {
       message: t('reservations.completeVisitMessage'),
       variant: 'info',
     })
-
     if (!confirmed) return
 
     setCompletingVisit(reservation.id)
     try {
       await completeReservation(reservation.id)
       refreshReservations()
+      reservationDeals.refresh()
       // Offer the rating. Declining leaves the visit completed.
+      setReviewLeadsToCommission(true)
       setReviewReservation(reservation)
     } catch (error: any) {
       // The thrown message is a Postgres/PostgREST string, not something to
@@ -167,14 +184,17 @@ export default function UserReservations() {
     }
   }
 
-  // Submitted or declined, the next step is the same: the commission prompt.
+  // After completing, submitted or declined, the next step is the commission
+  // prompt. Rating an older visit ends here.
   const handleReviewClosed = () => {
     const reviewed = reviewReservation
     setReviewReservation(null)
-    if (reviewed) setCommissionReservation(reviewed)
+    if (reviewed && reviewLeadsToCommission) setCommissionReservation(reviewed)
   }
 
-  // A booked listing is hidden from the public feed, so this row is the only
+  const propertyIdOf = (reservation: any) => reservation.property?.id || reservation.property_id || null
+
+  // A booked listing is hidden from the public feed, so this card is the only
   // route back to it - and to the agent holding the visit.
   const handleMessageAgent = (reservation: any) => {
     const ownerId = reservation.property?.owner_id
@@ -182,425 +202,249 @@ export default function UserReservations() {
       alert(t('reservations.agentUnavailable'), 'error', t('reservations.errorTitle'))
       return
     }
-    const propertyId = reservation.property?.id || reservation.property_id
+    const propertyId = propertyIdOf(reservation)
     navigate(propertyId ? `/chat/${ownerId}?propertyId=${propertyId}` : `/chat/${ownerId}`)
   }
 
-  // Date and time were two separate labelled rows; they are one fact.
-  const formatVisitSlot = (reservation: any) => {
-    const locale = currentLanguage === 'fr' ? 'fr-FR' : 'en-US'
-    const date = new Date(reservation.reservation_date).toLocaleDateString(locale, {
-      year: 'numeric',
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    })
-    if (!reservation.reservation_time) return date
-    const time = new Date(`2000-01-01T${reservation.reservation_time}`).toLocaleTimeString(
-      locale,
-      { hour: '2-digit', minute: '2-digit' },
+  const handleDirections = (reservation: any) => {
+    const location = reservation.property?.location
+    if (!location) return
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`, '_blank', 'noopener')
+  }
+
+  const openDeal = (reservationId?: string) =>
+    navigate(reservationId ? `/user/deals?reservation=${reservationId}` : '/user/deals')
+
+  const amountLabel = (reservation: any) => {
+    if (reservation.status === 'completed') return t('reservations.paid')
+    if (reservation.status === 'confirmed') return t('reservations.paidHeld')
+    if (reservation.status === 'pending' && reservation.payment_status !== 'paid') return t('reservations.paymentPending')
+    return t('reservations.paid')
+  }
+
+  const renderDeal = (reservation: any) => {
+    const deal = reservationDeals.byReservation.get(reservation.id)
+    if (!deal) return undefined
+    const attention = !!user?.id && dealNeedsAction(deal, user.id)
+    return (
+      <DealStrip
+        icon={Handshake}
+        label={t('reservations.dealLabel')}
+        status={dealStatusLabel(deal.status)}
+        actionLabel={attention ? t('reservations.dealActionNeeded') : t('reservations.trackDeal')}
+        attention={attention}
+        onClick={() => openDeal(reservation.id)}
+      />
     )
-    return `${date} · ${time}`
   }
 
-  const secondaryAction: React.CSSProperties = {
-    ...actionBase,
-    backgroundColor: Colors.primary[50],
-    border: `1px solid ${Colors.primary[100]}`,
+  const actionsFor = (reservation: any): { actions: CardAction[]; split?: boolean; hint?: string } => {
+    const messageAgent: CardAction = {
+      key: 'message',
+      label: t('reservations.messageAgent'),
+      icon: MessageCircle,
+      tone: 'secondary',
+      onClick: () => handleMessageAgent(reservation),
+    }
+    const propertyId = propertyIdOf(reservation)
+    const viewDetails: CardAction | null = propertyId
+      ? { key: 'details', label: t('reservations.viewDetails'), icon: Eye, tone: 'neutral', onClick: () => navigate(`/property/${propertyId}`) }
+      : null
+    const list = (...actions: (CardAction | null)[]) => actions.filter(Boolean) as CardAction[]
+
+    switch (reservation.status) {
+      case 'confirmed':
+        if (canCompleteVisit(reservation)) {
+          return {
+            actions: [
+              {
+                key: 'complete',
+                label: t('reservations.completeVisit'),
+                icon: CheckCircle2,
+                tone: 'primary',
+                onClick: () => handleCompleteVisit(reservation),
+                busy: completingVisit === reservation.id,
+              },
+              { ...messageAgent, tone: 'neutral' },
+            ],
+          }
+        }
+        // The visit day has not arrived, so completing is not yet possible.
+        // Say so - the agent's fee stays locked until this happens.
+        return { actions: list(messageAgent, viewDetails), hint: t('reservations.completeAvailableOnVisitDay') }
+      case 'pending':
+        return {
+          split: true,
+          hint: t('reservations.awaitingAgentHint'),
+          actions: [
+            { key: 'cancel', label: t('reservations.cancelRequest'), icon: X, tone: 'danger', onClick: () => handleCancel(reservation.id) },
+            { ...messageAgent, tone: 'neutral' },
+          ],
+        }
+      case 'completed':
+        return {
+          actions: list(
+            {
+              key: 'rate',
+              label: t('reservations.rateExperience'),
+              icon: Star,
+              tone: 'secondary',
+              onClick: () => {
+                setReviewLeadsToCommission(false)
+                setReviewReservation(reservation)
+              },
+            },
+            viewDetails,
+          ),
+        }
+      case 'cancelled':
+        if (reservation.payment_status === 'paid' && !reservation.refund_requested) {
+          return {
+            actions: list(
+              {
+                key: 'refund',
+                label: t('reservations.requestRefund'),
+                icon: RotateCcw,
+                tone: 'secondary',
+                onClick: () => handleRequestRefund(reservation.id),
+                disabled: !!requestingRefund && requestingRefund !== reservation.id,
+                busy: requestingRefund === reservation.id,
+              },
+              viewDetails,
+            ),
+          }
+        }
+        return {
+          actions: list(viewDetails),
+          hint: reservation.refund_requested ? t('reservations.refundRequestedShort') : undefined,
+        }
+      default:
+        return { actions: list(viewDetails) }
+    }
   }
 
-  const primaryAction: React.CSSProperties = {
-    ...actionBase,
-    color: Colors.white,
+  const renderCard = (reservation: any, variant: 'hero' | 'compact') => {
+    const { actions, split, hint } = actionsFor(reservation)
+    const owner = reservation.property?.owner
+    const propertyId = propertyIdOf(reservation)
+    return (
+      <ReservationCard
+        key={reservation.id}
+        reservation={reservation}
+        variant={variant}
+        statusLabel={statusLabel(reservation.status)}
+        heroBadge={isVisitToday(reservation) ? t('reservations.heroToday') : t('reservations.heroDue')}
+        person={variant === 'hero' ? {
+          name: owner?.full_name || t('reservations.agentFallback'),
+          subtitle: owner?.is_verified_agent ? t('reservations.verifiedAgent') : t('reservations.listingAgent'),
+          avatarUrl: typeof owner?.avatar_url === 'string' ? owner.avatar_url : null,
+          verified: !!owner?.is_verified_agent,
+        } : undefined}
+        schedule={{ label: t('reservations.scheduled'), value: formatVisitSlot(reservation, locale) }}
+        amount={{ label: amountLabel(reservation), value: formatFcfa(reservation.amount) }}
+        hint={hint}
+        deal={renderDeal(reservation)}
+        actions={actions}
+        splitActions={split}
+        footerAction={variant === 'hero' && reservation.property?.location ? {
+          key: 'directions',
+          label: t('reservations.getDirections'),
+          icon: Navigation,
+          tone: 'ghost',
+          onClick: () => handleDirections(reservation),
+        } : undefined}
+        onOpen={propertyId ? () => navigate(`/property/${propertyId}`) : undefined}
+      />
+    )
   }
 
-  const ghostAction: React.CSSProperties = {
-    ...actionBase,
-    backgroundColor: 'transparent',
-    border: `1px solid ${Colors.neutral[200]}`,
-  }
+  const showSkeleton = loading && reservations.length === 0
 
   return (
-    <div className="reservations-container reservations-workspace" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh' }}>
-      <div className="reservations-heading">
-        <h1 style={{ 
-          fontSize: '24px', 
-          fontWeight: '700', 
-          color: Colors.neutral[900],
-          marginBottom: '4px'
-        }}>
-          {t('reservations.title')}
-        </h1>
-        <p style={{ 
-          fontSize: '14px', 
-          color: Colors.neutral[600],
-          marginBottom: '20px'
-        }}>
-          {currentLanguage === 'fr' ? 'Retrouvez vos visites, paiements et prochaines étapes.' : 'Keep track of your visits, payments, and next steps.'}
-        </p>
-      </div>
+    <ReservationsPage label={t('reservations.myReservations')}>
+      <ReservationsHeader
+        title={t('reservations.myReservations')}
+        count={reservations.length}
+        subtitle={t('reservations.pageSubtitle')}
+        action={{
+          label: t('reservations.dealsButton'),
+          icon: Handshake,
+          badge: reservationDeals.needsActionCount,
+          onClick: () => openDeal(),
+        }}
+      />
 
-      <div className="reservation-tools">
-        <div className="reservation-tabs" aria-label={t('reservations.title')}>
-          {['all', 'confirmed', 'pending', 'completed', 'cancelled'].map(status => (
-            <button key={status} type="button" aria-pressed={statusFilter === status}
-              onClick={() => setStatusFilter(status)}>
-              {status === 'all' ? (currentLanguage === 'fr' ? 'Toutes' : 'All') : getStatusLabel(status)}
-              <span>{status === 'all' ? reservations.length : reservations.filter(item => item.status === status).length}</span>
-            </button>
-          ))}
-        </div>
-        <input type="search" value={search} onChange={event => setSearch(event.target.value)}
-          aria-label={currentLanguage === 'fr' ? 'Rechercher une réservation' : 'Search reservations'}
-          placeholder={currentLanguage === 'fr' ? 'Rechercher un bien ou une référence' : 'Search property or booking reference'} />
-      </div>
-      {!loading && !error && reservations.length > 0 && visibleReservations.length === 0 && (
-        <div className="reservation-no-results">
-          <p>{currentLanguage === 'fr' ? 'Aucune réservation correspondante.' : 'No reservations match your filters.'}</p>
-          <button onClick={() => { setSearch(''); setStatusFilter('all') }}>{currentLanguage === 'fr' ? 'Effacer les filtres' : 'Clear filters'}</button>
-        </div>
+      {reservations.length > 0 && (
+        <ReservationToolbar
+          search={search}
+          onSearch={setSearch}
+          placeholder={t('reservations.searchPlaceholder')}
+          options={filterOptions}
+          value={statusFilter}
+          onChange={setStatusFilter}
+          label={t('reservations.myReservations')}
+        />
       )}
 
-      {/* Payment Monitoring */}
       {isMonitoring && (
-        <div style={{
-          margin: '0 16px 20px',
-          padding: '16px',
-          backgroundColor: Colors.primary[50],
-          borderRadius: '12px',
-          border: `1px solid ${Colors.primary[200]}`
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '12px'
-          }}>
-            <span style={{
-              fontSize: '14px',
-              fontWeight: '600',
-              color: Colors.primary[800]
-            }}>
-              {t('reservations.paymentMonitoring')}
-            </span>
-            <span style={{
-              fontSize: '12px',
-              fontWeight: '600',
-              color: Colors.primary[700],
-              backgroundColor: Colors.primary[100],
-              padding: '4px 8px',
-              borderRadius: '4px'
-            }}>
-              {currentStatus}
-            </span>
-          </div>
-          <div style={{
-            width: '100%',
-            height: '6px',
-            backgroundColor: Colors.primary[200],
-            borderRadius: '3px',
-            overflow: 'hidden',
-            marginBottom: '12px'
-          }}>
-            <div style={{
-              width: `${monitoringProgress}%`,
-              height: '100%',
-              backgroundColor: Colors.primary[600],
-              borderRadius: '3px',
-              transition: 'width 0.3s'
-            }} />
-          </div>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            fontSize: '12px',
-            color: Colors.primary[700]
-          }}>
-            <span>{t('reservations.automaticallyChecking')}</span>
-            <span>{Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}</span>
-          </div>
-        </div>
+        <PaymentMonitorBanner
+          title={t('reservations.paymentMonitoring')}
+          status={currentStatus}
+          progress={monitoringProgress}
+          message={t('reservations.automaticallyChecking')}
+          timeLeft={timeRemaining}
+        />
       )}
 
-      {loading && (
-        <ReservationCardSkeleton count={3} />
+      {/* The header's Deals button is the permanent entry point; the banner only
+          appears when a deal is waiting on the customer. */}
+      {reservationDeals.needsActionCount > 0 && (
+        <Banner
+          icon={Handshake}
+          title={t('reservations.dealsTitle')}
+          body={t('reservations.dealsBodyActive', { count: reservationDeals.activeCount })}
+          attention={t('reservations.dealsNeedAction', { count: reservationDeals.needsActionCount })}
+          primary={{ label: t('reservations.myDeals'), onClick: () => openDeal() }}
+          secondary={{ label: t('reservations.requestProperty'), onClick: () => navigate('/user/deals?request=1') }}
+        />
       )}
 
-      {error && (
-        <div style={{ padding: '40px', textAlign: 'center', color: Colors.error[600] }}>
-          {error}
+      {showSkeleton ? (
+        <div style={{ marginTop: 20 }}>
+          <ReservationCardSkeleton count={3} />
         </div>
-      )}
-
-      {!loading && !error && reservations.length === 0 && (
-        <div style={{
-          padding: '48px 24px',
-          textAlign: 'center',
-          backgroundColor: Colors.white,
-          margin: '0 16px',
-          borderRadius: '12px'
-        }}>
-          <Calendar size={64} color={Colors.neutral[400]} style={{ marginBottom: '16px' }} />
-          <h2 style={{ color: Colors.neutral[800], marginBottom: '8px' }}>
-            {t('reservations.noReservations')}
-          </h2>
-          <p style={{ color: Colors.neutral[600] }}>
-            {t('home.welcomeSubtext')}
-          </p>
+      ) : error && reservations.length === 0 ? (
+        <p className="rsv-error" role="alert">{error}</p>
+      ) : reservations.length === 0 ? (
+        <div className="rsv-empty">
+          <span className="rsv-empty-icon" aria-hidden="true"><CalendarClock size={40} /></span>
+          <h2>{t('reservations.noReservationsYetTitle')}</h2>
+          <p>{t('reservations.noReservationsYetMessage')}</p>
+          <CardButton label={t('reservations.newVisit')} icon={Compass} tone="primary" onClick={() => navigate('/user/explore')} />
         </div>
-      )}
-
-      {!loading && !error && reservations.length > 0 && (
-        <div className="reservations-list">
-          {visibleReservations.map((reservation) => {
-            const property = reservation.property
-            if (!property) return null
-
-            return (
-              <div
-                key={reservation.id}
-                className="reservation-card"
-                style={{
-                  backgroundColor: Colors.white,
-                  borderRadius: '12px',
-                  padding: '20px',
-                  margin: '0 16px 16px',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
-                }}
-              >
-                {/* Header: thumbnail, status, title, location. Tapping it
-                    opens the listing - a booked property is out of the public
-                    feed, so this row is the only route back to it. */}
-                <div
-                  className="reservation-property"
-                  role="link" tabIndex={0}
-                  onKeyDown={event => { if (event.key === 'Enter' && property?.id) navigate(`/property/${property.id}`) }}
-                  onClick={() => property?.id && navigate(`/property/${property.id}`)}
-                  style={{
-                    display: 'flex',
-                    gap: '12px',
-                    cursor: property?.id ? 'pointer' : 'default'
-                  }}
-                >
-                  {property?.images?.[0] && isVideoUrl(property.images[0]) ? (
-                    <VideoThumbnail src={property.images[0]} alt={property.title || ''} className="reservation-thumbnail" />
-                  ) : property?.images?.[0] ? (
-                    <img
-                      src={property.images[0]}
-                      alt={property.title || ''}
-                      loading="lazy"
-                      style={{
-                        width: '92px',
-                        height: '92px',
-                        flexShrink: 0,
-                        objectFit: 'cover',
-                        borderRadius: '10px',
-                        backgroundColor: Colors.neutral[100]
-                      }}
-                    />
-                  ) : (
-                    <div style={{
-                      width: '92px',
-                      height: '92px',
-                      flexShrink: 0,
-                      borderRadius: '10px',
-                      backgroundColor: Colors.neutral[100],
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <Home size={26} color={Colors.neutral[400]} />
-                    </div>
-                  )}
-
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '3px 10px',
-                      borderRadius: '20px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      backgroundColor: `${getStatusColor(reservation.status)}1A`,
-                      color: getStatusColor(reservation.status)
-                    }}>
-                      <span style={{
-                        width: '6px',
-                        height: '6px',
-                        borderRadius: '50%',
-                        backgroundColor: getStatusColor(reservation.status)
-                      }} />
-                      {getStatusLabel(reservation.status)}
-                    </span>
-
-                    <div style={{
-                      marginTop: '6px',
-                      fontSize: '15px',
-                      fontWeight: 600,
-                      color: Colors.neutral[900],
-                      lineHeight: 1.3,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}>
-                      {property?.title || t('reservations.propertyLabel')}
-                    </div>
-
-                    <div style={{
-                      marginTop: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      fontSize: '12px',
-                      color: Colors.neutral[500],
-                      minWidth: 0
-                    }}>
-                      <MapPin size={12} style={{ flexShrink: 0 }} />
-                      <span style={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {property?.location || t('reservations.locationNotAvailable')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Date, time and amount were three separate rows of pills. */}
-                <div className="reservation-meta" style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  marginTop: '12px',
-                  padding: '10px 12px',
-                  borderRadius: '10px',
-                  backgroundColor: Colors.neutral[100]
-                }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '11px', color: Colors.neutral[500] }}>
-                      {t('reservations.reservationDate')}
-                    </div>
-                    <div style={{
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      color: Colors.neutral[900],
-                      marginTop: '2px'
-                    }}>
-                      {formatVisitSlot(reservation)}
-                    </div>
-                  </div>
-                  <div style={{
-                    width: '1px',
-                    alignSelf: 'stretch',
-                    backgroundColor: Colors.neutral[200],
-                    margin: '0 12px'
-                  }} />
-                  <div style={{ flex: 1, minWidth: 0, textAlign: 'right' }}>
-                    <div style={{ fontSize: '11px', color: Colors.neutral[500] }}>
-                      {t('reservations.paid')}
-                    </div>
-                    <div style={{
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      color: Colors.neutral[900],
-                      marginTop: '2px'
-                    }}>
-                      {/* formatPrice already appends FCFA */}
-                      {formatPrice(reservation.amount || 0)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* At most two actions: reaching the agent, and whatever this
-                    reservation's status actually allows next. */}
-                <div className="reservation-actions" style={{
-                  display: 'flex',
-                  gap: '8px',
-                  marginTop: '12px',
-                  flexWrap: 'wrap'
-                }}>
-                  {property?.owner_id && (
-                    <button
-                      onClick={() => handleMessageAgent(reservation)}
-                      style={{ ...secondaryAction, color: Colors.primary[600] }}
-                    >
-                      <MessageCircle size={15} />
-                      {t('reservations.messageAgent')}
-                    </button>
-                  )}
-
-                  {canCompleteVisit(reservation) ? (
-                    <button
-                      onClick={() => handleCompleteVisit(reservation)}
-                      disabled={completingVisit === reservation.id}
-                      style={{
-                        ...primaryAction,
-                        backgroundColor: Colors.success[600],
-                        cursor: completingVisit === reservation.id ? 'not-allowed' : 'pointer',
-                        opacity: completingVisit === reservation.id ? 0.6 : 1
-                      }}
-                    >
-                      <CheckCircle2 size={15} />
-                      {completingVisit === reservation.id
-                        ? t('common.loading')
-                        : t('reservations.completeVisit')}
-                    </button>
-                  ) : reservation.status === 'pending' ? (
-                    <button
-                      onClick={() => handleCancel(reservation.id)}
-                      style={{ ...ghostAction, color: Colors.error[700] }}
-                    >
-                      <X size={15} />
-                      {t('reservations.cancel')}
-                    </button>
-                  ) : reservation.status === 'cancelled' && reservation.payment_status === 'paid' ? (
-                    <button
-                      onClick={() => handleRequestRefund(reservation.id)}
-                      disabled={requestingRefund === reservation.id}
-                      style={{
-                        ...ghostAction,
-                        color: Colors.warning[700],
-                        cursor: requestingRefund === reservation.id ? 'not-allowed' : 'pointer',
-                        opacity: requestingRefund === reservation.id ? 0.6 : 1
-                      }}
-                    >
-                      {requestingRefund === reservation.id
-                        ? t('common.loading')
-                        : t('reservations.requestRefund')}
-                    </button>
-                  ) : property?.id ? (
-                    <button
-                      onClick={() => navigate(`/property/${property.id}`)}
-                      style={{ ...ghostAction, color: Colors.neutral[700] }}
-                    >
-                      {t('reservations.viewProperty')}
-                      <ChevronRight size={14} />
-                    </button>
-                  ) : null}
-                </div>
-
-                {/* The visit day has not arrived, so completing is not yet
-                    possible. Say so - the agent's fee stays locked until this
-                    happens, and silence here reads as a missing button. */}
-                {reservation.status === 'confirmed' && !canCompleteVisit(reservation) && (
-                  <div style={{
-                    marginTop: '10px',
-                    fontSize: '12px',
-                    color: Colors.neutral[500],
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '6px'
-                  }}>
-                    <Clock size={13} style={{ flexShrink: 0, marginTop: '1px' }} />
-                    <span>{t('reservations.completeAvailableOnVisitDay')}</span>
-                  </div>
-                )}
-              </div>
-            )
-          })}
+      ) : visibleReservations.length === 0 ? (
+        <div className="rsv-empty">
+          <p>{t('reservations.noMatches')}</p>
+          <CardButton label={t('reservations.filterAll')} tone="ghost" onClick={() => { setSearch(''); setStatusFilter('all') }} />
         </div>
+      ) : (
+        <>
+          {groups.today.length > 0 && (
+            <ReservationSectionView icon={MapPin} title={t('reservations.sectionToday')} live={t('reservations.liveToday')} hero>
+              {groups.today.map(r => renderCard(r, 'hero'))}
+            </ReservationSectionView>
+          )}
+          {groups.upcoming.length > 0 && (
+            <ReservationSectionView icon={CalendarClock} title={t('reservations.sectionUpcoming')} meta={t('reservations.sectionCount', { count: groups.upcoming.length })}>
+              {groups.upcoming.map(r => renderCard(r, 'compact'))}
+            </ReservationSectionView>
+          )}
+          {groups.past.length > 0 && (
+            <ReservationSectionView icon={History} title={t('reservations.sectionPast')} meta={t('reservations.sectionCount', { count: groups.past.length })}>
+              {groups.past.map(r => renderCard(r, 'compact'))}
+            </ReservationSectionView>
+          )}
+        </>
       )}
 
       <ReviewModal
@@ -615,14 +459,15 @@ export default function UserReservations() {
           visible={!!commissionReservation}
           onClose={() => setCommissionReservation(null)}
           reservation={commissionReservation}
-          agentName={commissionReservation.property?.owner?.full_name || t('reservations.agent')}
+          agentName={commissionReservation.property?.owner?.full_name || t('reservations.agentFallback')}
           propertyTitle={commissionReservation.property?.title || t('reservations.propertyLabel')}
           onPaymentSuccess={() => {
             setCommissionReservation(null)
             refreshReservations()
+            reservationDeals.refresh()
           }}
         />
       )}
-    </div>
+    </ReservationsPage>
   )
 }

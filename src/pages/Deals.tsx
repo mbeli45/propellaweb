@@ -1,73 +1,349 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDeals } from '@/hooks/useDeals';
-import { DealForm, dealForms, requestForm, partnerForm, money, statusLabel, requestActions, configurePartner, resolveReport } from '@/lib/deals';
-import SectionSwitch from '@/components/SectionSwitch';
-import './Deals.css';
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { HeartHandshake as Handshake, Plus, X } from 'lucide-react'
+import { useDeals } from '@/hooks/useDeals'
+import { dealNeedsAction } from '@/hooks/useReservationDeals'
+import { useLanguage } from '@/contexts/I18nContext'
+import { DealForm, partnerForm, requestForm, statusLabel } from '@/lib/deals'
+import SectionSwitch from '@/components/SectionSwitch'
 import { ListItemSkeleton } from '@/components/skeletons'
+import {
+  Banner,
+  CardButton,
+  Hint,
+  ReservationToolbar,
+  ReservationsHeader,
+  ReservationsPage,
+} from '@/components/reservations/ReservationUI'
+import { DealCard, PartnerCard, RequestCard, dealRef } from '@/components/deals/DealCard'
 
-export default function Deals({workspace='customer'}: {workspace?: 'admin' | 'agent' | 'customer'}) {
- const loaded=useDeals();
- const admin=workspace==='admin'&&loaded.admin;
- const visibleDeals=loaded.deals.filter(d=>admin||(workspace==='agent'?d.agent_id===loaded.userId:d.customer_id===loaded.userId));
- const state={...loaded,admin,deals:visibleDeals,
-  partners:loaded.partners.filter(p=>admin||p.owner_id===loaded.userId||visibleDeals.some(d=>d.partner_id===p.id)),
-  requests:loaded.requests.filter(r=>admin||(workspace==='agent'?visibleDeals.some(d=>d.request_id===r.id):r.customer_id===loaded.userId))};
- const navigate=useNavigate(); const [tab,setTab]=useState('deals'),[query,setQuery]=useState(''),[form,setForm]=useState<DealForm|null>(null);
- const [values,setValues]=useState<Record<string,string|boolean>>({});
- const dialogRef=useRef<HTMLElement>(null);
- useEffect(()=>{
-  if(!form)return;
-  const previous=document.activeElement as HTMLElement|null;
-  const previousOverflow=document.body.style.overflow;
-  document.body.style.overflow='hidden';
-  dialogRef.current?.querySelector<HTMLElement>('button, input, select, textarea')?.focus();
-  return ()=>{document.body.style.overflow=previousOverflow;previous?.focus();};
- },[form]);
- const dialogKeys=(e:React.KeyboardEvent)=>{
-  if(e.key==='Escape'&&!state.busy){e.preventDefault();setForm(null);}
-  if(e.key!=='Tab')return;
-  const controls=dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled)');
-  if(!controls?.length)return;
-  const first=controls[0],last=controls[controls.length-1];
-  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
-  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
- };
- const open=(f:DealForm)=>{setValues(Object.fromEntries(f.fields.map(field=>[field.key,field.type==='checkbox'?false:field.value??field.options?.[0]?.value??''])));setForm(f);};
- const actions=(forms:DealForm[])=>forms.map(f=><button key={`${f.action}-${f.id}`} disabled={state.busy} onClick={()=>open(f)} className={['pay','accept_quote','confirm_closing'].includes(f.action)?'deal-primary':''}>{f.title}</button>);
- const reservation=new URLSearchParams(window.location.search).get('reservation');
- const filtered=state.deals.filter(d=>`${d.title} ${d.status} ${d.id}`.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>Number(b.reservation_id===reservation)-Number(a.reservation_id===reservation));
- return <div className={`deal-page deal-workspace deal-workspace-${workspace}`}>
-  {workspace==='agent'&&<SectionSwitch label="Bookings" items={[{to:'/agent/reservations',label:'Bookings'},{to:'/agent/deals',label:'Deals'}]}/>}
-  <header className="deal-heading"><div><p className="deal-eyebrow">{workspace==='admin'?'Administration':workspace==='agent'?'Agent workspace':'My property journey'}</p><h1>{workspace==='admin'?'Requests & deals':workspace==='agent'?'Agency deals':'My property deals'}</h1><p>{workspace==='admin'?'Manage enquiries, assign agencies, and track commission collection.':workspace==='agent'?'Manage your referrals, prepare quotes, and follow each customer through closing.':'Track your property search, review your agency fee, and confirm your next step.'}</p></div><div className="deal-actions"><button onClick={()=>void state.refresh()} disabled={state.loading}>Refresh</button>{(admin||workspace==='customer')&&<button className="deal-primary" onClick={()=>open(requestForm(admin))}>{admin?'Record enquiry':'Request a property'}</button>}{workspace==='agent'&&!state.partners.some(p=>p.owner_id===state.userId)&&<button className="deal-primary" onClick={()=>open(partnerForm)}>Become a partner</button>}</div></header>
-  {workspace!=='admin'&&<p className="deal-context-note">Agency commission is payable only after a successful rental or purchase. Viewing fees are separate.</p>}
-  <nav className="deal-tabs" aria-label="Property journey sections">{['deals','requests',...(state.partners.length?['partners']:[])].map(t=><button key={t} aria-pressed={tab===t} onClick={()=>setTab(t)}>{t[0].toUpperCase()+t.slice(1)} <span>{t==='deals'?state.deals.length:t==='requests'?state.requests.length:state.partners.length}</span></button>)}</nav>
-  {state.error&&<p className="deal-error" role="alert">{state.error}</p>}{state.message&&<p role="status">{state.message}</p>}{state.loading&&(state.deals.length?<p role="status">Loading property journey…</p>:<ListItemSkeleton count={3} lines={3} appearance="card" flush/>)}
-  {tab==='deals'&&<><label className="deal-search">Search deals<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Property, status or deal reference"/></label>
-   {!state.loading&&!filtered.length&&<section className="deal-card"><h2>{query?'No matching deals':'No deals yet'}</h2><p>{query?'Try another property name, status or reference.':workspace==='admin'?'Record an enquiry or review property requests to get started.':workspace==='agent'?'Your assigned referrals will appear here.':'Request a property or complete a viewing to start your journey.'}</p></section>}
-   <div className="deal-grid">{filtered.map(d=><article className="deal-card" key={d.id}>
-    <div className="deal-card-top"><span className="deal-status">{statusLabel(d.status)}</span><small>{d.request_id?'Agency referral':'Listed property'}</small></div><h2>{d.title}</h2><small>Deal {d.id.slice(0,8)} · {d.purpose} · {d.interest==='proceed'?'Customer wants to proceed':d.interest==='searching'?'Customer is still searching':'Customer is deciding'}</small>
-    <details className="deal-expanded" open={reservation===d.reservation_id || undefined}><summary>View details & actions</summary><div className="deal-expanded-body"><div className="deal-actions" style={{marginTop:12}}>
-     {d.property_id&&<button onClick={()=>navigate(`/property/${d.property_id}`)}>View property</button>}
-     {workspace==='customer'&&d.agency_accepted_at&&d.customer_id===state.userId&&d.agent_id&&<button onClick={()=>navigate(`/chat/${d.agent_id}`)}>Message agency</button>}
-     {workspace==='agent'&&d.agency_accepted_at&&d.agent_id===state.userId&&d.customer_id&&<button onClick={()=>navigate(`/chat/${d.customer_id}`)}>Message customer</button>}
-    </div>
-    {!!d.requirements&&<p className="deal-multiline">{d.requirements}</p>}{!!d.proposal&&<p className="deal-multiline">{d.proposal}</p>}{!!d.sourcing_agency&&<p>Supplying agency: {d.sourcing_agency}</p>}
-    {d.commission_amount!=null&&<div className="deal-invoice"><span>Agency commission · quote {d.quote_version}</span><strong>{money(d.commission_amount)}</strong><p>{d.fee_basis}</p><small>Property amount: {money(d.transaction_amount)}. Rent / purchase funds are separate.</small>{(d.agent_id===state.userId||state.admin)&&<small>Propella share: {(d.platform_bps??0)/100}% of commission</small>}</div>}
-    {!!d.closing_note&&<p className="deal-multiline"><b>Closing details:</b> {d.closing_note}</p>}
-    {d.paid_at&&<p>Payment verified {new Date(d.paid_at).toLocaleDateString()}. Receipt: <code>{d.id}</code></p>}
-    {!d.agency_accepted_at&&<p className="deal-notice">Waiting for an approved partner to accept the referral terms.</p>}
-    {state.admin&&<p className={new Date(d.follow_up_at)<new Date()?'deal-notice':''}>Follow-up: {new Date(d.follow_up_at).toLocaleDateString()}</p>}
-    <div className="deal-actions">{actions(dealForms(d,state.userId,state.admin,state.partners,workspace))}</div>
-    {state.reports.filter(r=>r.deal_id===d.id).map(r=><div className="deal-report" key={r.id}><b>Report · {r.status}</b><p>{r.description}</p>{r.resolution&&<p>Resolution: {r.resolution}</p>}{state.admin&&r.status==='open'&&actions([resolveReport(r)])}</div>)}
-    <details><summary>Deal history</summary><ol className="deal-history">{state.events.filter(e=>e.deal_id===d.id).map(e=><li key={e.id}><span>{e.action.replace(/_/g,' ')}</span><small>{new Date(e.created_at).toLocaleString()}</small>{e.action==='quote'&&<p>Commission: {money(Number(e.detail.commission_amount))} · {String(e.detail.fee_basis||'')}</p>}</li>)}</ol></details></div></details>
-   </article>)}</div></>}
-  {tab==='requests'&&<div className="deal-grid">{!state.requests.length&&<p>No property requests yet.</p>}{state.requests.map(r=><article className="deal-card" key={r.id}><span className="deal-status">{state.deals.some(d=>d.request_id===r.id&&d.status!=='cancelled')?'Assigned · see Deals':'Awaiting assignment'}</span><h2>{r.location} · {r.purpose}</h2><p className="deal-multiline">{r.requirements}</p><p>Budget: {money(r.budget)}</p>{state.admin&&<p>{r.source} · {r.contact_note}</p>}<div className="deal-actions">{state.admin&&actions(requestActions(r,state.partners,state.deals.some(d=>d.request_id===r.id&&d.status!=='cancelled')))}</div></article>)}</div>}
-  {tab==='partners'&&<div className="deal-grid">{state.partners.map(p=><article className="deal-card" key={p.id}><span className="deal-status">{p.status}</span><h2>{p.name}</h2><p>{p.regions}</p><p>Propella share for new referrals: {p.platform_bps/100}%</p>{state.admin&&actions([configurePartner(p)])}</article>)}</div>}
-  {workspace==='customer'&&state.userId&&<p className="deal-account">Your account ID for linking a Facebook or other enquiry: <code>{state.userId}</code></p>}
-  {form&&<div className="deal-overlay"><section ref={dialogRef} onKeyDown={dialogKeys} role="dialog" aria-modal="true" aria-labelledby="deal-form-title" className="deal-dialog"><header><h2 id="deal-form-title">{form.title}</h2><button disabled={state.busy} aria-label="Close form" onClick={()=>setForm(null)}>×</button></header><p>{form.description}</p><form onSubmit={async e=>{e.preventDefault();if(await state.submit(form,values))setForm(null);}}>
-   {form.fields.map(f=><label key={f.key} className={f.type==='checkbox'?'deal-checkbox':''}>{f.type==='checkbox'?<><input type="checkbox" checked={values[f.key]===true} required={!f.optional} onChange={e=>setValues({...values,[f.key]:e.target.checked})}/><span>{f.label}</span></>:<><span>{f.label}</span>{f.type==='select'?<select autoFocus={form.fields[0]===f} required={!f.optional} value={String(values[f.key]??'')} onChange={e=>setValues({...values,[f.key]:e.target.value})}>{!f.options?.length&&<option value="">No eligible options</option>}{f.options?.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select>:f.type==='multiline'?<textarea required={!f.optional} maxLength={4000} rows={4} value={String(values[f.key]??'')} onChange={e=>setValues({...values,[f.key]:e.target.value})}/>:<input autoFocus={form.fields[0]===f} required={!f.optional} type={f.type==='number'?'number':'text'} min={f.type==='number'?1:undefined} step={f.type==='number'?1:undefined} value={String(values[f.key]??'')} onChange={e=>setValues({...values,[f.key]:e.target.value})}/>}</>}</label>)}
-   {state.error&&<p className="deal-error" role="alert">{state.error}</p>}<footer><button type="button" disabled={state.busy} onClick={()=>setForm(null)}>Cancel</button><button className="deal-primary" disabled={state.busy}>{state.busy?'Saving…':form.action==='pay'?'Request mobile-money payment':'Confirm'}</button></footer>
-  </form></section></div>}
- </div>;
+type Workspace = 'admin' | 'agent' | 'customer'
+type Tab = 'deals' | 'waiting' | 'requests' | 'partners'
+
+export default function Deals({ workspace = 'customer' }: { workspace?: Workspace }) {
+  const loaded = useDeals()
+  const { t } = useLanguage()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const reservation = searchParams.get('reservation')
+  const requestParam = searchParams.get('request')
+
+  // Each workspace sees only its own side of a deal; admins see everything.
+  const admin = workspace === 'admin' && loaded.admin
+  const deals = loaded.deals.filter((d) => admin || (workspace === 'agent' ? d.agent_id === loaded.userId : d.customer_id === loaded.userId))
+  const partners = loaded.partners.filter((p) => admin || p.owner_id === loaded.userId || deals.some((d) => d.partner_id === p.id))
+  const requests = loaded.requests.filter((r) =>
+    admin || (workspace === 'agent' ? deals.some((d) => d.request_id === r.id) : r.customer_id === loaded.userId),
+  )
+
+  const [tab, setTab] = useState<Tab>('deals')
+  const [query, setQuery] = useState('')
+  const [form, setForm] = useState<DealForm | null>(null)
+  const [values, setValues] = useState<Record<string, string | boolean>>({})
+  const dialogRef = useRef<HTMLElement>(null)
+
+  const open = (next: DealForm) => {
+    setValues(Object.fromEntries(next.fields.map((f) => [f.key, f.type === 'checkbox' ? false : f.value ?? f.options?.[0]?.value ?? ''])))
+    setForm(next)
+  }
+
+  // Deep link from the reservations page: ?request=1 opens the request form once.
+  const openedRequest = useRef(false)
+  useEffect(() => {
+    if (requestParam && workspace === 'customer' && !loaded.loading && !openedRequest.current) {
+      openedRequest.current = true
+      open(requestForm(false))
+    }
+  }, [requestParam, workspace, loaded.loading])
+
+  // Dialog: lock page scroll, focus the first control, restore focus on close.
+  useEffect(() => {
+    if (!form) return
+    const previous = document.activeElement as HTMLElement | null
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    dialogRef.current?.querySelector<HTMLElement>('input, select, textarea, button')?.focus()
+    return () => {
+      document.body.style.overflow = previousOverflow
+      previous?.focus()
+    }
+  }, [form])
+
+  const dialogKeys = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape' && !loaded.busy) {
+      e.preventDefault()
+      setForm(null)
+    }
+    if (e.key !== 'Tab') return
+    const controls = dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled)',
+    )
+    if (!controls?.length) return
+    const first = controls[0]
+    const last = controls[controls.length - 1]
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault()
+      last.focus()
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
+
+  const reportsOpenFor = (dealId: string) => loaded.reports.some((r) => r.deal_id === dealId && r.status === 'open')
+  const needsAction = (deal: (typeof deals)[number]) =>
+    admin ? deal.status === 'paid' || reportsOpenFor(deal.id) : dealNeedsAction(deal, loaded.userId)
+  const waiting = deals.filter(needsAction)
+
+  const visibleDeals = useMemo(() => {
+    const source = tab === 'waiting' ? waiting : deals
+    const q = query.trim().toLowerCase()
+    return source
+      .filter((d) =>
+        !q ||
+        [d.title, d.property?.title, d.property?.location, statusLabel(d.status), d.id, dealRef(d.id)].some((value) =>
+          value?.toLowerCase().includes(q),
+        ),
+      )
+      // A deal opened from a reservation goes first.
+      .sort((a, b) => Number(b.reservation_id === reservation) - Number(a.reservation_id === reservation))
+  }, [tab, waiting, deals, query, reservation])
+
+  const tabs = [
+    { key: 'deals', label: t('deals.tabDeals'), count: deals.length },
+    { key: 'waiting', label: t('deals.tabWaiting'), count: waiting.length },
+    { key: 'requests', label: t('deals.tabRequests'), count: requests.length },
+    ...(partners.length ? [{ key: 'partners', label: t('deals.tabPartners'), count: partners.length }] : []),
+  ]
+
+  const titleKey = workspace === 'admin' ? 'Admin' : workspace === 'agent' ? 'Agent' : 'Customer'
+  const canBecomePartner = workspace === 'agent' && !partners.some((p) => p.owner_id === loaded.userId)
+  const headerAction =
+    workspace === 'agent'
+      ? undefined
+      : { label: t('deals.requestProperty'), icon: Plus, onClick: () => open(requestForm(admin)) }
+  const showSkeleton = loaded.loading && deals.length === 0
+
+  const renderDeals = () =>
+    visibleDeals.length === 0 ? (
+      <div className="rsv-empty">
+        <p>{query ? t('deals.noMatches') : tab === 'waiting' ? t('deals.emptyWaiting') : t('deals.emptyDeals')}</p>
+      </div>
+    ) : (
+      <div className="rsv-grid" style={{ marginTop: 16 }}>
+        {visibleDeals.map((deal) => (
+          <DealCard
+            key={deal.id}
+            deal={deal}
+            workspace={workspace}
+            userId={loaded.userId}
+            admin={admin}
+            partners={loaded.partners}
+            reports={loaded.reports}
+            events={loaded.events}
+            busy={loaded.busy}
+            highlighted={!!reservation && deal.reservation_id === reservation}
+            needsAction={needsAction(deal)}
+            onForm={open}
+            onMessage={(id) => navigate(`/chat/${id}`)}
+            onViewProperty={(id) => navigate(`/property/${id}`)}
+          />
+        ))}
+      </div>
+    )
+
+  return (
+    <ReservationsPage label={t(`deals.title${titleKey}`)}>
+      <ReservationsHeader
+        title={t(`deals.title${titleKey}`)}
+        count={deals.length}
+        subtitle={t(`deals.subtitle${titleKey}`)}
+        action={headerAction}
+        onBack={workspace === 'customer' ? () => navigate(-1) : undefined}
+        backLabel={t('common.back')}
+      >
+        {workspace === 'agent' && (
+          <SectionSwitch
+            label={t('navigation.bookings')}
+            items={[
+              { to: '/agent/reservations', label: t('navigation.bookings') },
+              { to: '/agent/deals', label: t('reservations.dealsButton') },
+            ]}
+          />
+        )}
+      </ReservationsHeader>
+
+      {canBecomePartner && (
+        <Banner
+          icon={Handshake}
+          title={t('deals.becomePartner')}
+          body={partnerForm.description || ''}
+          primary={{ label: t('deals.becomePartner'), onClick: () => open(partnerForm) }}
+        />
+      )}
+
+      <ReservationToolbar
+        search={query}
+        onSearch={setQuery}
+        placeholder={t('deals.searchPlaceholder')}
+        options={tabs}
+        value={tab}
+        onChange={(key) => setTab(key as Tab)}
+        label={t(`deals.title${titleKey}`)}
+      />
+
+      {workspace !== 'admin' && (
+        <div style={{ marginTop: 12 }}>
+          <Hint text={t('deals.feesNote')} />
+        </div>
+      )}
+
+      {loaded.error && !form && (
+        <p className="rsv-error" role="alert">
+          {loaded.error}
+        </p>
+      )}
+      {loaded.message && (
+        <p className="rsv-muted" role="status" style={{ marginTop: 12 }}>
+          {loaded.message}
+        </p>
+      )}
+
+      {showSkeleton ? (
+        <div style={{ marginTop: 16 }}>
+          <ListItemSkeleton count={3} lines={3} leading="thumbnail" appearance="card" flush />
+        </div>
+      ) : tab === 'requests' ? (
+        requests.length === 0 ? (
+          <div className="rsv-empty">
+            <p>{t('deals.emptyRequests')}</p>
+          </div>
+        ) : (
+          <div className="rsv-grid" style={{ marginTop: 16 }}>
+            {requests.map((r) => (
+              <RequestCard
+                key={r.id}
+                request={r}
+                partners={loaded.partners}
+                assigned={loaded.deals.some((d) => d.request_id === r.id && d.status !== 'cancelled')}
+                admin={admin}
+                busy={loaded.busy}
+                onForm={open}
+              />
+            ))}
+          </div>
+        )
+      ) : tab === 'partners' ? (
+        partners.length === 0 ? (
+          <div className="rsv-empty">
+            <p>{t('deals.emptyPartners')}</p>
+          </div>
+        ) : (
+          <div className="rsv-grid" style={{ marginTop: 16 }}>
+            {partners.map((p) => (
+              <PartnerCard key={p.id} partner={p} admin={admin} busy={loaded.busy} onForm={open} />
+            ))}
+          </div>
+        )
+      ) : (
+        renderDeals()
+      )}
+
+      {workspace === 'customer' && loaded.userId && (
+        <p className="rsv-note">{t('deals.accountId', { id: loaded.userId })}</p>
+      )}
+
+      {form && (
+        <div className="rsv-dialog-backdrop" onMouseDown={(e) => e.target === e.currentTarget && !loaded.busy && setForm(null)}>
+          <section
+            ref={dialogRef}
+            onKeyDown={dialogKeys}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="deal-form-title"
+            className="rsv-dialog"
+          >
+            <div className="rsv-dialog-head">
+              <span className="rsv-banner-icon" style={{ background: 'var(--rsv-primary-tint)' }} aria-hidden="true">
+                <Handshake size={20} />
+              </span>
+              <h2 id="deal-form-title">{form.title}</h2>
+              <button type="button" className="rsv-back" disabled={loaded.busy} aria-label={t('deals.close')} onClick={() => setForm(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            {form.description && <p className="rsv-muted">{form.description}</p>}
+            <form
+              style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
+              onSubmit={async (e) => {
+                e.preventDefault()
+                if (await loaded.submit(form, values)) setForm(null)
+              }}
+            >
+              {form.fields.map((f) =>
+                f.type === 'checkbox' ? (
+                  <label key={f.key} className="rsv-check">
+                    <input
+                      type="checkbox"
+                      checked={values[f.key] === true}
+                      required={!f.optional}
+                      onChange={(e) => setValues({ ...values, [f.key]: e.target.checked })}
+                    />
+                    <span>{f.label}</span>
+                  </label>
+                ) : (
+                  <label key={f.key} className="rsv-field">
+                    <span>{f.label}</span>
+                    {f.type === 'select' ? (
+                      <select
+                        required={!f.optional}
+                        value={String(values[f.key] ?? '')}
+                        onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                        style={{ width: '100%', minHeight: 46, border: '1px solid var(--rsv-line)', borderRadius: 12, padding: '0 12px', font: 'inherit', color: 'var(--rsv-ink)', background: 'var(--rsv-surface)' }}
+                      >
+                        {!f.options?.length && <option value="">—</option>}
+                        {f.options?.map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : f.type === 'multiline' ? (
+                      <textarea
+                        required={!f.optional}
+                        maxLength={4000}
+                        rows={4}
+                        value={String(values[f.key] ?? '')}
+                        onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                      />
+                    ) : (
+                      <input
+                        required={!f.optional}
+                        type={f.type === 'number' ? 'number' : 'text'}
+                        min={f.type === 'number' ? 1 : undefined}
+                        step={f.type === 'number' ? 1 : undefined}
+                        value={String(values[f.key] ?? '')}
+                        onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                      />
+                    )}
+                  </label>
+                ),
+              )}
+              {loaded.error && (
+                <p className="rsv-error" role="alert" style={{ margin: 0 }}>
+                  {loaded.error}
+                </p>
+              )}
+              <div className="rsv-actions">
+                <CardButton label={t('common.cancel')} tone="neutral" onClick={() => setForm(null)} disabled={loaded.busy} />
+                <button type="submit" className="rsv-btn rsv-btn--primary" disabled={loaded.busy} aria-busy={loaded.busy || undefined}>
+                  {form.action === 'pay' ? t('deals.requestPayment') : t('deals.confirm')}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
+    </ReservationsPage>
+  )
 }

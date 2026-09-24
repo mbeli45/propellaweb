@@ -15,7 +15,7 @@ export function useDeals() {
    setUserId(auth.user.id);
    const results=await Promise.all([
     dealDb.from('profiles').select('role,is_admin').eq('id',auth.user.id).single(),
-    dealDb.from('property_deals').select('*').order('updated_at',{ascending:false}),
+    dealDb.from('property_deals').select('*, property:property_id(id,title,location,images), customer:customer_id(full_name,avatar_url), agent:agent_id(full_name,avatar_url,is_verified_agent)').order('updated_at',{ascending:false}),
     dealDb.from('agency_partners').select('*').order('created_at',{ascending:false}),
     dealDb.from('property_requests').select('*').order('created_at',{ascending:false}),
     dealDb.from('deal_events').select('*').order('created_at',{ascending:false}).limit(300),
