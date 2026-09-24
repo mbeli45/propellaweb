@@ -15,7 +15,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     flowType: 'pkce',
-    debug: import.meta.env.DEV,
+    // Off: GoTrue debug logs print the whole session (access + refresh tokens) on every refresh tick.
+    debug: false,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,

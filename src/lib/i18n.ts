@@ -47,7 +47,7 @@ i18n
     },
     lng: 'en', // Set default language to English
     fallbackLng: 'en',
-    debug: import.meta.env.DEV,
+    debug: false,
     
     interpolation: {
       escapeValue: false, // React already escapes values
