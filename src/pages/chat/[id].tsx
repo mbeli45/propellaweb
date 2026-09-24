@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { chatDayLabel, isSameDay } from '@/lib/chatDates'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
@@ -26,7 +27,8 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
   const propertyId = searchParams.get('propertyId') || undefined
   const { user: currentUser } = useAuth()
   const { colorScheme } = useThemeMode()
-  const { t } = useLanguage()
+  const { t, currentLanguage } = useLanguage()
+  const locale = currentLanguage === 'fr' ? 'fr-FR' : 'en-US'
   const Colors = getColors(colorScheme)
   const navigate = useNavigate()
   const { pickImage, uploadImage, uploading: uploadingMedia } = useStorage()
@@ -133,20 +135,9 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
     }
   }
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const minutes = Math.floor(diff / 60000)
-    const hours = Math.floor(diff / 3600000)
-    const days = Math.floor(diff / 86400000)
-
-    if (minutes < 1) return 'Just now'
-    if (minutes < 60) return `${minutes}m ago`
-    if (hours < 24) return `${hours}h ago`
-    if (days < 7) return `${days}d ago`
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-  }
+  // Bubbles show the clock time; day separators carry the date (WhatsApp-style).
+  const formatTime = (dateString: string) =>
+    dateString ? new Date(dateString).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : ''
 
   const getMessageStatus = (message: any) => {
     const status = message.status ?? (message.read ? 'read' : 'sent')
@@ -324,12 +315,19 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
           </div>
         )}
 
-        {conversationMessages.map((message) => {
+        {conversationMessages.map((message, index) => {
           const isOwn = message.sender_id === currentUser?.id
-          
+          const previous = conversationMessages[index - 1]
+          const newDay = !previous || !isSameDay(previous.created_at, message.created_at)
+
           return (
+            <React.Fragment key={message.id}>
+            {newDay && (
+              <div className="chat-day-separator" role="separator" aria-label={chatDayLabel(message.created_at, locale, { today: t('messages.today'), yesterday: t('messages.yesterday') })}>
+                <span>{chatDayLabel(message.created_at, locale, { today: t('messages.today'), yesterday: t('messages.yesterday') })}</span>
+              </div>
+            )}
             <div
-              key={message.id}
               style={{
                 display: 'flex',
                 justifyContent: isOwn ? 'flex-end' : 'flex-start',
@@ -392,6 +390,7 @@ export default function ChatDetail({ counterpartId: propCounterpartId, hideBackB
                 </div>
               </div>
             </div>
+            </React.Fragment>
           )
         })}
         <div ref={messagesEndRef} />

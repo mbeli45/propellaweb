@@ -9,22 +9,11 @@ import { useChatVisitContext, ChatVisit } from '@/hooks/useChatVisitContext'
 import { useBadgeCounts } from '@/hooks/useBadgeCounts'
 import { isVisitToday, reservationRef } from '@/components/reservations/ReservationUI'
 import { MessageListSkeleton } from '@/components/skeletons'
+import { chatListTimestamp } from '@/lib/chatDates'
 import ChatDetail from '@/pages/chat/[id]'
 import './Messages.css'
 
 type Filter = 'all' | 'unread' | 'visits' | 'people'
-
-const formatTimestamp = (timestamp: string | null, yesterdayLabel: string, locale: string) => {
-  if (!timestamp) return ''
-  const date = new Date(timestamp)
-  const now = new Date()
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
-  const startOfThatDay = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
-  const dayDiff = Math.round((startOfToday - startOfThatDay) / 86400000)
-  if (dayDiff <= 0) return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-  if (dayDiff === 1) return yesterdayLabel
-  return date.toLocaleDateString(locale, { month: 'short', day: '2-digit' })
-}
 
 const getInitials = (name: string) =>
   name
@@ -309,7 +298,7 @@ export default function UserMessages() {
                             {verified && <BadgeCheck size={15} aria-hidden="true" />}
                             {tag && <span className={`chats-tag${tag.live ? ' is-live' : ''}`}>{tag.label}</span>}
                           </span>
-                          <span className="chats-time">{formatTimestamp(item.lastMessage.created_at, t('messages.yesterday'), locale)}</span>
+                          <span className="chats-time">{chatListTimestamp(item.lastMessage.created_at, locale, t('messages.yesterday'))}</span>
                         </span>
                         <span className="chats-preview-row">
                           <span className="chats-preview">

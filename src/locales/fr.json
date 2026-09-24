@@ -356,7 +356,8 @@
     "markAllRead": "Tout marquer comme lu",
     "all": "Tous",
     "unread": "Non lus",
-    "yesterday": "Hier"
+    "yesterday": "Hier",
+    "today": "Aujourd'hui"
   },
   "profile": {
     "title": "Profil",
@@ -1520,7 +1521,16 @@
     "cardDescription": "Payer avec carte de crédit/débit",
     "bankTransfer": "Virement bancaire",
     "bankTransferDescription": "Payer par virement bancaire",
-    "selectPaymentMethod": "Sélectionner la méthode de paiement"
+    "selectPaymentMethod": "Sélectionner la méthode de paiement",
+    "confirmOnPhoneTitle": "Confirmez le paiement sur votre téléphone",
+    "confirmOnPhoneBody": "Nous avons envoyé une demande de {{amount}} au {{phone}}. Saisissez votre code PIN pour l'approuver.",
+    "waitingFor": "En attente de confirmation · {{time}}",
+    "noPromptTitle": "Vous n'avez pas reçu de notification ?",
+    "mtnInstruction": "Composez le {{code}}, puis approuvez le paiement en attente dans vos approbations MoMo.",
+    "orangeInstruction": "Composez le {{code}} pour valider le paiement en attente.",
+    "dialCode": "Composer le {{code}}",
+    "keepOpen": "Veuillez garder cette fenêtre ouverte. Vous pourrez la fermer dans {{time}}.",
+    "canCloseNow": "Toujours en attente ? Vous pouvez fermer cette fenêtre. Votre réservation sera confirmée automatiquement dès que le paiement aboutira."
   },
   "feedView": {
     "noPropertiesAvailable": "Aucun bien disponible",

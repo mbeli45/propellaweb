@@ -37,7 +37,7 @@ import { getPaymentStatus } from '@/lib/fapshi'
 import { isVideoUrl, separateMedia } from '@/utils/videoUtils'
 import PropertyCard from '@/components/PropertyCard'
 import VideoThumbnail from '@/components/VideoThumbnail'
-import ReservationModal from '@/components/ReservationModal'
+import ReservationModal, { PAYMENT_MIN_WAIT_SECONDS } from '@/components/ReservationModal'
 import VideoPlayer from '@/components/VideoPlayer'
 import SEO from '@/components/SEO'
 import './PropertyDetail.css'
@@ -85,6 +85,22 @@ export default function PropertyDetail() {
   const [phoneNumber, setPhoneNumber] = useState('')
   const [waitingForPayment, setWaitingForPayment] = useState(false)
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null)
+  const [paymentStartedAt, setPaymentStartedAt] = useState<number | null>(null)
+  const [paymentElapsed, setPaymentElapsed] = useState(0)
+  // Set when the customer closes the modal after the minimum wait: stop
+  // polling quietly and leave the reservation pending for the webhook.
+  const paymentAbandonedRef = useRef(false)
+
+  useEffect(() => {
+    if (!paymentStartedAt) {
+      setPaymentElapsed(0)
+      return
+    }
+    const tick = () => setPaymentElapsed(Math.floor((Date.now() - paymentStartedAt) / 1000))
+    tick()
+    const timer = setInterval(tick, 1000)
+    return () => clearInterval(timer)
+  }, [paymentStartedAt])
   const [saveError, setSaveError] = useState<string | null>(null)
   const videoThumbnails: Record<string, string> = {}
   const [playingVideo, setPlayingVideo] = useState<string | null>(null)
@@ -163,19 +179,28 @@ export default function PropertyDetail() {
     handleReserve()
   }, [requestedAction, property, handleReserve])
 
+  const paymentLocked = paymentStartedAt !== null && paymentElapsed < PAYMENT_MIN_WAIT_SECONDS
+
   const closeModal = useCallback(() => {
+    // Keep the modal open while the customer is still expected to approve.
+    if (paymentLocked) return
+    if (paymentStartedAt !== null) paymentAbandonedRef.current = true
     setShowReservationModal(false)
     setSelectedPaymentMethod(null)
     setPhoneNumber('')
     setPaymentMessage(null)
     setWaitingForPayment(false)
-  }, [])
+    setPaymentStartedAt(null)
+  }, [paymentLocked, paymentStartedAt])
 
   const handlePaymentMethodSelect = useCallback((method: PaymentMethod) => {
     setSelectedPaymentMethod(method)
   }, [])
 
   const handleConfirmReservation = async () => {
+    // A second click while a request is out would charge the customer twice.
+    if (waitingForPayment) return
+    paymentAbandonedRef.current = false
     if (!selectedPaymentMethod || !phoneNumber) {
       setPaymentMessage(t('propertyDetails.pleaseSelectPaymentAndPhone'))
       return
@@ -228,7 +253,9 @@ export default function PropertyDetail() {
         },
       )
 
-      setPaymentMessage(t('wallet.waitingForPayment'))
+      setPaymentMessage(null)
+      const startedAt = Date.now()
+      setPaymentStartedAt(startedAt)
 
       // Poll up to ~5 minutes (100 × 3 s). PIN entry on Cameroon mobile
       // networks routinely takes 30–90 s — the previous 30 s window was the
@@ -238,6 +265,9 @@ export default function PropertyDetail() {
       const POLL_MAX_ATTEMPTS = 100
       for (let attempts = 0; attempts < POLL_MAX_ATTEMPTS; attempts++) {
         await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS))
+        // Closed after the minimum wait: the reservation stays pending and is
+        // finalised by the payment webhook.
+        if (paymentAbandonedRef.current) return
         try {
           const result = await getPaymentStatus(transId)
           status = result.status
@@ -247,8 +277,15 @@ export default function PropertyDetail() {
           continue
         }
         if (status === 'SUCCESSFUL') break
-        if (status === 'FAILED' || status === 'EXPIRED') break
+        if (status === 'FAILED' || status === 'EXPIRED') {
+          // An early failure often just means the prompt hasn't been seen or
+          // approved yet (the customer may be dialling the USSD code). Keep
+          // waiting until the minimum window has passed.
+          if (Date.now() - startedAt < PAYMENT_MIN_WAIT_SECONDS * 1000) continue
+          break
+        }
       }
+      setPaymentStartedAt(null)
 
       if (status === 'SUCCESSFUL') {
         await updateReservationPayment(pendingReservationId, property.id, 'confirmed', {
@@ -285,6 +322,7 @@ export default function PropertyDetail() {
       }
       setPaymentMessage(error.message || t('reservations.reservationCreationFailed'))
       setWaitingForPayment(false)
+      setPaymentStartedAt(null)
     }
   }
 
@@ -1248,6 +1286,8 @@ export default function PropertyDetail() {
         onPhoneNumberChange={setPhoneNumber}
         loading={waitingForPayment}
         message={paymentMessage}
+        paymentElapsed={paymentStartedAt !== null ? paymentElapsed : null}
+        closeLocked={paymentLocked}
       />
       </div>
     </>

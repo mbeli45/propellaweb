@@ -7,6 +7,17 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { formatPrice } from '@/utils/shareUtils'
 import './ReservationModal.css'
 
+// Mobile-money approvals in Cameroon routinely take 30-90 s, and a prompt can
+// fail to arrive at all. The booking page keeps waiting (and keeps this modal
+// open) for at least this long before treating a payment as failed.
+export const PAYMENT_MIN_WAIT_SECONDS = 120
+// Manual approval codes when the PIN prompt never appears.
+const USSD_FALLBACK = { mtn: '*126#', orange: '#150*50#' } as const
+const formatClock = (seconds: number) => {
+  const safe = Math.max(0, Math.floor(seconds))
+  return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, '0')}`
+}
+
 interface ReservationModalProps {
   visible: boolean
   onClose: () => void
@@ -19,6 +30,10 @@ interface ReservationModalProps {
   onPhoneNumberChange: (phone: string) => void
   loading: boolean
   message: string | null
+  /** Seconds since the payment request was sent; null when not waiting. */
+  paymentElapsed?: number | null
+  /** True during the minimum wait - the modal can't be closed. */
+  closeLocked?: boolean
 }
 
 export default function ReservationModal({
@@ -32,7 +47,9 @@ export default function ReservationModal({
   phoneNumber,
   onPhoneNumberChange,
   loading,
-  message
+  message,
+  paymentElapsed = null,
+  closeLocked = false,
 }: ReservationModalProps) {
   const { colorScheme } = useThemeMode()
   const Colors = getColors(colorScheme)
@@ -65,8 +82,16 @@ export default function ReservationModal({
 
   if (!visible) return null
 
+  const waiting = paymentElapsed !== null && !!selectedPaymentMethod
+  const ussdCode = selectedPaymentMethod === 'orange' ? USSD_FALLBACK.orange : USSD_FALLBACK.mtn
+  // Android browsers can open the dialer with a USSD code; iOS and desktop can't.
+  const canDial = typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent)
+  const requestClose = () => {
+    if (!closeLocked) onClose()
+  }
+
   return (
-    <div className={`reservation-modal-overlay ${isMobile ? 'mobile' : ''}`} onClick={onClose}>
+    <div className={`reservation-modal-overlay ${isMobile ? 'mobile' : ''}`} onClick={requestClose}>
       <div
         className={`reservation-modal-content ${isMobile ? 'bottom-sheet' : ''}`}
         onClick={(e) => e.stopPropagation()}
@@ -77,7 +102,13 @@ export default function ReservationModal({
           <h2 style={{ color: Colors.neutral[900] }}>
             {t('propertyDetails.bookSiteVisit')}
           </h2>
-          <button onClick={onClose} className="reservation-close-button">
+          <button
+            onClick={requestClose}
+            className="reservation-close-button"
+            disabled={closeLocked}
+            aria-label={t('common.close')}
+            style={closeLocked ? { opacity: 0.3, cursor: 'not-allowed' } : undefined}
+          >
             <X size={24} color={Colors.neutral[600]} />
           </button>
         </div>
@@ -180,6 +211,41 @@ export default function ReservationModal({
             </div>
           )}
 
+          {/* Waiting for the customer to approve on their phone */}
+          {waiting && (
+            <div
+              className="reservation-message"
+              role="status"
+              aria-live="polite"
+              style={{ backgroundColor: Colors.primary[50], color: Colors.neutral[800], flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}
+            >
+              <strong style={{ color: Colors.neutral[900] }}>{t('payment.confirmOnPhoneTitle')}</strong>
+              <span>{t('payment.confirmOnPhoneBody', { amount: formatPrice(totalFee), phone: phoneNumber })}</span>
+              <span style={{ color: Colors.primary[700], fontWeight: 700, fontSize: 12 }}>
+                {t('payment.waitingFor', { time: formatClock(paymentElapsed ?? 0) })}
+              </span>
+              <strong style={{ color: Colors.neutral[900], marginTop: 4 }}>{t('payment.noPromptTitle')}</strong>
+              <span>
+                {selectedPaymentMethod === 'orange'
+                  ? t('payment.orangeInstruction', { code: ussdCode })
+                  : t('payment.mtnInstruction', { code: ussdCode })}
+              </span>
+              {canDial && (
+                <a
+                  href={`tel:${encodeURIComponent(ussdCode)}`}
+                  style={{ color: Colors.primary[700], fontWeight: 700 }}
+                >
+                  {t('payment.dialCode', { code: ussdCode })}
+                </a>
+              )}
+              <span style={{ fontSize: 12, color: Colors.neutral[600] }}>
+                {closeLocked
+                  ? t('payment.keepOpen', { time: formatClock(PAYMENT_MIN_WAIT_SECONDS - (paymentElapsed ?? 0)) })
+                  : t('payment.canCloseNow')}
+              </span>
+            </div>
+          )}
+
           {/* Info Note */}
           <div className="reservation-info-note" style={{ backgroundColor: Colors.primary[50] }}>
             <p style={{ color: Colors.primary[700] }}>
@@ -191,13 +257,13 @@ export default function ReservationModal({
         {/* Footer */}
         <div className="reservation-modal-footer" style={{ borderTopColor: Colors.neutral[200] }}>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="reservation-button reservation-button-outline"
             style={{
               borderColor: Colors.neutral[300],
               color: Colors.neutral[700]
             }}
-            disabled={loading}
+            disabled={closeLocked || (loading && !waiting)}
           >
             {t('common.cancel')}
           </button>
