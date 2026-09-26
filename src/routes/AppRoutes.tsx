@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import GuestLayout from '@/layouts/GuestLayout'
 import UserLayout from '@/layouts/UserLayout'
@@ -20,6 +20,7 @@ import Admin from '@/pages/admin/Admin'
 
 function AppRoutes() {
   const { user, loading } = useAuth()
+  const location = useLocation()
   // Only the first session check blocks the app. Later auth events (the SIGNED_IN
   // right after an OAuth code exchange, token refreshes) also flip `loading`, and
   // swapping the whole tree for a spinner then would unmount /auth/callback mid-flow.
@@ -35,6 +36,19 @@ function AppRoutes() {
     if (!user) return '/'
     if (user.role === 'agent' || user.role === 'landlord') return '/agent'
     return '/user'
+  }
+
+  // Apple's form_post flow in particular can bring the user back to the Site URL
+  // root (`/?code=...`) instead of /auth/callback. Nothing on the landing page
+  // finishes sign-in (profile creation, pending role), so a first-time user ends up
+  // signed in without a profile and sees the landing page. Forward any OAuth
+  // response to the callback. Auth pages are excluded: password-reset and email
+  // links carry `?code=` too and handle it themselves.
+  const oauthParams = `${location.search}${location.hash}`
+  const isOAuthResponse =
+    /[?&#](code|error|error_description|access_token)=/.test(oauthParams) && !/type=recovery/.test(oauthParams)
+  if (isOAuthResponse && !location.pathname.startsWith('/auth/') && !location.pathname.startsWith('/admin')) {
+    return <Navigate to={`/auth/callback${location.search}${location.hash}`} replace />
   }
 
   return (

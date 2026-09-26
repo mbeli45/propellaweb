@@ -58,7 +58,14 @@ export default function AuthCallback() {
 
         // Determine which provider was used and handle callback accordingly
         const { data: { session } } = await supabase.auth.getSession()
-        const provider = session?.user?.app_metadata?.provider || 'google'
+        // Use the sign-in that was actually started here: app_metadata.provider is
+        // the account's first provider ('email' for password accounts that later
+        // used Apple), which would skip the Apple role handling.
+        const provider = localStorage.getItem('pendingAppleRole')
+          ? 'apple'
+          : localStorage.getItem('pendingGoogleRole')
+            ? 'google'
+            : session?.user?.app_metadata?.provider || 'google'
         
         
         let callbackResult
