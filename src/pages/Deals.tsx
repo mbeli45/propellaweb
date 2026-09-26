@@ -28,9 +28,17 @@ export default function Deals({ workspace = 'customer' }: { workspace?: Workspac
   const reservation = searchParams.get('reservation')
   const requestParam = searchParams.get('request')
 
-  // Each workspace sees only its own side of a deal; admins see everything.
+  // Each workspace sees only its own side of a deal. Admins manage everyone
+  // else's deals: an admin who is also an agent (or customer) works their own
+  // deals from that workspace, so they're left out here.
   const admin = workspace === 'admin' && loaded.admin
-  const deals = loaded.deals.filter((d) => admin || (workspace === 'agent' ? d.agent_id === loaded.userId : d.customer_id === loaded.userId))
+  const deals = loaded.deals.filter((d) =>
+    admin
+      ? d.agent_id !== loaded.userId && d.customer_id !== loaded.userId
+      : workspace === 'agent'
+        ? d.agent_id === loaded.userId
+        : d.customer_id === loaded.userId,
+  )
   const partners = loaded.partners.filter((p) => admin || p.owner_id === loaded.userId || deals.some((d) => d.partner_id === p.id))
   const requests = loaded.requests.filter((r) =>
     admin || (workspace === 'agent' ? deals.some((d) => d.request_id === r.id) : r.customer_id === loaded.userId),
