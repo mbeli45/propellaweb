@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import GuestLayout from '@/layouts/GuestLayout'
@@ -19,10 +20,13 @@ import Admin from '@/pages/admin/Admin'
 
 function AppRoutes() {
   const { user, loading } = useAuth()
+  // Only the first session check blocks the app. Later auth events (the SIGNED_IN
+  // right after an OAuth code exchange, token refreshes) also flip `loading`, and
+  // swapping the whole tree for a spinner then would unmount /auth/callback mid-flow.
+  const bootedRef = useRef(false)
+  if (!loading) bootedRef.current = true
 
-  // Debug logging
-
-  if (loading) {
+  if (loading && !bootedRef.current) {
     return <LoadingScreen />
   }
 
