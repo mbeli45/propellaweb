@@ -23,8 +23,9 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { useLanguage } from '@/contexts/I18nContext'
 import type { Deal, DealEvent, DealForm, DealReport, Partner, PropertyRequest } from '@/lib/deals'
-import { configurePartner, dealForms, money, requestActions, resolveReport, statusLabel } from '@/lib/deals'
+import { configurePartner, dealForms, money, requestActions, resolveReport, reviewPartner, statusLabel } from '@/lib/deals'
 import { ActionMenu, CardButton, Hint, StatusPill, Tone } from '@/components/reservations/ReservationUI'
+import { AgencyStatusPill, AgencyVerificationDetails } from './AgencyVerification'
 import './DealCard.css'
 
 /*
@@ -466,7 +467,7 @@ export function PartnerCard({
           <div className="rsv-info">
             <h3 className="rsv-card-title" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               {partner.name}
-              {partner.status === 'active' && <BadgeCheck size={14} color="var(--rsv-primary)" aria-label="active" />}
+              {partner.status === 'active' && partner.verification_status === 'approved' && <BadgeCheck size={14} color="var(--rsv-primary)" aria-label="active" />}
             </h3>
             <p className="rsv-muted">
               {partner.regions} · {partner.status}
@@ -474,6 +475,20 @@ export function PartnerCard({
           </div>
         </div>
         <p className="rsv-detail-text">{t('deals.partnerShare', { percent: partner.platform_bps / 100 })}</p>
+        <AgencyStatusPill partner={partner} />
+        {partner.verification_note && (
+          <div>
+            <div className="rsv-detail-label">{t('agencyVerify.reviewerNote')}</div>
+            <p className="rsv-detail-text">{partner.verification_note}</p>
+          </div>
+        )}
+        <AgencyVerificationDetails partner={partner} />
+        {admin && partner.verification_submitted_at && (
+          <div className="av-review-actions">
+            <CardButton label={t('agencyVerify.approve')} tone="primary" onClick={() => onForm(reviewPartner(partner, 'approved'))} disabled={busy} />
+            <CardButton label={t('agencyVerify.requestChanges')} tone="neutral" onClick={() => onForm(reviewPartner(partner, 'changes_requested'))} disabled={busy} />
+          </div>
+        )}
         {admin && <CardButton label={t('deals.managePartner')} tone="neutral" onClick={() => onForm(configurePartner(partner))} disabled={busy} block />}
       </div>
     </article>

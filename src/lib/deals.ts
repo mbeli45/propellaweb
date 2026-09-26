@@ -17,11 +17,11 @@ export interface Deal {
   customer?: { full_name: string | null; avatar_url: string | null } | null;
   agent?: { full_name: string | null; avatar_url: string | null; is_verified_agent: boolean | null } | null;
 }
-export interface Partner { id: string; owner_id: string | null; name: string; regions: string; status: string; platform_bps: number }
+export interface Partner { id: string; owner_id: string | null; name: string; regions: string; status: string; platform_bps: number; verification_status?: string; verification_data?: Record<string,string|boolean>; verification_submitted_at?: string; verification_note?: string }
 export interface PropertyRequest { id: string; customer_id: string | null; source: string; location: string; requirements: string; purpose: string; budget: number; contact_note: string; consent_at: string | null }
 export interface DealEvent { id: string; deal_id: string; action: string; detail: Record<string, unknown>; created_at: string }
 export interface DealReport { id: string; deal_id: string; description: string; status: string; resolution: string | null }
-export interface Field { key: string; label: string; type?: 'number' | 'multiline' | 'checkbox' | 'select'; options?: { value: string; label: string }[]; optional?: boolean; value?: string }
+export interface Field { key: string; label: string; type?: 'file' | 'number' | 'multiline' | 'checkbox' | 'select'; options?: { value: string; label: string }[]; optional?: boolean; value?: string; section?: FieldSection; hidden?: boolean }
 export interface DealForm { action: string; id?: string; title: string; description?: string; fields: Field[]; data?: Record<string, unknown> }
 export const money = (value: number | null) => value == null ? 'Not quoted' : `${Number(value).toLocaleString()} XAF`;
 export const statusLabel = (status: string) => ({searching:'Finding a property',proposed:'Property proposed',quoted:'Review commission quote',accepted:'Quote accepted',closing:'Confirm rental or purchase',payment_pending:'Payment awaiting verification',paid:'Commission paid · awaiting settlement',settled:'Agency balance credited',cancelled:'Closed without a deal'}[status] || status);
@@ -30,11 +30,72 @@ export const requestForm = (admin = false): DealForm => ({action:'request',title
   {key:'budget',label:'Maximum property budget (XAF)',type:'number'}, {key:'requirements',label:'Property type, bedrooms, moving date and other requirements',type:'multiline'},
   ...(admin ? [{key:'source',label:'Enquiry source',type:'select' as const,options:['facebook','referral','other','app'].map(value=>({value,label:value}))},{key:'customer_id',label:'Customer account ID (optional until linked)',optional:true},{key:'contact_note',label:'Private contact / follow-up notes',type:'multiline' as const,optional:true}] : []),
   {key:'consent',label:admin ? 'The customer agreed to share their requirements with a partner agency' : 'I agree to share my requirements with a partner agency',type:'checkbox'}]});
-export const partnerForm: DealForm = {action:'register_partner',title:'Apply as an agency partner',description:'Propella reviews applications before enabling referrals. Your commission is set per deal and payable only on a successful rental or purchase.',fields:[{key:'name',label:'Agency / professional name'},{key:'regions',label:'Areas you serve'}]};
+export type FieldSection = 'company' | 'representative' | 'documents' | 'declaration';
+/** Groups consecutive fields by section, keeping their order (forms without sections give one untitled group). */
+export function groupFields(fields: Field[]) {
+ const groups: { section?: FieldSection; fields: Field[] }[] = [];
+ for (const f of fields) {
+  if (f.hidden) continue;
+  const last = groups[groups.length - 1];
+  if (last && last.section === f.section) last.fields.push(f);
+  else groups.push({ section: f.section, fields: [f] });
+ }
+ return groups;
+}
+
+export const agencyDocumentFields: Field[] = [
+ {key:'registration_document',label:'RCCM / business registration document',type:'file',section:'documents'},
+ {key:'taxpayer_document',label:'Taxpayer registration / Attestation d’Immatriculation Fiscale',type:'file',section:'documents'},
+ {key:'authorization_document',label:'Professional card / MINHDU registration evidence (where applicable)',type:'file',optional:true,section:'documents'},
+ {key:'authorization_explanation',label:'If authorization is not applicable, explain why (minimum 20 characters)',type:'multiline',optional:true,section:'documents'},
+ {key:'address_document',label:'Business address proof (utility bill, lease or official location document)',type:'file',optional:true,section:'documents'},
+ {key:'address_explanation',label:'If address proof is not applicable, explain why (minimum 20 characters)',type:'multiline',optional:true,section:'documents'},
+];
+export const partnerForm: DealForm = {action:'register_partner',title:'Verify your registered company',
+ description:'Only approved registered companies receive new referrals. Documents are private to your account and Propella administrators.',
+ fields:[
+  {key:'registered_company',label:'This agency is a legally registered company',type:'checkbox',section:'company'},
+  {key:'name',label:'Registered company name',section:'company'},
+  {key:'regions',label:'Areas you serve',section:'company'},
+  {key:'registration_number',label:'RCCM / business registration number',section:'company'},
+  {key:'taxpayer_number',label:'Taxpayer identification number',section:'company'},
+  {key:'business_address',label:'Business address',type:'multiline',section:'company'},
+  {key:'representative_name',label:'Account representative’s full legal name',section:'representative'},
+  {key:'id_front',label:'Representative’s national ID / CNI — front',type:'file',section:'representative'},
+  {key:'id_back',label:'Representative’s national ID / CNI — back',type:'file',section:'representative'},
+  ...agencyDocumentFields,
+  {key:'declaration',label:'I am authorised to represent this company and confirm that these documents and details are accurate',type:'checkbox',section:'declaration'},
+ ]};
+/** All uploaded-document fields of the application, in display order. */
+export const agencyFileFields = partnerForm.fields.filter((f) => f.type === 'file');
+export const applicationForm = (p?: Partner): DealForm => ({...partnerForm,fields:partnerForm.fields.map(f=>({...f,value:
+ typeof p?.verification_data?.[f.key]==='string' ? String(p.verification_data[f.key]) : f.key==='name'?p?.name:f.key==='regions'?p?.regions:undefined}))});
+/** Company-verification state of the viewer's own partner record ('missing' when there is none). */
+export const agencyStatus = (p?: Partner) => (p?.verification_status || 'missing') as 'missing' | 'pending' | 'changes_requested' | 'approved';
+/** Admin review, opened from either the Approve or the Request corrections button. */
+export const reviewPartner = (p: Partner, decision: 'approved' | 'changes_requested'): DealForm => ({action:'review_partner',id:p.id,
+ title:decision==='approved'?`Approve ${p.name}`:`Request corrections from ${p.name}`,
+ description:decision==='approved'
+  ? 'Approve only after checking the business identifiers, representative ID, address and professional authorization. Approval does not activate referrals.'
+  : 'Tell the agency exactly what to correct. They will see this note and can update their application.',
+ data:{submitted_at:p.verification_submitted_at},fields:[
+ {key:'decision',label:'Decision',type:'select',hidden:true,value:decision,options:[{value:decision,label:decision}]},
+ {key:'note',label:decision==='approved'?'Review findings, including any accepted exception (minimum 10 characters)':'Corrections required (minimum 10 characters)',type:'multiline'},
+ ...(decision==='approved' ? [{key:'checked',label:'I checked the documents and business identifiers, including any explanation for a missing conditional document',type:'checkbox' as const}] : []),
+ ]});
+export async function uploadAgencyDocument(userId:string, key:string, body:Blob|ArrayBuffer, mime:string, size:number) {
+ if(!['application/pdf','image/jpeg','image/png'].includes(mime)||size<=0||size>10485760) throw new Error('Choose a PDF, JPG or PNG file no larger than 10 MB.');
+ const extension=mime==='application/pdf'?'pdf':mime==='image/png'?'png':'jpg';
+ const path=`${userId}/${key}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+ const {error}=await dealDb.storage.from('agency-verification').upload(path,body,{contentType:mime,upsert:false});
+ if(error)throw error;
+ return path;
+}
+
 export function requestActions(r: PropertyRequest, partners: Partner[], assigned: boolean): DealForm[] {
  const forms: DealForm[]=[];
  if(!r.customer_id) forms.push({action:'link_customer',id:r.id,title:'Link customer account',description:'Ask the customer to sign in and share their account ID from My Deals. Check their identity and consent before linking.',fields:[{key:'customer_id',label:'Customer account ID'},{key:'consent',label:'Customer identity and sharing consent confirmed',type:'checkbox'}]});
- if(!assigned && r.consent_at) forms.push({action:'assign',id:r.id,title:'Assign agency',fields:[{key:'partner_id',label:'Approved partner',type:'select',options:partners.filter(p=>p.status==='active' && p.owner_id).map(p=>({value:p.id,label:`${p.name} · ${p.regions}`}))}]});
+ if(!assigned && r.consent_at) forms.push({action:'assign',id:r.id,title:'Assign agency',fields:[{key:'partner_id',label:'Approved partner',type:'select',options:partners.filter(p=>p.status==='active' && p.verification_status==='approved' && p.owner_id).map(p=>({value:p.id,label:`${p.name} · ${p.regions}`}))}]});
  return forms;
 }
 export const configurePartner = (p: Partner): DealForm => ({action:'configure_partner',id:p.id,title:`Manage ${p.name}`,description:'This rate applies to new referrals. Already accepted deals keep their agreed rate.',fields:[{key:'status',label:'Partner status',type:'select',value:p.status,options:['pending','active','suspended'].map(value=>({value,label:value}))},{key:'platform_bps',label:'Propella share in basis points (1000 = 10%)',type:'number',value:String(p.platform_bps)}]});
@@ -45,7 +106,7 @@ export function dealForms(d: Deal, userId: string, admin: boolean, partners: Par
  const add=(f: Omit<DealForm,'id'>)=>forms.push({...f,id:d.id});
  if(agent&&editable&&!d.customer_closed_at) add({action:'decline_referral',title:'Unable to serve this request',description:'Propella will be notified so the customer can be reassigned. Use this only when no rental or purchase has completed.',fields:[{key:'reason',label:'Reason and useful handover details',type:'multiline'}]});
  if(agent && editable && !d.agency_accepted_at) {
-  const partner=partners.find(p=>p.owner_id===userId && p.status==='active');
+  const partner=partners.find(p=>p.owner_id===userId && p.status==='active' && p.verification_status==='approved');
   if(partner) add({action:'accept_referral',title:'Accept referral terms',description:`Propella receives ${(d.platform_bps??partner.platform_bps)/100}% of the agency commission earned from this introduction. Collect that commission through Propella only when the customer rents or buys. You remain responsible if another agency supplies the property. No successful transaction means no commission charge.`,fields:[{key:'acknowledge',label:'I accept these referral and collection terms',type:'checkbox'}]});
  }
  if(agent && editable && !d.customer_closed_at && d.agency_accepted_at) {

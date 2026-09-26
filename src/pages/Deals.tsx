@@ -4,7 +4,13 @@ import { HeartHandshake as Handshake, Plus, X } from 'lucide-react'
 import { useDeals } from '@/hooks/useDeals'
 import { dealNeedsAction } from '@/hooks/useReservationDeals'
 import { useLanguage } from '@/contexts/I18nContext'
-import { DealForm, partnerForm, requestForm, statusLabel } from '@/lib/deals'
+import { DealForm, applicationForm, groupFields, requestForm, statusLabel } from '@/lib/deals'
+import {
+  AgencyVerificationNotice,
+  DocumentUploadRow,
+  FormSection,
+  useAgencyFieldLabel,
+} from '@/components/deals/AgencyVerification'
 import SectionSwitch from '@/components/SectionSwitch'
 import { ListItemSkeleton } from '@/components/skeletons'
 import {
@@ -45,6 +51,7 @@ export default function Deals({ workspace = 'customer' }: { workspace?: Workspac
   )
 
   const [tab, setTab] = useState<Tab>('deals')
+  const [uploading, setUploading] = useState(false)
   const [query, setQuery] = useState('')
   const [form, setForm] = useState<DealForm | null>(null)
   const [values, setValues] = useState<Record<string, string | boolean>>({})
@@ -78,7 +85,7 @@ export default function Deals({ workspace = 'customer' }: { workspace?: Workspac
   }, [form])
 
   const dialogKeys = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape' && !loaded.busy) {
+    if (e.key === 'Escape' && !loaded.busy && !uploading) {
       e.preventDefault()
       setForm(null)
     }
@@ -125,7 +132,20 @@ export default function Deals({ workspace = 'customer' }: { workspace?: Workspac
   ]
 
   const titleKey = workspace === 'admin' ? 'Admin' : workspace === 'agent' ? 'Agent' : 'Customer'
-  const canBecomePartner = workspace === 'agent' && !partners.some((p) => p.owner_id === loaded.userId)
+  const ownPartner = partners.find((p) => p.owner_id === loaded.userId)
+  const agencyFieldLabel = useAgencyFieldLabel()
+  // Company-verification forms show translated labels; other deal forms keep theirs.
+  const isAgencyForm = form?.action === 'register_partner' || form?.action === 'review_partner'
+  const labelOf = (field: DealForm['fields'][number]) => (isAgencyForm ? agencyFieldLabel(field) : field.label)
+  const submitLabel = !form
+    ? ''
+    : form.action === 'pay'
+      ? t('deals.requestPayment')
+      : form.action === 'review_partner'
+        ? values.decision === 'approved'
+          ? t('agencyVerify.approve')
+          : t('agencyVerify.requestChanges')
+        : t('deals.confirm')
   const headerAction =
     workspace === 'agent'
       ? undefined
@@ -181,13 +201,8 @@ export default function Deals({ workspace = 'customer' }: { workspace?: Workspac
         )}
       </ReservationsHeader>
 
-      {canBecomePartner && (
-        <Banner
-          icon={Handshake}
-          title={t('deals.becomePartner')}
-          body={partnerForm.description || ''}
-          primary={{ label: t('deals.becomePartner'), onClick: () => open(partnerForm) }}
-        />
+      {workspace === 'agent' && (
+        <AgencyVerificationNotice partner={ownPartner} onApply={() => open(applicationForm(ownPartner))} />
       )}
 
       <ReservationToolbar
@@ -262,7 +277,7 @@ export default function Deals({ workspace = 'customer' }: { workspace?: Workspac
       )}
 
       {form && (
-        <div className="rsv-dialog-backdrop" onMouseDown={(e) => e.target === e.currentTarget && !loaded.busy && setForm(null)}>
+        <div className="rsv-dialog-backdrop" onMouseDown={(e) => e.target === e.currentTarget && !loaded.busy && !uploading && setForm(null)}>
           <section
             ref={dialogRef}
             onKeyDown={dialogKeys}
@@ -275,77 +290,95 @@ export default function Deals({ workspace = 'customer' }: { workspace?: Workspac
               <span className="rsv-banner-icon" style={{ background: 'var(--rsv-primary-tint)' }} aria-hidden="true">
                 <Handshake size={20} />
               </span>
-              <h2 id="deal-form-title">{form.title}</h2>
-              <button type="button" className="rsv-back" disabled={loaded.busy} aria-label={t('deals.close')} onClick={() => setForm(null)}>
+              <h2 id="deal-form-title">{form.action === 'register_partner' ? t('agencyVerify.applyTitle') : form.title}</h2>
+              <button type="button" className="rsv-back" disabled={loaded.busy || uploading} aria-label={t('deals.close')} onClick={() => setForm(null)}>
                 <X size={20} />
               </button>
             </div>
-            {form.description && <p className="rsv-muted">{form.description}</p>}
+            {form.description && (
+              <p className="rsv-muted">{form.action === 'register_partner' ? t('agencyVerify.applyDescription') : form.description}</p>
+            )}
             <form
               style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
               onSubmit={async (e) => {
                 e.preventDefault()
+                if (uploading) return
                 if (await loaded.submit(form, values)) setForm(null)
               }}
             >
-              {form.fields.map((f) =>
-                f.type === 'checkbox' ? (
-                  <label key={f.key} className="rsv-check">
-                    <input
-                      type="checkbox"
-                      checked={values[f.key] === true}
-                      required={!f.optional}
-                      onChange={(e) => setValues({ ...values, [f.key]: e.target.checked })}
-                    />
-                    <span>{f.label}</span>
-                  </label>
-                ) : (
-                  <label key={f.key} className="rsv-field">
-                    <span>{f.label}</span>
-                    {f.type === 'select' ? (
-                      <select
-                        required={!f.optional}
-                        value={String(values[f.key] ?? '')}
-                        onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
-                        style={{ width: '100%', minHeight: 46, border: '1px solid var(--rsv-line)', borderRadius: 12, padding: '0 12px', font: 'inherit', color: 'var(--rsv-ink)', background: 'var(--rsv-surface)' }}
-                      >
-                        {!f.options?.length && <option value="">—</option>}
-                        {f.options?.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : f.type === 'multiline' ? (
-                      <textarea
-                        required={!f.optional}
-                        maxLength={4000}
-                        rows={4}
-                        value={String(values[f.key] ?? '')}
-                        onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
-                      />
-                    ) : (
-                      <input
-                        required={!f.optional}
-                        type={f.type === 'number' ? 'number' : 'text'}
-                        min={f.type === 'number' ? 1 : undefined}
-                        step={f.type === 'number' ? 1 : undefined}
-                        value={String(values[f.key] ?? '')}
-                        onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
-                      />
+              <fieldset disabled={uploading || loaded.busy} className="av-fields">
+                {groupFields(form.fields).map((group, index) => (
+                  <FormSection key={group.section || index} section={group.section}>
+                    {group.fields.map((f) =>
+                      f.type === 'checkbox' ? (
+                        <label key={f.key} className="rsv-check">
+                          <input
+                            type="checkbox"
+                            checked={values[f.key] === true}
+                            required={!f.optional}
+                            onChange={(e) => setValues({ ...values, [f.key]: e.target.checked })}
+                          />
+                          <span>{labelOf(f)}</span>
+                        </label>
+                      ) : f.type === 'file' ? (
+                        <DocumentUploadRow
+                          key={f.key}
+                          userId={loaded.userId}
+                          field={f}
+                          value={String(values[f.key] || '')}
+                          onChange={(path) => setValues((v) => ({ ...v, [f.key]: path }))}
+                          onBusy={setUploading}
+                        />
+                      ) : (
+                        <label key={f.key} className="rsv-field">
+                          <span>{labelOf(f)}</span>
+                          {f.type === 'select' ? (
+                            <select
+                              required={!f.optional}
+                              value={String(values[f.key] ?? '')}
+                              onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                              style={{ width: '100%', minHeight: 46, border: '1px solid var(--rsv-line)', borderRadius: 12, padding: '0 12px', font: 'inherit', color: 'var(--rsv-ink)', background: 'var(--rsv-surface)' }}
+                            >
+                              {!f.options?.length && <option value="">—</option>}
+                              {f.options?.map((o) => (
+                                <option key={o.value} value={o.value}>
+                                  {o.label}
+                                </option>
+                              ))}
+                            </select>
+                          ) : f.type === 'multiline' ? (
+                            <textarea
+                              required={!f.optional}
+                              maxLength={4000}
+                              rows={4}
+                              value={String(values[f.key] ?? '')}
+                              onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                            />
+                          ) : (
+                            <input
+                              required={!f.optional}
+                              type={f.type === 'number' ? 'number' : 'text'}
+                              min={f.type === 'number' ? 1 : undefined}
+                              step={f.type === 'number' ? 1 : undefined}
+                              value={String(values[f.key] ?? '')}
+                              onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                            />
+                          )}
+                        </label>
+                      ),
                     )}
-                  </label>
-                ),
-              )}
+                  </FormSection>
+                ))}
+              </fieldset>
               {loaded.error && (
                 <p className="rsv-error" role="alert" style={{ margin: 0 }}>
                   {loaded.error}
                 </p>
               )}
               <div className="rsv-actions">
-                <CardButton label={t('common.cancel')} tone="neutral" onClick={() => setForm(null)} disabled={loaded.busy} />
-                <button type="submit" className="rsv-btn rsv-btn--primary" disabled={loaded.busy} aria-busy={loaded.busy || undefined}>
-                  {form.action === 'pay' ? t('deals.requestPayment') : t('deals.confirm')}
+                <CardButton label={t('common.cancel')} tone="neutral" onClick={() => setForm(null)} disabled={loaded.busy || uploading} />
+                <button type="submit" className="rsv-btn rsv-btn--primary" disabled={loaded.busy || uploading} aria-busy={loaded.busy || undefined}>
+                  {submitLabel}
                 </button>
               </div>
             </form>
