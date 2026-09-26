@@ -18,6 +18,9 @@ export interface Deal {
   agent?: { full_name: string | null; avatar_url: string | null; is_verified_agent: boolean | null } | null;
 }
 export interface Partner { id: string; owner_id: string | null; name: string; regions: string; status: string; platform_bps: number; verification_status?: string; verification_data?: Record<string,string|boolean>; verification_submitted_at?: string; verification_note?: string }
+export interface ReferralInvitation { id:string; request_id:string; partner_id:string; status:string; location:string; requirements:string; purpose:string; budget:number; platform_bps:number; updated_at:string }
+export const invitationForm=(i:ReferralInvitation):DealForm=>({action:'claim_referral',id:i.id,data:{invited_at:i.updated_at},title:'Accept this referral',description:`The first agency to accept gets this request exclusively. By accepting, you confirm you can serve the customer. Propella receives ${i.platform_bps/100}% of the agency commission, payable through Propella only after a successful rental or purchase.`,fields:[{key:'acknowledge',label:'I can serve this request and accept the referral and commission collection terms',type:'checkbox'}]});
+export const declineInvitation=(i:ReferralInvitation):DealForm=>({action:'decline_invitation',id:i.id,title:'Decline invitation',description:'Other invited agencies can still accept this request.',fields:[]});
 export interface PropertyRequest { id: string; customer_id: string | null; source: string; location: string; requirements: string; purpose: string; budget: number; contact_note: string; consent_at: string | null }
 export interface DealEvent { id: string; deal_id: string; action: string; detail: Record<string, unknown>; created_at: string }
 export interface DealReport { id: string; deal_id: string; description: string; status: string; resolution: string | null }
@@ -95,7 +98,7 @@ export async function uploadAgencyDocument(userId:string, key:string, body:Blob|
 export function requestActions(r: PropertyRequest, partners: Partner[], assigned: boolean): DealForm[] {
  const forms: DealForm[]=[];
  if(!r.customer_id) forms.push({action:'link_customer',id:r.id,title:'Link customer account',description:'Ask the customer to sign in and share their account ID from My Deals. Check their identity and consent before linking.',fields:[{key:'customer_id',label:'Customer account ID'},{key:'consent',label:'Customer identity and sharing consent confirmed',type:'checkbox'}]});
- if(!assigned && r.consent_at) forms.push({action:'assign',id:r.id,title:'Assign agency',fields:[{key:'partner_id',label:'Approved partner',type:'select',options:partners.filter(p=>p.status==='active' && p.verification_status==='approved' && p.owner_id).map(p=>({value:p.id,label:`${p.name} · ${p.regions}`}))}]});
+ if(!assigned && r.consent_at) forms.push({action:'invite_referral',id:r.id,title:'Send to agencies',description:'Select one or more verified companies. The first to accept receives this referral exclusively. Adding agencies does not reopen a claimed request.',fields:partners.filter(p=>p.status==='active' && p.verification_status==='approved' && p.owner_id).map(p=>({key:`partner_${p.id}`,label:`${p.name} · ${p.regions}`,type:'checkbox' as const,optional:true}))});
  return forms;
 }
 export const configurePartner = (p: Partner): DealForm => ({action:'configure_partner',id:p.id,title:`Manage ${p.name}`,description:'This rate applies to new referrals. Already accepted deals keep their agreed rate.',fields:[{key:'status',label:'Partner status',type:'select',value:p.status,options:['pending','active','suspended'].map(value=>({value,label:value}))},{key:'platform_bps',label:'Propella share in basis points (1000 = 10%)',type:'number',value:String(p.platform_bps)}]});
@@ -110,6 +113,7 @@ export function dealForms(d: Deal, userId: string, admin: boolean, partners: Par
   if(partner) add({action:'accept_referral',title:'Accept referral terms',description:`Propella receives ${(d.platform_bps??partner.platform_bps)/100}% of the agency commission earned from this introduction. Collect that commission through Propella only when the customer rents or buys. You remain responsible if another agency supplies the property. No successful transaction means no commission charge.`,fields:[{key:'acknowledge',label:'I accept these referral and collection terms',type:'checkbox'}]});
  }
  if(agent && editable && !d.customer_closed_at && d.agency_accepted_at) {
+  if(['searching','proposed'].includes(d.status)&&!d.reservation_id) add({action:'link_property',title:'Attach property for site visit',description:'Paste the link or ID of a property listed by your agency. The client will use its existing site-visit checkout.',fields:[{key:'property_id',label:'Property link or ID',value:d.property_id||''}]});
   add({action:'propose',title:'Propose / change property',description:'Changing the proposal requires a new commission quote and customer acceptance.',fields:[{key:'proposal',label:'Property details, location and viewing arrangements',type:'multiline',value:d.proposal},{key:'sourcing_agency',label:'Supplying agency (if another agency is involved)',optional:true,value:d.sourcing_agency}]});
   add({action:'quote',title:'Set / revise commission quote',description:'Set your fee for a successful transaction. A revision requires fresh customer acceptance. No payment is due for viewing alone.',fields:[{key:'purpose',label:'Transaction',type:'select',value:d.purpose,options:[{value:'rent',label:'Rent'},{value:'buy',label:'Buy'}]},{key:'transaction_amount',label:'Agreed rent / purchase amount (XAF)',type:'number',value:d.transaction_amount?.toString()},{key:'commission_amount',label:'Total agency commission (XAF)',type:'number',value:d.commission_amount?.toString()},{key:'fee_basis',label:'Explain fee calculation, rent period and what it covers',type:'multiline',value:d.fee_basis}]});
   if(d.status==='accepted') add({action:'request_closing',title:'Request closing confirmation',description:'Only request this when the rental or purchase is succeeding and the agreed commission is becoming payable.',fields:[{key:'note',label:'Agreement reference, completion date and closing details',type:'multiline'}]});
@@ -130,6 +134,12 @@ export function dealForms(d: Deal, userId: string, admin: boolean, partners: Par
  return forms;
 }
 export async function submitDealForm(form: DealForm, values: Record<string, string | boolean>) {
+ if(form.action==='link_property'){
+  const match=String(values.property_id||'').match(/(?:^|\/)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:$|[?#])/i);
+  if(!match)throw new Error('Paste a valid Propella property link or property ID.');
+  values={...values,property_id:match[1]};
+ }
+ if(form.action==='invite_referral' && !Object.entries(values).some(([k,v])=>k.startsWith('partner_')&&v===true)) throw new Error('Select at least one verified agency.');
  for(const f of form.fields) {
   const v=values[f.key];
   if(!f.optional && (f.type==='checkbox' ? v!==true : !String(v??'').trim())) throw new Error(`Required: ${f.label}`);

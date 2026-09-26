@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { HeartHandshake as Handshake, Plus, X } from 'lucide-react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { HeartHandshake as Handshake, Plus, SearchX, X } from 'lucide-react'
 import { useDeals } from '@/hooks/useDeals'
 import { dealNeedsAction } from '@/hooks/useReservationDeals'
 import { useLanguage } from '@/contexts/I18nContext'
@@ -16,17 +16,21 @@ import { ListItemSkeleton } from '@/components/skeletons'
 import {
   Banner,
   CardButton,
+  EmptyState,
   Hint,
   ReservationToolbar,
   ReservationsHeader,
   ReservationsPage,
 } from '@/components/reservations/ReservationUI'
 import { DealCard, PartnerCard, RequestCard, dealRef } from '@/components/deals/DealCard'
+import { ReferralInvitations } from '@/components/deals/ReferralInvitations'
 
 type Workspace = 'admin' | 'agent' | 'customer'
-type Tab = 'deals' | 'waiting' | 'requests' | 'partners'
+type Tab = 'invitations' | 'deals' | 'waiting' | 'requests' | 'partners'
 
 export default function Deals({ workspace = 'customer' }: { workspace?: Workspace }) {
+  // /user/deals/:dealId opens one deal (from a client invitation link).
+  const { dealId } = useParams<{ dealId: string }>()
   const loaded = useDeals()
   const { t } = useLanguage()
   const navigate = useNavigate()
@@ -38,7 +42,7 @@ export default function Deals({ workspace = 'customer' }: { workspace?: Workspac
   // else's deals: an admin who is also an agent (or customer) works their own
   // deals from that workspace, so they're left out here.
   const admin = workspace === 'admin' && loaded.admin
-  const deals = loaded.deals.filter((d) =>
+  const deals = loaded.deals.filter((d) => !dealId || d.id === dealId).filter((d) =>
     admin
       ? d.agent_id !== loaded.userId && d.customer_id !== loaded.userId
       : workspace === 'agent'
@@ -51,6 +55,11 @@ export default function Deals({ workspace = 'customer' }: { workspace?: Workspac
   )
 
   const [tab, setTab] = useState<Tab>('deals')
+  // Invitations are first-come: reload when the tab opens so claimed ones show as closed.
+  const { refresh } = loaded
+  useEffect(() => {
+    if (tab === 'invitations') void refresh()
+  }, [tab, refresh])
   const [uploading, setUploading] = useState(false)
   const [query, setQuery] = useState('')
   const [form, setForm] = useState<DealForm | null>(null)
@@ -124,7 +133,13 @@ export default function Deals({ workspace = 'customer' }: { workspace?: Workspac
       .sort((a, b) => Number(b.reservation_id === reservation) - Number(a.reservation_id === reservation))
   }, [tab, waiting, deals, query, reservation])
 
+  const invitations = loaded.invitations.filter(
+    (i) => admin || (workspace === 'agent' && partners.some((p) => p.id === i.partner_id && p.owner_id === loaded.userId)),
+  )
   const tabs = [
+    ...(workspace !== 'customer'
+      ? [{ key: 'invitations', label: t('deals.tabInvitations'), count: invitations.filter((i) => i.status === 'invited').length }]
+      : []),
     { key: 'deals', label: t('deals.tabDeals'), count: deals.length },
     { key: 'waiting', label: t('deals.tabWaiting'), count: waiting.length },
     { key: 'requests', label: t('deals.tabRequests'), count: requests.length },
@@ -147,16 +162,25 @@ export default function Deals({ workspace = 'customer' }: { workspace?: Workspac
           : t('agencyVerify.requestChanges')
         : t('deals.confirm')
   const headerAction =
-    workspace === 'agent'
+    workspace === 'agent' || dealId
       ? undefined
       : { label: t('deals.requestProperty'), icon: Plus, onClick: () => open(requestForm(admin)) }
   const showSkeleton = loaded.loading && deals.length === 0
 
   const renderDeals = () =>
     visibleDeals.length === 0 ? (
-      <div className="rsv-empty">
-        <p>{query ? t('deals.noMatches') : tab === 'waiting' ? t('deals.emptyWaiting') : t('deals.emptyDeals')}</p>
-      </div>
+      dealId ? (
+        <EmptyState
+          icon={SearchX}
+          title={t('deals.dealUnavailableTitle')}
+          body={t('deals.dealUnavailableBody')}
+          action={{ label: t('deals.seeAllDeals'), onClick: () => navigate('/user/deals') }}
+        />
+      ) : (
+        <div className="rsv-empty">
+          <p>{query ? t('deals.noMatches') : tab === 'waiting' ? t('deals.emptyWaiting') : t('deals.emptyDeals')}</p>
+        </div>
+      )
     ) : (
       <div className="rsv-grid" style={{ marginTop: 16 }}>
         {visibleDeals.map((deal) => (
@@ -170,7 +194,7 @@ export default function Deals({ workspace = 'customer' }: { workspace?: Workspac
             reports={loaded.reports}
             events={loaded.events}
             busy={loaded.busy}
-            highlighted={!!reservation && deal.reservation_id === reservation}
+            highlighted={!!dealId || (!!reservation && deal.reservation_id === reservation)}
             needsAction={needsAction(deal)}
             onForm={open}
             onMessage={(id) => navigate(`/chat/${id}`)}
@@ -183,11 +207,11 @@ export default function Deals({ workspace = 'customer' }: { workspace?: Workspac
   return (
     <ReservationsPage label={t(`deals.title${titleKey}`)}>
       <ReservationsHeader
-        title={t(`deals.title${titleKey}`)}
+        title={dealId ? t('deals.titleSingle') : t(`deals.title${titleKey}`)}
         count={deals.length}
-        subtitle={t(`deals.subtitle${titleKey}`)}
+        subtitle={dealId ? t('deals.subtitleSingle') : t(`deals.subtitle${titleKey}`)}
         action={headerAction}
-        onBack={workspace === 'customer' ? () => navigate(-1) : undefined}
+        onBack={dealId ? () => navigate('/user/deals') : workspace === 'customer' ? () => navigate(-1) : undefined}
         backLabel={t('common.back')}
       >
         {workspace === 'agent' && (
@@ -205,15 +229,17 @@ export default function Deals({ workspace = 'customer' }: { workspace?: Workspac
         <AgencyVerificationNotice partner={ownPartner} onApply={() => open(applicationForm(ownPartner))} />
       )}
 
-      <ReservationToolbar
-        search={query}
-        onSearch={setQuery}
-        placeholder={t('deals.searchPlaceholder')}
-        options={tabs}
-        value={tab}
-        onChange={(key) => setTab(key as Tab)}
-        label={t(`deals.title${titleKey}`)}
-      />
+      {!dealId && (
+        <ReservationToolbar
+          search={query}
+          onSearch={setQuery}
+          placeholder={t('deals.searchPlaceholder')}
+          options={tabs}
+          value={tab}
+          onChange={(key) => setTab(key as Tab)}
+          label={t(`deals.title${titleKey}`)}
+        />
+      )}
 
       {workspace !== 'admin' && (
         <div style={{ marginTop: 12 }}>
@@ -236,6 +262,17 @@ export default function Deals({ workspace = 'customer' }: { workspace?: Workspac
         <div style={{ marginTop: 16 }}>
           <ListItemSkeleton count={3} lines={3} leading="thumbnail" appearance="card" flush />
         </div>
+      ) : tab === 'invitations' ? (
+        <ReferralInvitations
+          invitations={invitations}
+          partners={loaded.partners}
+          userId={loaded.userId}
+          admin={admin}
+          busy={loaded.busy}
+          loading={loaded.loading}
+          onForm={open}
+          onRefresh={() => void loaded.refresh()}
+        />
       ) : tab === 'requests' ? (
         requests.length === 0 ? (
           <div className="rsv-empty">

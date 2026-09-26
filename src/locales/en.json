@@ -1679,7 +1679,34 @@
     "accountId": "Your account ID (for linking an enquiry): {{id}}",
     "confirm": "Confirm",
     "requestPayment": "Request mobile-money payment",
-    "close": "Close"
+    "close": "Close",
+    "tabInvitations": "Invitations",
+    "titleSingle": "Your property deal",
+    "subtitleSingle": "Where this deal stands and your next step.",
+    "dealUnavailableTitle": "Deal not available",
+    "dealUnavailableBody": "This deal doesn't exist or belongs to another account.",
+    "seeAllDeals": "See all deals",
+    "bookSiteVisit": "Book and pay site visit",
+    "preparingListing": "Your agency is attaching the property. You can book the site visit once it's listed.",
+    "clientLink": "Client link",
+    "clientLinkLabel": "Private client link",
+    "clientLinkCopy": "Copy link",
+    "clientLinkCopied": "Copied",
+    "clientLinkNew": "New link",
+    "clientLinkNote": "Expires {{date}}. Send it only to this client. A new link cancels the old one.",
+    "clientLinkCopyFallback": "Select the link and copy it.",
+    "invitationOpen": "Open",
+    "invitationAccepted": "Accepted",
+    "invitationDeclined": "Declined",
+    "invitationClosed": "Closed",
+    "invitationFirstWins": "The first agency to accept gets this client.",
+    "invitationShare": "Propella share",
+    "invitationShareValue": "{{percent}}% of commission",
+    "invitationAccept": "Accept referral",
+    "invitationDecline": "Decline",
+    "emptyInvitationsTitle": "No invitations yet",
+    "emptyInvitationsBody": "Client requests sent to agencies show up here.",
+    "checkAgain": "Check again"
   },
   "profileMenu": {
     "activity": "Activity",
@@ -1825,5 +1852,15 @@
       "note": "Review findings (at least 10 characters)",
       "checked": "I checked the documents and business identifiers, including any explanation for a missing conditional document"
     }
+  },
+  "clientInvite": {
+    "title": "Your property deal is ready",
+    "body": "Log in or create an account to open your deal and book your site visit. Use the account this invitation was sent to.",
+    "login": "Log in",
+    "signup": "Create an account",
+    "opening": "Opening your deal…",
+    "errorTitle": "Invitation not available",
+    "missing": "This invitation is missing or has expired. Open the link Propella sent you again.",
+    "continue": "Continue without it"
   }
 }

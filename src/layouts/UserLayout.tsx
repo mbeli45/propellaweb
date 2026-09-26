@@ -53,6 +53,7 @@ export default function UserLayout() {
             <Route path="explore" element={<UserExplore />} />
             <Route path="commissions" element={<UserCommissions />} />
             <Route path="deals" element={<Deals />} />
+            <Route path="deals/:dealId" element={<Deals />} />
             <Route path="saved" element={<UserSaved />} />
             <Route path="profile" element={<UserProfile />} />
             <Route path="profile/settings" element={<ProfileSettings />} />

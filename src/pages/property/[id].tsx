@@ -262,6 +262,7 @@ export default function PropertyDetail() {
         reservationDate.toISOString().split('T')[0],
         null,
         {
+          referral_deal_id: searchParams.get('deal') || undefined,
           status: 'pending',
           amount: totalFee,
           payment_status: 'initiated',
@@ -328,7 +329,9 @@ export default function PropertyDetail() {
         setPaymentMessage(t('reservations.reservationCreated'))
         setTimeout(() => {
           closeModal()
-          navigate('/user/reservations')
+          // A visit booked from a client deal link returns to that deal.
+          const dealId = searchParams.get('deal')
+          navigate(dealId ? `/user/deals/${dealId}` : '/user/reservations')
         }, 2000)
       } else if (status === 'FAILED' || status === 'EXPIRED') {
         await updateReservationPayment(pendingReservationId, property.id, 'failed', {

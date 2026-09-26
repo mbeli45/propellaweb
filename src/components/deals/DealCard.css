@@ -36,3 +36,6 @@
 .dc-info > .rsv-more, .dc-info > .rsv-details { margin-top: 8px; }
 .dc-info > .rsv-hint { margin-top: 12px; }
 .dc-row { align-items: stretch; }
+.dc-client-link { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; padding: 14px; border: 1px solid var(--rsv-line-soft); border-radius: 12px; }
+.dc-client-link .rsv-muted, .dc-client-link .rsv-error { margin: 0; font-size: 12px; }
+.dc-client-link input { font-size: 13px; color: var(--rsv-ink-2); }

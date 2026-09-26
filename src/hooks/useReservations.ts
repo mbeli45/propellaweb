@@ -106,6 +106,7 @@ export function useReservations(userId: string) {
     reservation_date: string, 
     reservation_time: string | null,
     options?: {
+      referral_deal_id?: string;
       status?: string;
       amount?: number;
       transaction_id?: string;
@@ -121,7 +122,8 @@ export function useReservations(userId: string) {
         data: { propertyId, userId, amount: options?.amount }
       });
 
-      const insertData: ReservationInsert = {
+      const insertData: ReservationInsert & {referral_deal_id?:string} = {
+        ...(options?.referral_deal_id ? {referral_deal_id:options.referral_deal_id} : {}),
         user_id: userId,
         property_id: propertyId,
         reservation_date,

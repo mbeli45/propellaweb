@@ -10,9 +10,11 @@ import {
   XCircle,
   ChevronDown,
   ChevronUp,
+  CalendarCheck,
   CircleDollarSign,
   Flag,
   HeartHandshake as Handshake,
+  Link2,
   Home as HomeIcon,
   MapPin,
   MessageCircle,
@@ -26,6 +28,7 @@ import type { Deal, DealEvent, DealForm, DealReport, Partner, PropertyRequest } 
 import { configurePartner, dealForms, money, requestActions, resolveReport, reviewPartner, statusLabel } from '@/lib/deals'
 import { ActionMenu, CardButton, Hint, StatusPill, Tone } from '@/components/reservations/ReservationUI'
 import { AgencyStatusPill, AgencyVerificationDetails } from './AgencyVerification'
+import { ClientLinkPanel, useClientDealLink } from './ClientDealLink'
 import './DealCard.css'
 
 /*
@@ -133,6 +136,11 @@ export function DealCard({
   const openReports = dealReports.filter((report) => report.status === 'open')
   const dealEvents = events.filter((event) => event.deal_id === deal.id)
   const followUpOverdue = admin && new Date(deal.follow_up_at) < new Date()
+  const clientLink = useClientDealLink(deal.id)
+  // Once the agency has accepted, the client books (and pays for) a site visit
+  // on the attached listing; the admin sends the client a private link to it.
+  const serviceable = !!deal.agency_accepted_at && deal.status !== 'cancelled'
+  const canBookVisit = isCustomer && serviceable && !deal.reservation_id
 
   const forms = dealForms(deal, userId, admin, partners, workspace)
   const primaryForms = forms.filter((form) => PRIMARY_ACTIONS.includes(form.action))
@@ -172,7 +180,9 @@ export function DealCard({
       ? { warning: false, text: t('deals.waitingForPartner') }
       : deal.paid_at
         ? { warning: false, text: t('deals.paymentVerified', { date: formatDate(deal.paid_at) }) }
-        : null
+        : canBookVisit && !deal.property_id
+          ? { warning: false, text: t('deals.preparingListing') }
+          : null
 
   return (
     <article className={`dc-card${highlighted ? ' dc-card--highlight' : ''}`}>
@@ -263,8 +273,17 @@ export function DealCard({
 
         {/* Actions: the one next step, then Message + ⋯ (everything else in a menu) */}
         {(() => {
-          const [next, ...otherPrimary] = primaryForms
-          const menuActions = [...otherPrimary, ...secondaryForms].map((form) => ({
+          const [nextForm, ...otherPrimary] = primaryForms
+          // Booking the site visit comes before any other step for the client.
+          const next =
+            canBookVisit && deal.property_id
+              ? { label: t('deals.bookSiteVisit'), icon: CalendarCheck, onClick: () => onViewProperty(`${deal.property_id}?action=book&deal=${deal.id}`) }
+              : nextForm
+                ? { label: nextForm.title, icon: actionIcon(nextForm.action), onClick: () => onForm(nextForm) }
+                : null
+          const menuForms = canBookVisit && deal.property_id ? primaryForms : otherPrimary
+          const showLinkButton = admin && serviceable && !clientLink.link
+          const menuActions = [...menuForms, ...secondaryForms].map((form) => ({
             key: form.action,
             label: form.title,
             icon: actionIcon(form.action),
@@ -287,10 +306,10 @@ export function DealCard({
               {waitingOn && <Hint text={waitingOn} />}
               {next && (
                 <div className="dc-actions">
-                  <CardButton label={next.title} icon={actionIcon(next.action)} tone="primary" onClick={() => onForm(next)} disabled={busy} busy={busy} block />
+                  <CardButton label={next.label} icon={next.icon} tone="primary" onClick={next.onClick} disabled={busy} busy={busy} block />
                 </div>
               )}
-              {(counterpartId || menuActions.length > 0) && (
+              {(counterpartId || showLinkButton || menuActions.length > 0) && (
                 <div className="rsv-actions dc-row" style={{ marginTop: next ? 8 : 14 }}>
                   {counterpartId && (
                     <CardButton
@@ -300,11 +319,15 @@ export function DealCard({
                       onClick={() => onMessage(counterpartId)}
                     />
                   )}
+                  {showLinkButton && (
+                    <CardButton label={t('deals.clientLink')} icon={Link2} tone="secondary" onClick={clientLink.issue} busy={clientLink.busy} />
+                  )}
                   {menuActions.length > 0 && (
-                    <ActionMenu label={t('deals.moreActions')} actions={menuActions} disabled={busy} wide={!counterpartId} />
+                    <ActionMenu label={t('deals.moreActions')} actions={menuActions} disabled={busy} wide={!counterpartId && !showLinkButton} />
                   )}
                 </div>
               )}
+              {admin && serviceable && <ClientLinkPanel state={clientLink} />}
             </>
           )
         })()}

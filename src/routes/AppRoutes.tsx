@@ -1,6 +1,8 @@
 import { useRef } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { pendingClientInvitation } from '@/lib/clientInvitation'
+import ClientDealInvitation from '@/pages/ClientDealInvitation'
 import GuestLayout from '@/layouts/GuestLayout'
 import UserLayout from '@/layouts/UserLayout'
 import AgentLayout from '@/layouts/AgentLayout'
@@ -51,8 +53,13 @@ function AppRoutes() {
     return <Navigate to={`/auth/callback${location.search}${location.hash}`} replace />
   }
 
+  // A client who opened a deal invitation link before signing in finishes it after auth.
+  const inviteExempt = ['/deal-invite', '/auth/', '/admin'].some((path) => location.pathname.startsWith(path))
+  if (user && pendingClientInvitation() && !inviteExempt) return <Navigate to="/deal-invite" replace />
   return (
     <Routes>
+      {/* Client deal invitation (private link from an admin) */}
+      <Route path="/deal-invite" element={<ClientDealInvitation />} />
       {/* Landing Page - Public */}
       <Route path="/" element={!user ? <Landing /> : <Navigate to={getDefaultRoute()} replace />} />
 

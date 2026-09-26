@@ -1672,7 +1672,34 @@
     "accountId": "Votre identifiant de compte (pour lier une demande) : {{id}}",
     "confirm": "Confirmer",
     "requestPayment": "Demander le paiement mobile money",
-    "close": "Fermer"
+    "close": "Fermer",
+    "tabInvitations": "Invitations",
+    "titleSingle": "Votre transaction",
+    "subtitleSingle": "Où en est cette transaction et votre prochaine étape.",
+    "dealUnavailableTitle": "Transaction indisponible",
+    "dealUnavailableBody": "Cette transaction n'existe pas ou appartient à un autre compte.",
+    "seeAllDeals": "Voir toutes les transactions",
+    "bookSiteVisit": "Réserver et payer la visite",
+    "preparingListing": "Votre agence ajoute le bien. Vous pourrez réserver la visite dès qu'il sera publié.",
+    "clientLink": "Lien client",
+    "clientLinkLabel": "Lien client privé",
+    "clientLinkCopy": "Copier le lien",
+    "clientLinkCopied": "Copié",
+    "clientLinkNew": "Nouveau lien",
+    "clientLinkNote": "Expire le {{date}}. Envoyez-le uniquement à ce client. Un nouveau lien annule l'ancien.",
+    "clientLinkCopyFallback": "Sélectionnez le lien et copiez-le.",
+    "invitationOpen": "Ouverte",
+    "invitationAccepted": "Acceptée",
+    "invitationDeclined": "Refusée",
+    "invitationClosed": "Fermée",
+    "invitationFirstWins": "La première agence qui accepte obtient ce client.",
+    "invitationShare": "Part Propella",
+    "invitationShareValue": "{{percent}} % de la commission",
+    "invitationAccept": "Accepter la recommandation",
+    "invitationDecline": "Refuser",
+    "emptyInvitationsTitle": "Aucune invitation",
+    "emptyInvitationsBody": "Les demandes clients envoyées aux agences apparaissent ici.",
+    "checkAgain": "Vérifier à nouveau"
   },
   "profileMenu": {
     "activity": "Activité",
@@ -1818,5 +1845,15 @@
       "note": "Constats de l’examen (au moins 10 caractères)",
       "checked": "J’ai vérifié les documents et les identifiants de l’entreprise, y compris toute explication pour un document conditionnel manquant"
     }
+  },
+  "clientInvite": {
+    "title": "Votre transaction est prête",
+    "body": "Connectez-vous ou créez un compte pour ouvrir votre transaction et réserver votre visite. Utilisez le compte auquel cette invitation a été envoyée.",
+    "login": "Se connecter",
+    "signup": "Créer un compte",
+    "opening": "Ouverture de votre transaction…",
+    "errorTitle": "Invitation indisponible",
+    "missing": "Cette invitation est introuvable ou a expiré. Ouvrez à nouveau le lien envoyé par Propella.",
+    "continue": "Continuer sans"
   }
 }
