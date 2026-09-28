@@ -1,6 +1,8 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import AdminApp from '@/admin/App';
+import LoadingScreen from '@/components/LoadingScreen';
+
+const AdminApp = lazy(() => import('@/admin/App'));
 
 // Let react-admin handle all authentication
 // The authProvider will check access and redirect to login if needed
@@ -58,7 +60,7 @@ const Admin = () => {
   }
 
   // Always render AdminApp - react-admin will handle auth and routing
-  return <AdminApp />;
+  return <Suspense fallback={<LoadingScreen />}><AdminApp /></Suspense>;
 };
 
 export default Admin;

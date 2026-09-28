@@ -20,7 +20,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined
+    // Let the SDK test storage availability and fall back to memory when blocked.
+    // Reading window.localStorage here can throw before React mounts.
   },
   db: {
     schema: 'public'

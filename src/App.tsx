@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -6,10 +7,12 @@ import { I18nProvider } from './contexts/I18nContext'
 import { DialogProvider } from './contexts/DialogContext'
 import { BottomSheetProvider } from './contexts/BottomSheetContext'
 import AppRoutes from './routes/AppRoutes'
-import AdminApp from './admin/App'
+import LoadingScreen from './components/LoadingScreen'
 import ErrorBoundary from './components/ErrorBoundary'
 import EULAGate from './components/moderation/EULAGate'
 import './lib/i18n'
+
+const AdminApp = lazy(() => import('./admin/App'))
 
 function App() {
   // Check if we're on the admin subdomain
@@ -26,7 +29,9 @@ function App() {
         <HelmetProvider>
           <ThemeProvider>
             <I18nProvider>
-              <AdminApp />
+              <Suspense fallback={<LoadingScreen />}>
+                <AdminApp />
+              </Suspense>
             </I18nProvider>
           </ThemeProvider>
         </HelmetProvider>
