@@ -7,6 +7,9 @@ import { Layout } from './Layout';
 import LoginPage from './LoginPage';
 import { Icon } from '@iconify/react';
 
+import { AgentIdentityList, AgentIdentityEdit } from './resources/AgentIdentities';
+import { PropertyMediaCleanupList } from './resources/PropertyMediaCleanup';
+
 // Import resources
 import { PropertyList, PropertyEdit, PropertyCreate } from './resources/Properties';
 import { ProfileList, ProfileEdit } from './resources/Profiles';
@@ -102,8 +105,13 @@ const AdminApp = () => {
         recordRepresentation={(record) => `Review by ${record.user_id?.slice(0, 8)}`}
         icon={ReviewIcon}
       />
+      <Resource name="agent_identity_verifications" list={AgentIdentityList} edit={AgentIdentityEdit}
+        options={{ label: 'ID reviews' }} icon={AgentVerificationIcon} />
+      <Resource name="property_media_cleanup_jobs" list={PropertyMediaCleanupList}
+        options={{ label: 'Media cleanup' }} icon={ModerationIcon} />
       <Resource
         name="agent_verifications"
+        options={{ label: 'Professional verification' }}
         list={AgentVerificationList}
         edit={AgentVerificationEdit}
         recordRepresentation={(record) => `Verification: ${record.agent_id?.slice(0, 8)}`}

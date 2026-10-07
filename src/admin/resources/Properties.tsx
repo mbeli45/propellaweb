@@ -62,6 +62,7 @@ const PropertyFilter = (props: any) => (
         sx={{ minWidth: 240 }}
       />
     </ReferenceInput>
+    <BooleanInput source="owner_review_pending" label="Awaiting ID approval" />
     <TextInput source="location@ilike" label="Search location" resettable />
     <SelectInput
       source="status"
@@ -138,6 +139,7 @@ const PropertyDatagrid = () => (
       <TextField source="full_name" />
     </ReferenceField>
     <TextField source="location" />
+    <BooleanField source="owner_review_pending" label="Awaiting ID approval" />
     <BooleanField source="is_featured" label="Featured" />
     <DateField source="created_at" />
     <EditButton />

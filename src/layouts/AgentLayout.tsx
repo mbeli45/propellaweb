@@ -15,6 +15,8 @@ import UserSaved from '@/pages/user/Saved'
 import ChatDetail from '@/pages/chat/[id]'
 import PropertyDetail from '@/pages/property/[id]'
 import AddProperty from '@/pages/property/add'
+import ProfileIdentity from '@/pages/profile/Identity'
+import { IdentityGate } from '@/components/identity/IdentityGate'
 import EditProperty from '@/pages/property/edit/[id]'
 import ProfileSettings from '@/pages/profile/Settings'
 import ProfileVerification from '@/pages/profile/Verification'
@@ -63,7 +65,8 @@ export default function AgentLayout() {
             <Route path="profile/help/faq" element={<FAQ />} />
             <Route path="profile/help/privacy" element={<Privacy />} />
             <Route path="profile/help/terms" element={<Terms />} />
-            <Route path="property/add" element={<AddProperty />} />
+            <Route path="property/add" element={<IdentityGate><AddProperty /></IdentityGate>} />
+            <Route path="identity" element={<ProfileIdentity />} />
             <Route path="property/edit/:id" element={<EditProperty />} />
             <Route path="property/:id" element={<PropertyDetail />} />
             <Route path="chat/:id" element={<ChatDetail />} />

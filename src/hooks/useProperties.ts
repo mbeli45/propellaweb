@@ -19,7 +19,7 @@ export function useProperties(userId: string) {
 
   const fetchProperties = useCallback(async () => {
     if (!userId) return;
-    
+
     setLoading(true);
     setError(null);
 
@@ -42,6 +42,7 @@ export function useProperties(userId: string) {
           area,
           amenities,
           images,
+          owner_review_pending,
           status,
           reserved_by,
           reservation_fee,
@@ -55,7 +56,8 @@ export function useProperties(userId: string) {
             full_name,
             avatar_url,
             email,
-            role
+            role,
+            is_verified_agent
           )
         `)
         .eq('owner_id', userId)
@@ -77,6 +79,7 @@ export function useProperties(userId: string) {
       }
 
       const transformedProperties: PropertyData[] = data.map((property: any) => ({
+        owner_review_pending: property.owner_review_pending,
         id: property.id,
         title: property.title,
         description: property.description || undefined,
@@ -97,14 +100,14 @@ export function useProperties(userId: string) {
         // If property is already marked as reserved/sold in DB, use that
         // Otherwise, if there's an active reservation, mark as reserved
         reserved_by: property.reserved_by ?? undefined,
-        status: property.status === 'reserved' || property.status === 'sold' 
-          ? property.status 
+        status: property.status === 'reserved' || property.status === 'sold'
+          ? property.status
           : (reservedPropertyIdSet.has(property.id) ? 'reserved' : (property.status || 'available')),
         reservationFee: property.reservation_fee || undefined,
         rent_period: property.rent_period as 'monthly' | 'yearly' | null | undefined,
         advance_months_min: property.advance_months_min || undefined,
         advance_months_max: property.advance_months_max || undefined,
-        isVerified: property.profiles?.role === 'agent' || property.profiles?.role === 'landlord',
+        isVerified: !!property.profiles?.is_verified_agent,
         owner_id: property.owner_id,
         owner: property.profiles ? {
           id: property.profiles.id,
@@ -118,9 +121,9 @@ export function useProperties(userId: string) {
       setProperties(transformedProperties);
     } catch (err: any) {
       setError(err.message);
-      captureException(err, { 
+      captureException(err, {
         context: 'useProperties.fetchProperties',
-        userId 
+        userId
       });
     } finally {
       setLoading(false);
@@ -146,14 +149,14 @@ export function useProperties(userId: string) {
 
       // Remove from local state
       setProperties(prev => prev.filter(p => p.id !== propertyId));
-      
+
       addBreadcrumb({
         category: 'property',
         message: 'Property deleted successfully',
         level: 'info',
         data: { propertyId }
       });
-      
+
       return true;
     } catch (err: any) {
       const isReferencedProperty = err?.code === '23503' && String(err?.message || '').includes('transactions_property_id_fkey');
@@ -197,8 +200,8 @@ export function useAllPropertiesBase(filters?: FilterOptions) {
   const limit = filters?.limit;
 
   // Create stable string representation of category array
-  const categoryString = useMemo(() => 
-    category ? JSON.stringify([...category].sort()) : '', 
+  const categoryString = useMemo(() =>
+    category ? JSON.stringify([...category].sort()) : '',
     [category]
   );
 
@@ -247,7 +250,8 @@ export function useAllPropertiesBase(filters?: FilterOptions) {
             full_name,
             avatar_url,
             email,
-            role
+            role,
+            is_verified_agent
           )
         `)
         .order('created_at', { ascending: false });
@@ -296,7 +300,7 @@ export function useAllPropertiesBase(filters?: FilterOptions) {
         rent_period: property.rent_period as 'monthly' | 'yearly' | null | undefined,
         advance_months_min: property.advance_months_min || undefined,
         advance_months_max: property.advance_months_max || undefined,
-        isVerified: property.profiles?.role === 'agent' || property.profiles?.role === 'landlord',
+        isVerified: !!property.profiles?.is_verified_agent,
         owner_id: property.owner_id,
         owner: property.profiles ? {
           id: property.profiles.id,
@@ -341,13 +345,13 @@ export function useProperty(propertyId: string) {
 
   const fetchProperty = useCallback(async () => {
     if (!propertyId) return;
-    
+
     // Cache for 30 seconds to prevent unnecessary refetches
     const now = Date.now();
     if (property && (now - lastFetched) < 30000) {
       return;
     }
-    
+
     setLoading(true);
     setError(null);
 
@@ -441,9 +445,9 @@ export function useProperty(propertyId: string) {
       setLastFetched(now);
     } catch (err: any) {
       setError(err.message);
-      captureException(err, { 
+      captureException(err, {
         context: 'useProperty.fetchProperty',
-        propertyId 
+        propertyId
       });
     } finally {
       setLoading(false);
@@ -469,13 +473,13 @@ export function useSimilarProperties(currentPropertyId: string, category?: strin
       setProperties([]);
       return;
     }
-    
+
     // Cache for 60 seconds since similar properties don't change frequently
     const now = Date.now();
     if (properties.length > 0 && (now - lastFetchedRef.current) < 60000) {
       return;
     }
-    
+
     setLoading(true);
     setError(null);
 
@@ -506,7 +510,8 @@ export function useSimilarProperties(currentPropertyId: string, category?: strin
             id,
             full_name,
             avatar_url,
-            role
+            role,
+            is_verified_agent
           )
         `)
         .neq('id', currentPropertyId) // Exclude current property
@@ -542,7 +547,7 @@ export function useSimilarProperties(currentPropertyId: string, category?: strin
         rent_period: property.rent_period as 'monthly' | 'yearly' | null | undefined,
         advance_months_min: property.advance_months_min || undefined,
         advance_months_max: property.advance_months_max || undefined,
-        isVerified: property.profiles?.role === 'agent' || property.profiles?.role === 'landlord',
+        isVerified: !!property.profiles?.is_verified_agent,
         owner_id: property.owner_id,
         owner: property.profiles ? {
           id: property.profiles.id,
@@ -557,11 +562,11 @@ export function useSimilarProperties(currentPropertyId: string, category?: strin
       lastFetchedRef.current = now;
     } catch (err: any) {
       setError(err.message);
-      captureException(err, { 
+      captureException(err, {
         context: 'useSimilarProperties.fetchSimilarProperties',
         currentPropertyId,
         category,
-        type 
+        type
       });
     } finally {
       setLoading(false);
@@ -583,7 +588,7 @@ export function useHomeProperties() {
   const blockedSet = useMemo(() => new Set(blockedIds), [blockedIds]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Add cache to prevent unnecessary refetches
   const cacheRef = useRef<{
     data: PropertyData[];
@@ -593,14 +598,14 @@ export function useHomeProperties() {
 
   const fetchHomeProperties = useCallback(async (forceRefresh = false) => {
     // Check cache first
-    if (!forceRefresh && cacheRef.current && 
+    if (!forceRefresh && cacheRef.current &&
         Date.now() - cacheRef.current.timestamp < CACHE_DURATION) {
       const cached = cacheRef.current.data;
-      const featured = cached.filter(p => 
+      const featured = cached.filter(p =>
         p.category === 'premium' || p.category === 'luxury'
       ).slice(0, 5);
       const recent = cached.slice(0, 10);
-      
+
       setFeaturedProperties(featured);
       setRecentProperties(recent);
       setLoading(false);
@@ -647,7 +652,8 @@ export function useHomeProperties() {
             full_name,
             avatar_url,
             email,
-            role
+            role,
+            is_verified_agent
           )
         `)
         .or(visibility)
@@ -687,7 +693,8 @@ export function useHomeProperties() {
             full_name,
             avatar_url,
             email,
-            role
+            role,
+            is_verified_agent
           )
         `)
         .or(visibility)
@@ -732,7 +739,7 @@ export function useHomeProperties() {
         rent_period: property.rent_period as 'monthly' | 'yearly' | null | undefined,
         advance_months_min: property.advance_months_min || undefined,
         advance_months_max: property.advance_months_max || undefined,
-        isVerified: property.profiles?.role === 'agent' || property.profiles?.role === 'landlord',
+        isVerified: !!property.profiles?.is_verified_agent,
         owner_id: property.owner_id,
         owner: property.profiles ? {
           id: property.profiles.id,
@@ -767,7 +774,7 @@ export function useHomeProperties() {
         rent_period: property.rent_period as 'monthly' | 'yearly' | null | undefined,
         advance_months_min: property.advance_months_min || undefined,
         advance_months_max: property.advance_months_max || undefined,
-        isVerified: property.profiles?.role === 'agent' || property.profiles?.role === 'landlord',
+        isVerified: !!property.profiles?.is_verified_agent,
         owner_id: property.owner_id,
         owner: property.profiles ? {
           id: property.profiles.id,
@@ -790,7 +797,7 @@ export function useHomeProperties() {
     } catch (err: any) {
       console.error('❌ Error in fetchHomeProperties:', err);
       setError(err.message || 'Failed to load properties');
-      captureException(err, { 
+      captureException(err, {
         context: 'useHomeProperties.fetchHomeProperties'
       });
     } finally {

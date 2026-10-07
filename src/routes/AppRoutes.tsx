@@ -11,6 +11,7 @@ import LoadingScreen from '@/components/LoadingScreen'
 import Landing from '@/pages/Landing'
 import PropertyDetail from '@/pages/property/[id]'
 import AddProperty from '@/pages/property/add'
+import { IdentityGate } from '@/components/identity/IdentityGate'
 import EditProperty from '@/pages/property/edit/[id]'
 import ChatDetail from '@/pages/chat/[id]'
 import AgentProfilePage from '@/pages/agent/[id]'
@@ -83,7 +84,7 @@ function AppRoutes() {
 
       {/* Property routes (accessible to all) */}
       <Route path="/property/:id" element={<PropertyDetail />} />
-      <Route path="/property/add" element={user?.role === 'agent' || user?.role === 'landlord' ? <AddProperty /> : <Navigate to="/auth/login" />} />
+      <Route path="/property/add" element={user?.role === 'agent' || user?.role === 'landlord' ? <IdentityGate><AddProperty /></IdentityGate> : <Navigate to="/auth/login" />} />
       <Route path="/property/edit/:id" element={user?.role === 'agent' || user?.role === 'landlord' ? <EditProperty /> : <Navigate to="/auth/login" />} />
       
       {/* Chat routes */}

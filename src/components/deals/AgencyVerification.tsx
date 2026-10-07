@@ -51,12 +51,15 @@ export function DocumentUploadRow({
   value,
   onChange,
   onBusy,
+  store = (file) => uploadAgencyDocument(userId, field.key, file, file.type, file.size),
 }: {
   userId: string
   field: Field
   value: string
   onChange: (path: string) => void
   onBusy: (busy: boolean) => void
+  /** Stores the file and returns its path; defaults to the agency-verification bucket. */
+  store?: (file: File) => Promise<string>
 }) {
   const { t } = useLanguage()
   const labelOf = useAgencyFieldLabel()
@@ -73,7 +76,7 @@ export function DocumentUploadRow({
     setError('')
     try {
       if (file.size > MAX_BYTES) throw new Error(t('agencyVerify.fileTooLarge'))
-      onChange(await uploadAgencyDocument(userId, field.key, file, file.type, file.size))
+      onChange(await store(file))
     } catch (e) {
       const message = (e as Error).message || ''
       setError(message.startsWith('Choose a PDF') ? t('agencyVerify.fileTooLarge') : message)

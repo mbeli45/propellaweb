@@ -9,14 +9,17 @@ import { usePropertyViews } from '@/hooks/usePropertyViews'
 import { useStorage } from '@/hooks/useStorage'
 import { useDialog } from '@/contexts/DialogContext'
 import PropertyCard from '@/components/PropertyCard'
-import { Plus, BarChart3, Home, RefreshCw, Wallet, AlertCircle, HeartHandshake } from 'lucide-react'
+import { Plus, BarChart3, Home, RefreshCw, Wallet, AlertCircle, HeartHandshake, ShieldCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { confirmPropertyAvailability } from '@/hooks/usePropertyAvailability'
 import './Listings.css'
 import { PropertyCardSkeleton } from '@/components/skeletons'
+import { useIdentityGate } from '@/hooks/useIdentityGate'
 import {
+  Banner,
   CardButton,
   EmptyState,
+  Hint,
   ReservationToolbar,
   ReservationsHeader,
   ReservationsPage,
@@ -28,6 +31,7 @@ export default function AgentListings() {
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
   const Colors = getColors(colorScheme)
+  const identity = useIdentityGate()
   const navigate = useNavigate()
   const { getAgentTotalViews } = usePropertyViews()
   const { pendingUploads, retryPendingUpload } = useStorage()
@@ -180,6 +184,18 @@ export default function AgentListings() {
           { label: t('agent.statBookings'), value: agentReservations?.length || 0, onClick: () => navigate('/agent/reservations') },
         ]}
       />
+
+      {identity.stage === 'needed' ? (
+        <Banner
+          icon={ShieldCheck}
+          title={identity.state?.status === 'rejected' ? t('identity.rejectedTitle') : t('identity.bannerTitle')}
+          body={identity.state?.status === 'rejected' ? identity.state?.rejection_reason || t('identity.rejectedBody') : t('identity.bannerBody')}
+          attention={identity.state?.status === 'rejected' ? t('identity.needsYou') : undefined}
+          primary={{ label: t('identity.verifyCta'), onClick: () => navigate('/agent/identity') }}
+        />
+      ) : identity.stage === 'review' ? (
+        <Hint text={t('identity.underReview')} />
+      ) : null}
 
       <div className="ds-shortcuts">
         <CardButton label={t('reservations.dealsButton')} icon={HeartHandshake} tone="neutral" onClick={() => navigate('/agent/deals')} />

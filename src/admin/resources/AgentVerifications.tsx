@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react';
 import { TextInput, NumberInput, SelectInput, BooleanInput, AutocompleteInput } from '../components/ShadcnInputs';
 import { AdminTable, AdminPagination } from '../components/AdminTable';
 import {
@@ -17,6 +18,7 @@ import {
 import { Stack, Divider, Box, Typography } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { Colors } from '@/constants/Colors';
+import { supabase } from '@/lib/supabase';
 import { EditToolbar } from '../components/EditToolbar';
 import { DeleteButtonWithConfirm } from '../components/DeleteButtonWithConfirm';
 import StatusChip from '../components/StatusChip';
@@ -40,7 +42,7 @@ const VERIFICATION_STATUS_CHOICES = [
   { id: 'pending', name: 'Pending' },
   { id: 'approved', name: 'Approved' },
   { id: 'rejected', name: 'Rejected' },
-  { id: 'under_review', name: 'Under Review' },
+  { id: 'documents_review', name: 'Under Review' },
 ];
 
 const formatXaf = (n: number | string | null | undefined) => {
@@ -138,7 +140,23 @@ export const AgentVerificationList = () => (
 );
 
 // Quick helper: render a clickable document link if URL set, else a "missing" pill.
+// Professional documents use their private bucket, independently of ID reviews.
 const DocLink = ({ label, url }: { label: string; url?: string | null }) => {
+  const storedPath = url?.match(/\/storage\/v1\/object\/(?:public|sign|authenticated)\/verification-docs\/([^?]+)/)?.[1]
+    ?? (url && !/^https?:\/\//i.test(url) ? url : null)
+  const isPrivate = !!storedPath
+  const openPrivate = async (e: MouseEvent<HTMLElement>) => {
+    e.preventDefault()
+    const tab = window.open('', '_blank')
+    if (tab) tab.opener = null
+    const { data, error } = await supabase.storage.from('verification-docs').createSignedUrl(decodeURIComponent(storedPath!), 300)
+    if (error || !data?.signedUrl) {
+      tab?.close()
+      alert(error?.message || 'Could not open the document')
+      return
+    }
+    if (tab) tab.location.href = data.signedUrl
+  }
   if (!url) {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, py: 1 }}>
@@ -157,7 +175,8 @@ const DocLink = ({ label, url }: { label: string; url?: string | null }) => {
   return (
     <Box
       component="a"
-      href={url}
+      href={isPrivate ? '#' : url}
+      onClick={isPrivate ? openPrivate : undefined}
       target="_blank"
       rel="noopener noreferrer"
       sx={{

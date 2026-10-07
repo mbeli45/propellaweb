@@ -136,13 +136,13 @@ export function useAgentVerification(agentId?: string) {
   const fetchAgentProfile = async (id: string) => {
     try {
       setLoading(true);
-      
+
       // Fetch profile with verification data
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select(`
           *,
-          agent_verifications (*)
+          agent_verifications:public_agent_verifications (*)
         `)
         .eq('id', id)
         .single();
@@ -165,7 +165,7 @@ export function useAgentVerification(agentId?: string) {
 
       const agentData: AgentProfile = {
         ...profile,
-        verification: (profile.agent_verifications?.[0] as any) || null,
+        verification: (Array.isArray(profile.agent_verifications) ? profile.agent_verifications[0] : profile.agent_verifications) as any || null,
         recent_ratings: recentRatings as AgentRating[] || [],
       } as AgentProfile;
 
@@ -188,22 +188,20 @@ export function useAgentVerification(agentId?: string) {
   ): Promise<boolean> => {
     try {
       setLoading(true);
-      
-      const { data, error } = await supabase
-        .from('agent_verifications')
-        .insert({
-          agent_id: id,
-          business_name: businessName,
-          business_address: businessAddress,
-          years_of_experience: yearsOfExperience,
-          specializations,
-          verification_status: 'pending',
-        })
-        .select()
-        .single();
+
+      const details = {
+        business_name: businessName,
+        business_address: businessAddress,
+        years_of_experience: yearsOfExperience,
+        specializations,
+      };
+      // The ID step may already have created the row.
+      const { data, error } = verification?.id
+        ? await supabase.from('agent_verifications').update(details).eq('id', verification.id).select().single()
+        : await supabase.from('agent_verifications').insert({ agent_id: id, ...details, verification_status: 'pending' }).select().single();
 
       if (error) throw error;
-      
+
       setVerification(data as AgentVerification);
       return true;
     } catch (err: any) {
@@ -229,11 +227,11 @@ export function useAgentVerification(agentId?: string) {
 
       // Upload file to storage
       const uploadResult = await uploadFile(fileUri, 'application/octet-stream', 'verification-docs', `agent-verification/${agentVerificationId}`);
-      
+
       if (!uploadResult || uploadResult.error) {
         throw new Error(uploadResult?.error || 'Failed to upload file');
       }
-      
+
       const fileUrl = uploadResult.url;
 
       // Update verification record
@@ -325,7 +323,7 @@ export function useAgentVerification(agentId?: string) {
 
       // Refresh ratings
       await fetchRatings(targetAgentId);
-      
+
       return true;
     } catch (err: any) {
       console.error('Error adding rating:', err);
@@ -346,7 +344,7 @@ export function useAgentVerification(agentId?: string) {
         .from('profiles')
         .select(`
           *,
-          agent_verifications!agent_verifications_agent_id_fkey!inner (
+          agent_verifications:public_agent_verifications!inner (
             verification_status,
             verification_badge,
             average_rating,
@@ -364,7 +362,7 @@ export function useAgentVerification(agentId?: string) {
         // Silently handle network errors to prevent console spam
         throw error;
       }
-      
+
       // Transform and sort the data
       const agents = data?.map(agent => ({
         ...agent,
@@ -375,11 +373,11 @@ export function useAgentVerification(agentId?: string) {
       const sortedAgents = agents.sort((a, b) => {
         const ratingA = a.verification?.average_rating || 0;
         const ratingB = b.verification?.average_rating || 0;
-        
+
         if (ratingA !== ratingB) {
           return ratingB - ratingA; // Higher rating first
         }
-        
+
         // If ratings are equal, sort by total reviews
         const reviewsA = a.verification?.total_reviews || 0;
         const reviewsB = b.verification?.total_reviews || 0;
@@ -416,13 +414,7 @@ export function useAgentVerification(agentId?: string) {
         completed: !!verification.professional_certificate_url,
         required: false,
       },
-      {
-        id: 'id_documents',
-        title: 'ID Documents (Front & Back)',
-        completed: !!(verification.id_document_front_url && verification.id_document_back_url),
-        required: true,
-      },
-      {
+{
         id: 'proof_of_address',
         title: 'Proof of Address',
         completed: !!verification.proof_of_address_url,
@@ -489,12 +481,12 @@ export function useAgentVerification(agentId?: string) {
     verification,
     ratings,
     agentProfile,
-    
+
     // States
     loading,
     uploading,
     error,
-    
+
     // Actions
     initializeVerification,
     uploadVerificationDocument,
@@ -505,19 +497,17 @@ export function useAgentVerification(agentId?: string) {
     fetchRatings,
     fetchAgentProfile,
     getTopVerifiedAgents,
-    
+
     // Helpers
     getVerificationChecklist,
     getBadgeInfo,
-    
+
     // Computed
     verificationChecklist: getVerificationChecklist(),
     isVerificationComplete: verification?.verification_status === 'approved',
-    canSubmitForReview: verification && 
+    canSubmitForReview: verification &&
       verification.business_license_url &&
-      verification.id_document_front_url &&
-      verification.id_document_back_url &&
       verification.proof_of_address_url &&
       verification.verification_status === 'pending',
   };
-} 
+}

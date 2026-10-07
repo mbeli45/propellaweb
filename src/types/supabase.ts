@@ -14,6 +14,23 @@ export type Database = {
   }
   public: {
     Tables: {
+      property_media_cleanup_jobs: {
+        Row: { id: string; property_id: string; owner_id: string; media_url: string;
+          state: 'pending' | 'processing' | 'completed' | 'skipped' | 'failed'; attempts: number;
+          lease_token: string | null; available_at: string; created_at: string; finished_at: string | null; last_error: string | null; };
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
+        Relationships: [];
+      }
+      agent_identity_verifications: { Row: { id: string; agent_id: string; id_document_front_url: string | null; id_document_back_url: string | null;
+ verification_status: 'pending' | 'documents_review' | 'approved' | 'rejected'; submitted_at: string | null;
+ submission_version: number; verified_by: string | null; verified_at: string | null; rejection_reason: string | null;
+ created_at: string; updated_at: string; }; Insert: Record<string, never>; Update: Record<string, never>; Relationships: [{ foreignKeyName: 'agent_identity_verifications_agent_id_fkey'; columns: ['agent_id']; isOneToOne: true; referencedRelation: 'profiles'; referencedColumns: ['id'] }, { foreignKeyName: 'agent_identity_verifications_verified_by_fkey'; columns: ['verified_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] }] }
+      agent_identity_review_events: {
+        Row: { id: string; identity_id: string; reviewer_id: string | null; submission_version: number; decision: string; note: string | null; created_at: string };
+        Insert: Record<string, never>; Update: Record<string, never>;
+        Relationships: [{ foreignKeyName: 'agent_identity_review_events_identity_id_fkey'; columns: ['identity_id']; isOneToOne: false; referencedRelation: 'agent_identity_verifications'; referencedColumns: ['id'] }, { foreignKeyName: 'agent_identity_review_events_reviewer_id_fkey'; columns: ['reviewer_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] }]
+      }
       agent_ratings: {
         Row: {
           agent_id: string
@@ -694,6 +711,7 @@ export type Database = {
       }
       properties: {
         Row: {
+          owner_review_pending: boolean
           advance_months_max: number | null
           advance_months_min: number | null
           amenities: string[] | null
@@ -734,6 +752,7 @@ export type Database = {
           view_count: number | null
         }
         Insert: {
+          owner_review_pending?: boolean
           advance_months_max?: number | null
           advance_months_min?: number | null
           amenities?: string[] | null
@@ -773,6 +792,7 @@ export type Database = {
           view_count?: number | null
         }
         Update: {
+          owner_review_pending?: boolean
           advance_months_max?: number | null
           advance_months_min?: number | null
           amenities?: string[] | null
@@ -1369,6 +1389,10 @@ export type Database = {
       }
     }
     Views: {
+      public_agent_verifications: {
+        Row: { id: string; agent_id: string; verification_status: string; verification_badge: string | null; badge_earned_at: string | null; total_properties_sold: number; total_properties_rented: number; average_rating: number | null; total_reviews: number | null };
+        Relationships: [{ foreignKeyName: 'agent_verifications_agent_id_fkey'; columns: ['agent_id']; isOneToOne: true; referencedRelation: 'profiles'; referencedColumns: ['id'] }]
+      }
       property_analytics_summary: {
         Row: {
           last_viewed_at: string | null
@@ -1394,6 +1418,9 @@ export type Database = {
       }
     }
     Functions: {
+      identity_verification: { Args: { p_action: string; p_side?: string | null; p_path?: string | null }; Returns: Json }
+      can_post_listings: { Args: Record<PropertyKey, never>; Returns: boolean }
+      review_agent_identity: { Args: { p_id: string; p_version: number; p_decision: string; p_note?: string | null; p_expected_status?: string }; Returns: undefined }
       available_withdrawable_balance: {
         Args: { p_user_id: string }
         Returns: number

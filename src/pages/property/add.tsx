@@ -5,6 +5,7 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { supabase } from '@/lib/supabase'
+import { identityCommand } from '@/lib/identity'
 import { useStorage } from '@/hooks/useStorage'
 import { ChevronLeft, Plus, X, Star, DollarSign, Square, Home, MapPin } from 'lucide-react'
 import LocationSearchInput from '@/components/LocationSearchInput'
@@ -217,6 +218,10 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
     setSuccessMessage(null)
 
     try {
+      if (!isEditMode) {
+        const identity = await identityCommand('status')
+        if (!identity.can_post) throw new Error(t('identity.gateLead'))
+      }
       const oversized = form.images.find(isOverWebUploadLimit)
       if (oversized) {
         setError(fileTooLargeForWebMessage(oversized))
@@ -308,7 +313,9 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
         if (insertError) throw insertError
 
         setError(null)
-        if (data?.id) {
+        if (data?.owner_review_pending) {
+          navigate('/agent', { state: { identityListingSaved: true } })
+        } else if (data?.id) {
           navigate(`/property/${data.id}`)
         } else {
           navigate('/agent')

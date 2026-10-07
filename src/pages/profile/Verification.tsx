@@ -79,6 +79,15 @@ export default function ProfileVerification() {
   }
 
   const handleDocumentUpload = async (documentType: string) => {
+    // ID images go to the private ID step, not the public media store.
+    if (documentType === 'id_documents') {
+      navigate('/agent/identity')
+      return
+    }
+    if (documentType === 'business_info') {
+      setShowInitForm(true)
+      return
+    }
     if (!verification?.id) return
     
     try {
@@ -135,7 +144,7 @@ export default function ProfileVerification() {
     <ReservationsPage narrow label={t('sharedProfile.agentVerification')}>
       <PageHeader
         title={t('sharedProfile.agentVerification')}
-        subtitle={t('verificationUI.subtitle')}
+        subtitle={t('identity.professionalNote')}
         onBack={() => navigate(-1)}
         backLabel={t('common.back')}
       />

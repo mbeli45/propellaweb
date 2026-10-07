@@ -12,7 +12,8 @@ export const navigation: { label: string; links: AdminLink[] }[] = [
     { path: '/reservations', label: 'Reservations', icon: 'lucide:calendar-check', queue: 'reservations' },
     { path: '/profiles', label: 'People', icon: 'lucide:users', description: 'Manage accounts and review agent verification applications.', tabs: [
       { path: '/profiles', label: 'Accounts' },
-      { path: '/agent_verifications', label: 'Agent verifications', queue: 'verifications' },
+      { path: '/agent_identity_verifications', label: 'ID reviews', queue: 'verifications' },
+      { path: '/agent_verifications', label: 'Professional verification' },
     ] },
   ] },
   { label: 'Operations', links: [
@@ -26,6 +27,7 @@ export const navigation: { label: string; links: AdminLink[] }[] = [
       { path: '/content_reports', label: 'Content reports', queue: 'reports' },
       { path: '/property_reviews', label: 'Reviews' },
       { path: '/commission_disputes', label: 'Commission disputes', queue: 'commissionDisputes' },
+      { path: '/property_media_cleanup_jobs', label: 'Media cleanup' },
     ] },
     { path: '/signup-stats', label: 'Analytics', icon: 'lucide:bar-chart-3', description: 'Explore account growth and property viewing activity.', tabs: [
       { path: '/signup-stats', label: 'Signup insights' },

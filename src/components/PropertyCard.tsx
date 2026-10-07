@@ -40,6 +40,7 @@ export interface PropertyData {
   advance_months_min?: number
   advance_months_max?: number
   rent_period?: 'monthly' | 'yearly' | null
+  owner_review_pending?: boolean;
   status?: string
   /** Set by trigger when someone books a visit; only that user still sees the listing. */
   reserved_by?: string
@@ -102,6 +103,7 @@ export default function PropertyCard({
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation()
+    if (property.owner_review_pending) return
     if (onShare) {
       onShare()
     } else {
@@ -318,6 +320,8 @@ export default function PropertyCard({
           )}
           <button
             aria-label={t('common.share', 'Share property')}
+            disabled={property.owner_review_pending}
+            title={property.owner_review_pending ? t('identity.listingInReview') : undefined}
             onClick={handleShare}
             style={{
               backgroundColor: colorScheme === 'dark'
@@ -429,7 +433,7 @@ export default function PropertyCard({
           {isOwner && property.status && (
             <span
             >
-              {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
+              {property.owner_review_pending ? t('identity.listingInReview') : property.status.charAt(0).toUpperCase() + property.status.slice(1)}
             </span>
           )}
 

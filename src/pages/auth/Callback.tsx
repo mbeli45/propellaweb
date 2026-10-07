@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { handleGoogleCallback } from '@/lib/googleAuth'
 import { handleAppleCallback } from '@/lib/appleAuth'
 import { supabase } from '@/lib/supabase'
+import { agentLandingRoute } from '@/lib/identity'
 import Loader from '@/components/ui/Loader'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -15,8 +16,11 @@ export default function AuthCallback() {
 
   useEffect(() => {
     if (callbackComplete && !loading && user) {
-      const targetRoute = user.role === 'agent' || user.role === 'landlord' ? '/agent' : '/user'
-      navigate(targetRoute, { replace: true })
+      if (user.role === 'agent' || user.role === 'landlord') {
+        void agentLandingRoute().then((route) => navigate(route, { replace: true }))
+      } else {
+        navigate('/user', { replace: true })
+      }
     }
   }, [callbackComplete, loading, navigate, user])
 

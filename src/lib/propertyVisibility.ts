@@ -19,8 +19,8 @@ export async function propertyVisibilityFilter(): Promise<string> {
   const { data } = await supabase.auth.getSession();
   const userId = data.session?.user?.id;
   return userId
-    ? `status.eq.available,reserved_by.eq.${userId}`
-    : 'status.eq.available';
+    ? `and(owner_review_pending.eq.false,or(status.eq.available,reserved_by.eq.${userId}))`
+    : 'and(owner_review_pending.eq.false,status.eq.available)';
 }
 
 /** True when this listing is only visible to `userId` because they booked it. */

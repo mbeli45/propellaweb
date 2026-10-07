@@ -1,0 +1,35 @@
+.idv-step {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.idv-lead {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--rsv-ink-2);
+}
+
+/* Amber: the next step is the user's. */
+.idv-rejected {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--rsv-warning-tint);
+  color: var(--rsv-warning-ink);
+}
+
+.idv-rejected-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.idv-rejected-body {
+  margin: 0;
+  font-size: 13px;
+  line-height: 19px;
+}

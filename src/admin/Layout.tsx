@@ -74,8 +74,8 @@ const useQueueCounts = (): QueueCounts => {
             .eq('status', 'pending'),
           supabase.from('content_reports').select('id', { count: 'exact', head: true })
             .eq('status', 'pending'),
-          supabase.from('agent_verifications').select('id', { count: 'exact', head: true })
-            .eq('verification_status', 'pending'),
+          supabase.from('agent_identity_verifications').select('id', { count: 'exact', head: true })
+            .eq('verification_status', 'documents_review'),
           supabase.from('commission_disputes').select('id', { count: 'exact', head: true })
             .eq('status', 'open'),
         ]);

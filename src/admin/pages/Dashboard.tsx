@@ -213,9 +213,9 @@ const Dashboard = () => {
             .select('id', { count: 'exact', head: true })
             .eq('status', 'pending'),
           supabase
-            .from('agent_verifications')
+            .from('agent_identity_verifications')
             .select('id', { count: 'exact', head: true })
-            .eq('verification_status', 'pending'),
+            .eq('verification_status', 'documents_review'),
           supabase
             .from('reservations')
             .select('id, amount, reservation_fee, refund_status, created_at, property:property_id(title), user:user_id(full_name, email)')
@@ -442,10 +442,10 @@ const Dashboard = () => {
               />
               <AttentionRow
                 icon="lucide:shield-check"
-                label="Verifications pending"
+                label="IDs awaiting review"
                 value={kpis?.pendingVerifications ?? 0}
                 tone="warning"
-                onClick={() => navigate(adminPath('/agent_verifications'))}
+                onClick={() => navigate(adminPath('/agent_identity_verifications'))}
                 loading={loading}
               />
               <AttentionRow

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { supabase } from '@/lib/supabase'
+import { agentLandingRoute } from '@/lib/identity'
 import { Database } from '@/types/supabase'
 import { useNavigate } from 'react-router-dom'
 import { setUser as setSentryUser } from '@/lib/sentry'
@@ -365,7 +366,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Fetch profile and navigate based on role
         await fetchProfile(data.user.id, true)
         const userRole = data.user.user_metadata?.role
-        const targetRoute = (userRole === 'agent' || userRole === 'landlord') ? '/agent' : '/user'
+        // New agents and landlords go to the ID step first (it offers "Do this later").
+        const targetRoute = (userRole === 'agent' || userRole === 'landlord') ? await agentLandingRoute() : '/user'
         navigate(targetRoute)
       }
     } catch (err: any) {

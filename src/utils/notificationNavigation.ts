@@ -42,7 +42,9 @@ export function getNavigationState() {
 }
 
 export interface NotificationData {
-  type: 'chat' | 'reservation' | 'property' | 'deal';
+  type: 'chat' | 'reservation' | 'property' | 'deal' | 'identity';
+  kind?: string;
+  identityId?: string;
   dealId?: string;
   messageId?: string;
   senderId?: string;
@@ -105,6 +107,12 @@ export function handleNotificationNavigation(data: NotificationData, currentUser
 
   try {
     switch (data.type) {
+      case 'identity':
+        if (data.kind === 'identity_review' && data.identityId) {
+          const base = ['admin.propellacam.com', 'admin.propella.cm', 'admin.propella.com'].includes(window.location.hostname) ? '' : '/admin';
+          router.push(`${base}/agent_identity_verifications/${encodeURIComponent(data.identityId)}`);
+        } else if (data.kind === 'identity_decision') router.push('/agent/identity');
+        break;
       case 'deal':
         router.push(userRole === 'agent' || userRole === 'landlord' ? '/agent/deals' : '/user/deals');
         break;
