@@ -25,7 +25,11 @@ interface AuthContextProps {
   resendVerificationCode: (email: string, mode?: string) => Promise<void>
 }
 
-const AuthContext = createContext<AuthContextProps | undefined>(undefined)
+// Keep providers and consumers on the same context during Vite Fast Refresh.
+// A reload can otherwise replace the context while the old provider is mounted.
+const AuthContext = (import.meta.hot?.data.authContext as React.Context<AuthContextProps | undefined> | undefined)
+  ?? createContext<AuthContextProps | undefined>(undefined)
+if (import.meta.hot) import.meta.hot.data.authContext = AuthContext
 
 const profileCache = new Map<string, { data: Profile; timestamp: number }>()
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
@@ -238,7 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Soft delete: anonymise PII, matching the mobile app's deleteAccount.
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ full_name: 'Deleted User', email: null, phone: null, avatar_url: null, bio: null })
+        .update({ full_name: 'Deleted User', email: `deleted-${user.id}@account.invalid`, phone: null, avatar_url: null, bio: null })
         .eq('id', user.id)
       if (profileError) throw profileError
       await supabase.auth.signOut()
