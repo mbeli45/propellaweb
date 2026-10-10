@@ -34,7 +34,7 @@ export default function ProfileIdentity() {
           state={state}
           onChange={setState}
           onRetry={() => void refresh()}
-          onDone={() => navigate('/agent/property/add', { replace: true })}
+          onDone={() => navigate('/agent', { replace: true })}
           later={onboarding ? { label: t('identity.later'), onClick: () => navigate('/agent', { replace: true }) } : undefined}
         />
       )}

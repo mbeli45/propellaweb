@@ -6,7 +6,7 @@ import { useIdentityGate } from '@/hooks/useIdentityGate'
 import { PageHeader, ReservationsPage } from '@/components/reservations/ReservationUI'
 import { IdentityStep } from './IdentityStep'
 
-/** New accounts submit their ID before the first listing; the wrapped page opens once it is sent. */
+/** ID submission returns to the dashboard; a later visit can open the wrapped page. */
 export function IdentityGate({ children }: { children: React.ReactNode }) {
   const { t } = useLanguage()
   const navigate = useNavigate()
@@ -26,7 +26,7 @@ export function IdentityGate({ children }: { children: React.ReactNode }) {
   return (
     <ReservationsPage label={t('identity.title')} narrow>
       <PageHeader title={t('identity.title')} subtitle={t('identity.subtitle')} onBack={() => navigate(-1)} backLabel={t('common.back')} />
-      <IdentityStep state={state} onChange={setState} onDone={() => {}} onRetry={() => void refresh()} lead={t('identity.gateLead')} />
+      <IdentityStep state={state} onChange={setState} onDone={() => navigate('/agent', { replace: true })} onRetry={() => void refresh()} lead={t('identity.gateLead')} />
     </ReservationsPage>
   )
 }

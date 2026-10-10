@@ -1864,6 +1864,7 @@
     "continue": "Continue without it"
   },
   "identity": {
+    "dashboard": "Go to dashboard",
     "businessTitle": "Business verification (optional)",
     "title": "Verify your identity",
     "subtitle": "One quick step before your first listing.",

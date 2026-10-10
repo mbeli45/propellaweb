@@ -46,7 +46,7 @@ export function IdentityStep({
         icon={ShieldCheck}
         title={stage === 'review' ? t('identity.receivedTitle') : t('identity.clearTitle')}
         body={stage === 'review' ? t('identity.receivedBody') : t('identity.clearBody')}
-        action={{ label: t('identity.addListing'), onClick: onDone }}
+        action={{ label: t('identity.dashboard'), onClick: onDone }}
       />
     )
   }
