@@ -139,7 +139,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
       })
 
-      if (signInError) throw signInError
+      if (signInError) {
+        if (signInError.code === 'email_not_confirmed' || signInError.message?.includes('Email not confirmed')) {
+          navigate(`/auth/verify?email=${encodeURIComponent(email.trim().toLowerCase())}&resend=1`, { replace: true })
+        }
+        throw signInError
+      }
       if (data.user) {
         // Fetch the profile first
         const { data: profile, error: profileError } = await supabase
@@ -158,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(profileData)
 
         // Navigate based on role - use queueMicrotask to ensure state update is processed
-        const targetRoute = (profileData.role === 'agent' || profileData.role === 'landlord') ? '/agent' : '/user'
+        const targetRoute = (profileData.role === 'agent' || profileData.role === 'landlord') ? await agentLandingRoute() : '/user'
         
         // Use queueMicrotask to allow React to process the state update before navigation
         queueMicrotask(() => {

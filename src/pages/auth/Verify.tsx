@@ -11,14 +11,14 @@ export default function Verify() {
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [resendTimeLeft, setResendTimeLeft] = useState(300)
+  const [searchParams] = useSearchParams()
+  const [resendTimeLeft, setResendTimeLeft] = useState(searchParams.get('resend') === '1' ? 0 : 300)
   const [email, setEmail] = useState('')
   const { verifyOTP, resendVerificationCode } = useAuth()
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
   const Colors = getColors(colorScheme)
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const isResetMode = useMemo(() => {
@@ -112,10 +112,11 @@ export default function Verify() {
     if (resendTimeLeft > 0) return
 
     setError(null)
+    setResendTimeLeft(300)
     try {
       await resendVerificationCode(email, isResetMode ? 'reset' : 'verify')
-      setResendTimeLeft(300)
     } catch (err: any) {
+      setResendTimeLeft(0)
       setError(err.message || t('verify.resendFailed'))
     }
   }, [resendTimeLeft, email, isResetMode, resendVerificationCode, t])

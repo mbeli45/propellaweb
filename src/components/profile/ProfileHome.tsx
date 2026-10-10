@@ -155,10 +155,11 @@ export default function ProfileHome({ workspace }: { workspace: 'user' | 'agent'
 
       <SettingsGroup title={t('profileMenu.account')}>
         <SettingsRow icon={UserIcon} label={t('profileMenu.editProfile')} onClick={() => navigate(`${base}/profile/settings`)} />
+        {isAgent && <SettingsRow icon={Shield} label={t('identity.title')} onClick={() => navigate('/agent/identity')} />}
         {isAgent && (
           <SettingsRow
             icon={Shield}
-            label={t('profile.verification')}
+            label={t('identity.businessTitle')}
             value={isVerified ? t('profileMenu.verified') : t('profileMenu.notVerified')}
             onClick={() => navigate('/agent/profile/verification')}
           />

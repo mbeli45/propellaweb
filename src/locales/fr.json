@@ -1857,6 +1857,7 @@
     "continue": "Continuer sans"
   },
   "identity": {
+    "businessTitle": "Vérification professionnelle (facultative)",
     "title": "Vérifiez votre identité",
     "subtitle": "Une étape rapide avant votre première annonce.",
     "gateLead": "Avant votre première annonce, ajoutez une photo de votre pièce d'identité. Cela protège les locataires et les acheteurs sur Propella.",

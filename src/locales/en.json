@@ -1864,6 +1864,7 @@
     "continue": "Continue without it"
   },
   "identity": {
+    "businessTitle": "Business verification (optional)",
     "title": "Verify your identity",
     "subtitle": "One quick step before your first listing.",
     "gateLead": "Before your first listing, add a photo of your ID. It keeps Propella safe for renters and buyers.",
