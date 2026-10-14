@@ -35,7 +35,8 @@ export function useIdentityGate() {
     void refresh()
     const onFocus = () => void refresh()
     window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
+    const timer = window.setInterval(() => { if (document.visibilityState === 'visible') void refresh() }, 30000)
+    return () => { window.removeEventListener('focus', onFocus); window.clearInterval(timer) }
   }, [refresh])
 
   return { state, setState, loading, refresh, stage: identityStage(state) }

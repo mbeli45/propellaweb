@@ -22,7 +22,7 @@ export type Database = {
         Update: Record<string, never>;
         Relationships: [];
       }
-      agent_identity_verifications: { Row: { id: string; agent_id: string; id_document_front_url: string | null; id_document_back_url: string | null;
+      agent_identity_verifications: { Row: { selfie_with_id_url: string | null; selfie_required: boolean; id: string; agent_id: string; id_document_front_url: string | null; id_document_back_url: string | null;
  verification_status: 'pending' | 'documents_review' | 'approved' | 'rejected'; submitted_at: string | null;
  submission_version: number; verified_by: string | null; verified_at: string | null; rejection_reason: string | null;
  created_at: string; updated_at: string; }; Insert: Record<string, never>; Update: Record<string, never>; Relationships: [{ foreignKeyName: 'agent_identity_verifications_agent_id_fkey'; columns: ['agent_id']; isOneToOne: true; referencedRelation: 'profiles'; referencedColumns: ['id'] }, { foreignKeyName: 'agent_identity_verifications_verified_by_fkey'; columns: ['verified_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] }] }

@@ -105,20 +105,20 @@ function IdentityDetail() {
     <DetailHero eyebrow="Agent identity" title={<AgentName />} badges={<StatusChip value={r.verification_status} />}
       meta={<><MetaItem label="Submitted" value={r.submitted_at ? new Date(r.submitted_at).toLocaleString() : 'Not submitted'} />
         <MetaItem label="Reviewed" value={r.verified_at ? new Date(r.verified_at).toLocaleString() : 'Not reviewed'} /></>} />
-    <DetailSection title="ID documents" description="Check both sides for legibility and confirm the identity matches the agent. Business documents and payment are not required for this decision.">
-      <DetailGrid cols={2}><IdentityDocument label="ID front" path={r.id_document_front_url} /><IdentityDocument label="ID back" path={r.id_document_back_url} /></DetailGrid>
+    <DetailSection title="ID documents" description="Check both sides for legibility and compare the face and ID with the photo of the agent holding their ID. Business documents and payment are not required for this decision.">
+      <DetailGrid cols={2}><IdentityDocument label="ID front" path={r.id_document_front_url} /><IdentityDocument label="ID back" path={r.id_document_back_url} /><IdentityDocument label="Photo holding ID" path={r.selfie_with_id_url} /></DetailGrid>
     </DetailSection>
     {r.rejection_reason && <DetailSection title="Reason for rejection"><Typography>{r.rejection_reason}</Typography></DetailSection>}
     <DetailSection title="Identity decision" description="Approval publishes available listings automatically. Rejection hides this agent's listings unless their account is exempt as an existing agent.">
       {canReview ? <Stack spacing={2}>
-        <label><input type="checkbox" checked={checked} onChange={e => setChecked(e.target.checked)} /> I have reviewed both sides of this ID.</label>
+        <label><input type="checkbox" checked={checked} onChange={e => setChecked(e.target.checked)} /> I have reviewed the ID documents and the holding-ID photo (if required).</label>
         <label htmlFor="identity-review-note">Review note (required for rejection)</label>
         <Textarea id="identity-review-note" value={note} onChange={e => setNote(e.target.value)} rows={3} maxLength={2000} />
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-          {r.verification_status === 'documents_review' && <Button disabled={busy || !checked || !r.id_document_front_url || !r.id_document_back_url} onClick={() => void review('approved')}>Approve ID and publish listings</Button>}
+          {r.verification_status === 'documents_review' && <Button disabled={busy || !checked || !r.id_document_front_url || !r.id_document_back_url || (r.selfie_required && !r.selfie_with_id_url)} onClick={() => void review('approved')}>Approve ID and publish listings</Button>}
           <Button variant="destructive" disabled={busy || !checked || note.trim().length < 3} onClick={() => void review('rejected')}>{r.verification_status === 'approved' ? 'Withdraw approval' : 'Reject ID'}</Button>
         </Box>
-      </Stack> : <Typography>{r.verification_status === 'rejected' ? 'Waiting for corrected documents and a new submission.' : 'The agent has not submitted both ID documents yet.'}</Typography>}
+      </Stack> : <Typography>{r.verification_status === 'rejected' ? 'Waiting for corrected documents and a new submission.' : 'The agent has not submitted all required identity photos yet.'}</Typography>}
     </DetailSection>
     <DetailSection title="Review history">
       <ReferenceManyField reference="agent_identity_review_events" target="identity_id" sort={{ field: 'created_at', order: 'DESC' }}>

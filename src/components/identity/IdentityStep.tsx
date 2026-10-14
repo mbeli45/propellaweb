@@ -9,7 +9,7 @@ import './IdentityStep.css'
 
 /**
  * The ID check new agents and landlords complete before their first listing:
- * both sides of an ID, then Submit. Posting opens right away; listings show to
+ * both sides of an ID and a photo holding it, then Submit. Posting opens right away; listings show to
  * clients once the team approves the ID.
  */
 export function IdentityStep({
@@ -52,7 +52,7 @@ export function IdentityStep({
   }
 
   const userId = user?.id || ''
-  const store = (side: 'front' | 'back') => async (file: File) => {
+  const store = (side: 'front' | 'back' | 'selfie') => async (file: File) => {
     const path = await uploadIdentityDocument(userId, side, file, file.type, file.size)
     onChange(await identityCommand('save', side, path))
     return path
@@ -69,7 +69,7 @@ export function IdentityStep({
       setSubmitting(false)
     }
   }
-  const ready = !!state?.front && !!state?.back
+  const ready = !!state?.front && !!state?.back && !!state?.selfie
 
   return (
     <div className="idv-step">
@@ -90,6 +90,7 @@ export function IdentityStep({
             value={state?.front ? 'uploaded' : ''}
             onChange={() => {}}
             onBusy={setUploading}
+            disabled={uploading || submitting}
             store={store('front')}
           />
           <DocumentUploadRow
@@ -98,7 +99,19 @@ export function IdentityStep({
             value={state?.back ? 'uploaded' : ''}
             onChange={() => {}}
             onBusy={setUploading}
+            disabled={uploading || submitting}
             store={store('back')}
+          />
+          <p className="av-note">{t('identity.selfieHint')}</p>
+          <DocumentUploadRow
+            userId={userId}
+            field={{ key: 'identity_selfie', label: t('identity.selfie'), type: 'file' }}
+            value={state?.selfie ? 'uploaded' : ''}
+            onChange={() => {}}
+            onBusy={setUploading}
+            disabled={uploading || submitting || !state?.front || !state?.back}
+            photoOnly
+            store={store('selfie')}
           />
           <p className="av-note">{t('identity.privateNote')}</p>
         </div>
@@ -114,7 +127,7 @@ export function IdentityStep({
 
       <div className="rsv-actions">
         <CardButton label={t('identity.submit')} tone="primary" onClick={submit} disabled={!ready || uploading} busy={submitting} />
-        {later && <CardButton label={later.label} tone="neutral" onClick={later.onClick} disabled={submitting} />}
+        {later && <CardButton label={later.label} tone="neutral" onClick={later.onClick} disabled={submitting || uploading} />}
       </div>
     </div>
   )

@@ -51,8 +51,12 @@ export function DocumentUploadRow({
   value,
   onChange,
   onBusy,
+  disabled = false,
+  photoOnly = false,
   store = (file) => uploadAgencyDocument(userId, field.key, file, file.type, file.size),
 }: {
+  disabled?: boolean
+  photoOnly?: boolean
   userId: string
   field: Field
   value: string
@@ -104,9 +108,9 @@ export function DocumentUploadRow({
         ref={inputRef}
         id={inputId}
         type="file"
-        accept="application/pdf,image/jpeg,image/png"
+        accept={photoOnly ? "image/jpeg,image/png" : "application/pdf,image/jpeg,image/png"}
         className="av-doc-input"
-        disabled={busy}
+        disabled={busy || disabled}
         onChange={(e) => {
           const file = e.target.files?.[0]
           if (file) void upload(file)
@@ -115,7 +119,7 @@ export function DocumentUploadRow({
       <button
         type="button"
         className={`av-doc-btn${uploaded ? ' is-done' : ''}`}
-        disabled={busy}
+        disabled={busy || disabled}
         aria-label={`${uploaded ? t('agencyVerify.replace') : t('agencyVerify.upload')}: ${label}`}
         onClick={() => inputRef.current?.click()}
       >

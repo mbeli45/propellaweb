@@ -176,6 +176,22 @@ export default function AgentListings() {
         action={{ label: t('agent.addProperty'), icon: Plus, onClick: () => navigate('/property/add') }}
       />
 
+      {identity.stage === 'needed' ? (
+        <Banner
+          icon={ShieldCheck}
+          title={identity.state?.status === 'rejected' ? t('identity.progressRejected') : t('identity.progressTitle')}
+          body={identity.state?.status === 'rejected' ? identity.state?.rejection_reason || t('identity.rejectedBody') : t('identity.bannerBody')}
+          attention={identity.state?.status === 'rejected' ? t('identity.needsYou') : undefined}
+          primary={{ label: t('identity.verifyCta'), onClick: () => navigate('/agent/identity') }}
+        />
+      ) : identity.stage === 'review' ? (
+        <Banner icon={ShieldCheck} title={t('identity.progressReview')} body={t('identity.underReview')}
+          primary={{ label: t('identity.statusAction'), onClick: () => navigate('/agent/identity') }} />
+      ) : !identity.loading && identity.stage === 'unavailable' ? (
+        <Banner icon={ShieldCheck} title={t('identity.unavailableTitle')} body={t('identity.unavailableBody')}
+          primary={{ label: t('identity.retry'), onClick: () => void identity.refresh() }} />
+      ) : null}
+
       <StatStrip
         items={[
           { label: t('agentDashboard.listings'), value: total },
@@ -184,18 +200,6 @@ export default function AgentListings() {
           { label: t('agent.statBookings'), value: agentReservations?.length || 0, onClick: () => navigate('/agent/reservations') },
         ]}
       />
-
-      {identity.stage === 'needed' ? (
-        <Banner
-          icon={ShieldCheck}
-          title={identity.state?.status === 'rejected' ? t('identity.rejectedTitle') : t('identity.bannerTitle')}
-          body={identity.state?.status === 'rejected' ? identity.state?.rejection_reason || t('identity.rejectedBody') : t('identity.bannerBody')}
-          attention={identity.state?.status === 'rejected' ? t('identity.needsYou') : undefined}
-          primary={{ label: t('identity.verifyCta'), onClick: () => navigate('/agent/identity') }}
-        />
-      ) : identity.stage === 'review' ? (
-        <Hint text={t('identity.underReview')} />
-      ) : null}
 
       <div className="ds-shortcuts">
         <CardButton label={t('reservations.dealsButton')} icon={HeartHandshake} tone="neutral" onClick={() => navigate('/agent/deals')} />

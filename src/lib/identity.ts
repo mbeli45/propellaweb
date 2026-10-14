@@ -6,6 +6,10 @@ export interface IdentityState {
   /** False for accounts created before the check existed, and for admins. */
   required: boolean
   front: boolean
+  selfie: boolean;
+  selfie_required?: boolean;
+  submitted_at?: string | null;
+  reviewed_at?: string | null;
   back: boolean
   submitted: boolean
   status: 'missing' | 'pending' | 'documents_review' | 'approved' | 'rejected'
@@ -21,16 +25,19 @@ export type IdentityStage = 'clear' | 'needed' | 'review' | 'unavailable'
 export const identityStage = (s: IdentityState | null): IdentityStage =>
   !s ? 'unavailable' : !s.required || s.status === 'approved' ? 'clear' : s.can_post ? 'review' : 'needed'
 
-export async function identityCommand(action: 'status' | 'save' | 'submit', side?: 'front' | 'back', path?: string) {
+export async function identityCommand(action: 'status' | 'save' | 'submit', side?: 'front' | 'back' | 'selfie', path?: string) {
   const { data, error } = await dealDb.rpc('identity_verification', { p_action: action, p_side: side ?? null, p_path: path ?? null })
   if (error) throw error
   return data as IdentityState
 }
 
 /** Uploads one side of the ID to the private bucket and returns its storage path. */
-export async function uploadIdentityDocument(userId: string, side: 'front' | 'back', body: Blob | ArrayBuffer, mime: string, size: number) {
+export async function uploadIdentityDocument(userId: string, side: 'front' | 'back' | 'selfie', body: Blob | ArrayBuffer, mime: string, size: number) {
   if (!['application/pdf', 'image/jpeg', 'image/png'].includes(mime) || size <= 0 || size > 10485760) {
     throw new Error('Choose a PDF, JPG or PNG file no larger than 10 MB.')
+  }
+  if (side === 'selfie' && !['image/jpeg', 'image/png'].includes(mime)) {
+    throw new Error('Choose a JPG or PNG photo no larger than 10 MB.');
   }
   const extension = mime === 'application/pdf' ? 'pdf' : mime === 'image/png' ? 'png' : 'jpg'
   const path = `${userId}/${side}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`
