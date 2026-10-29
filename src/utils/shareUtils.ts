@@ -64,20 +64,6 @@ export const createPropertyUrl = (property: PropertyData): string => {
 }
 
 /**
- * Creates a deep link URL
- */
-export const createDeepLinkUrl = (property: PropertyData): string => {
-  return createPropertyUrl(property)
-}
-
-/**
- * Creates a web share URL
- */
-export const createWebShareUrl = (property: PropertyData): string => {
-  return `https://propellacam.com/functions/v1/share-property?id=${property.id}`
-}
-
-/**
  * Creates a share message for a property
  */
 export const createPropertyShareMessage = (property: PropertyData): string => {
