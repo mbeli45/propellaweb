@@ -37,3 +37,6 @@ dist-ssr
 .mcp/
 **/mcp.json
 .cursor/mcp.json
+
+# Local validation tools, previews and logs
+.tmp/
