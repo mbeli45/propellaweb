@@ -742,6 +742,9 @@ export type Database = {
           rent_period: string | null
           reservation_fee: number | null
           status: string | null
+          stay_kind: string | null
+          check_in_time: string | null
+          check_out_time: string | null
           title: string
           town: string | null
           total_reviews: number | null
@@ -782,6 +785,9 @@ export type Database = {
           property_type?: string | null
           reservation_fee?: number | null
           status?: string | null
+          stay_kind?: string | null
+          check_in_time?: string | null
+          check_out_time?: string | null
           title: string
           town?: string | null
           total_reviews?: number | null
@@ -822,6 +828,9 @@ export type Database = {
           property_type?: string | null
           reservation_fee?: number | null
           status?: string | null
+          stay_kind?: string | null
+          check_in_time?: string | null
+          check_out_time?: string | null
           title?: string
           town?: string | null
           total_reviews?: number | null

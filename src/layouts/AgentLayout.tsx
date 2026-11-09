@@ -11,6 +11,10 @@ import AgentWallet from '@/pages/agent/Wallet'
 import AgentProfile from '@/pages/agent/Profile'
 import AgentAnalytics from '@/pages/agent/Analytics'
 import Deals from '@/pages/Deals'
+import HostStays from '@/pages/stays/HostStays'
+import ManageStay from '@/pages/stays/ManageStay'
+import MyStays from '@/pages/stays/MyStays'
+import BookStay from '@/pages/stays/BookStay'
 import UserSaved from '@/pages/user/Saved'
 import ChatDetail from '@/pages/chat/[id]'
 import PropertyDetail from '@/pages/property/[id]'
@@ -56,6 +60,10 @@ export default function AgentLayout() {
             <Route path="wallet" element={<AgentWallet />} />
             <Route path="analytics" element={<AgentAnalytics />} />
             <Route path="deals" element={<Deals workspace="agent" />} />
+            <Route path="stays" element={<HostStays />} />
+            <Route path="stays/manage/:id" element={<ManageStay />} />
+            <Route path="stays/my" element={<MyStays />} />
+            <Route path="stays/book/:id" element={<BookStay />} />
             <Route path="saved" element={<UserSaved />} />
             <Route path="profile" element={<AgentProfile />} />
             <Route path="profile/settings" element={<ProfileSettings />} />

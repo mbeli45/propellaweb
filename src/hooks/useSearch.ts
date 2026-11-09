@@ -9,7 +9,7 @@ import { propertyVisibilityFilter } from '@/lib/propertyVisibility';
 
 type Property = Database['public']['Tables']['properties']['Row'];
 type SearchFilters = {
-  type?: 'rent' | 'sale';
+  type?: 'rent' | 'sale' | 'stay';
   category?: string[];
   propertyType?: string[];
   minPrice?: number;
@@ -177,7 +177,7 @@ export function useSearch() {
         image: property.images && property.images.length > 0 
           ? property.images[0] 
           : 'https://via.placeholder.com/400x300?text=No+Image',
-        type: property.type as 'rent' | 'sale',
+        type: property.type as 'rent' | 'sale' | 'stay',
         bedrooms: property.bedrooms ?? undefined,
         bathrooms: property.bathrooms ?? undefined,
         area: property.area ?? undefined,

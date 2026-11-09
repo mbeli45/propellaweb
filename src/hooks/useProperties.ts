@@ -7,7 +7,7 @@ import { propertyVisibilityFilter } from '@/lib/propertyVisibility';
 
 interface FilterOptions {
   category?: string[];
-  type?: 'rent' | 'sale';
+  type?: 'rent' | 'sale' | 'stay';
   status?: 'available' | 'reserved' | 'sold';
   limit?: number;
 }
@@ -87,7 +87,7 @@ export function useProperties(userId: string) {
         location: property.location,
         town: property.town || undefined,
         availability_confirmed_at: property.availability_confirmed_at ?? undefined,
-        type: property.type as 'rent' | 'sale',
+        type: property.type as 'rent' | 'sale' | 'stay',
         property_type: property.property_type || undefined,
         category: property.category as 'budget' | 'standard' | 'premium' | 'luxury',
         bedrooms: property.bedrooms || undefined,
@@ -285,7 +285,7 @@ export function useAllPropertiesBase(filters?: FilterOptions) {
         location: property.location,
         town: property.town || undefined,
         availability_confirmed_at: property.availability_confirmed_at ?? undefined,
-        type: property.type as 'rent' | 'sale',
+        type: property.type as 'rent' | 'sale' | 'stay',
         property_type: property.property_type || undefined,
         category: property.category as 'budget' | 'standard' | 'premium' | 'luxury',
         bedrooms: property.bedrooms || undefined,
@@ -385,6 +385,9 @@ export function useProperty(propertyId: string) {
           rent_period,
           advance_months_min,
           advance_months_max,
+          stay_kind,
+          check_in_time,
+          check_out_time,
           owner_id,
           created_at,
           profiles!properties_owner_id_fkey!inner (
@@ -410,7 +413,7 @@ export function useProperty(propertyId: string) {
         location: data.location,
         town: data.town || undefined,
         availability_confirmed_at: data.availability_confirmed_at ?? undefined,
-        type: data.type as 'rent' | 'sale',
+        type: data.type as 'rent' | 'sale' | 'stay',
         category: data.category as 'budget' | 'standard' | 'premium' | 'luxury',
         bedrooms: data.bedrooms || undefined,
         bathrooms: data.bathrooms || undefined,
@@ -428,6 +431,9 @@ export function useProperty(propertyId: string) {
         rent_period: data.rent_period as 'monthly' | 'yearly' | null | undefined,
         advance_months_min: data.advance_months_min || undefined,
         advance_months_max: data.advance_months_max || undefined,
+        stay_kind: data.stay_kind ?? null,
+        check_in_time: data.check_in_time ?? null,
+        check_out_time: data.check_out_time ?? null,
         isVerified: !!data.profiles?.is_verified_agent,
         owner_id: data.owner_id, // Add owner_id for owner check
         owner: data.profiles ? {
@@ -461,7 +467,7 @@ export function useProperty(propertyId: string) {
   return { property, loading, error, refetch: fetchProperty };
 }
 
-export function useSimilarProperties(currentPropertyId: string, category?: string, type?: 'rent' | 'sale', limit: number = 3) {
+export function useSimilarProperties(currentPropertyId: string, category?: string, type?: 'rent' | 'sale' | 'stay', limit: number = 3) {
   const [properties, setProperties] = useState<PropertyData[]>([]);
   const [loading, setLoading] = useState(false); // Start as false since this is secondary data
   const [error, setError] = useState<string | null>(null);
@@ -533,7 +539,7 @@ export function useSimilarProperties(currentPropertyId: string, category?: strin
         location: property.location,
         town: property.town || undefined,
         availability_confirmed_at: property.availability_confirmed_at ?? undefined,
-        type: property.type as 'rent' | 'sale',
+        type: property.type as 'rent' | 'sale' | 'stay',
         category: property.category as 'budget' | 'standard' | 'premium' | 'luxury',
         bedrooms: property.bedrooms || undefined,
         bathrooms: property.bathrooms || undefined,
@@ -724,7 +730,7 @@ export function useHomeProperties() {
         location: property.location,
         town: property.town || undefined,
         availability_confirmed_at: property.availability_confirmed_at ?? undefined,
-        type: property.type as 'rent' | 'sale',
+        type: property.type as 'rent' | 'sale' | 'stay',
         property_type: property.property_type || undefined,
         category: property.category as 'budget' | 'standard' | 'premium' | 'luxury',
         bedrooms: property.bedrooms || undefined,
@@ -759,7 +765,7 @@ export function useHomeProperties() {
         location: property.location,
         town: property.town || undefined,
         availability_confirmed_at: property.availability_confirmed_at ?? undefined,
-        type: property.type as 'rent' | 'sale',
+        type: property.type as 'rent' | 'sale' | 'stay',
         property_type: property.property_type || undefined,
         category: property.category as 'budget' | 'standard' | 'premium' | 'luxury',
         bedrooms: property.bedrooms || undefined,

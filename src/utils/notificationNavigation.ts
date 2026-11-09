@@ -42,7 +42,8 @@ export function getNavigationState() {
 }
 
 export interface NotificationData {
-  type: 'chat' | 'reservation' | 'property' | 'deal' | 'identity';
+  type: 'chat' | 'reservation' | 'property' | 'deal' | 'identity' | 'stay';
+  audience?: 'host' | 'guest';
   kind?: string;
   identityId?: string;
   dealId?: string;
@@ -113,6 +114,13 @@ export function handleNotificationNavigation(data: NotificationData, currentUser
           router.push(`${base}/agent_identity_verifications/${encodeURIComponent(data.identityId)}`);
         } else if (data.kind === 'identity_decision') router.push('/agent/identity');
         break;
+      case 'stay': {
+        // Hosts get requests and guest cancellations; guests get replies.
+        const isHost = userRole === 'agent' || userRole === 'landlord';
+        const audience = data.audience;
+        router.push(audience === 'host' && isHost ? '/agent/stays' : `${isHost ? '/agent' : '/user'}/stays/my`);
+        break;
+      }
       case 'deal':
         router.push(userRole === 'agent' || userRole === 'landlord' ? '/agent/deals' : '/user/deals');
         break;

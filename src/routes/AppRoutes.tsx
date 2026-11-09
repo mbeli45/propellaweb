@@ -10,6 +10,7 @@ import AuthLayout from '@/layouts/AuthLayout'
 import LoadingScreen from '@/components/LoadingScreen'
 import Landing from '@/pages/Landing'
 import PropertyDetail from '@/pages/property/[id]'
+import BookStay from '@/pages/stays/BookStay'
 import AddProperty from '@/pages/property/add'
 import { IdentityGate } from '@/components/identity/IdentityGate'
 import EditProperty from '@/pages/property/edit/[id]'
@@ -84,6 +85,7 @@ function AppRoutes() {
 
       {/* Property routes (accessible to all) */}
       <Route path="/property/:id" element={<PropertyDetail />} />
+      <Route path="/stays/book/:id" element={<BookStay />} />
       <Route path="/property/add" element={user?.role === 'agent' || user?.role === 'landlord' ? <IdentityGate><AddProperty /></IdentityGate> : <Navigate to="/auth/login" />} />
       <Route path="/property/edit/:id" element={user?.role === 'agent' || user?.role === 'landlord' ? <EditProperty /> : <Navigate to="/auth/login" />} />
       

@@ -27,6 +27,7 @@ import { PropertyViewList } from './resources/PropertyViews';
 // import StorageMigrationPage from './pages/StorageMigration';
 import Dashboard from './pages/Dashboard';
 import UserSignupStats from './pages/UserSignupStats';
+import StaySettings from './pages/StaySettings';
 import Deals from '../pages/Deals';
 
 // Menu icons - Using Lucide and Heroicons for better design
@@ -69,6 +70,7 @@ const AdminApp = () => {
       <CustomRoutes>
         <Route path="/deals" element={<Deals workspace="admin" />} />
         <Route path="/signup-stats" element={<UserSignupStats />} />
+        <Route path="/stays" element={<StaySettings />} />
       </CustomRoutes>
       <Resource
         name="properties"

@@ -8,7 +8,7 @@ export const transformPropertyData = (property: any): PropertyData => {
     description: property.description || undefined,
     price: property.price,
     location: property.location,
-    type: property.type as 'rent' | 'sale',
+    type: property.type as 'rent' | 'sale' | 'stay',
     category: property.category as 'budget' | 'standard' | 'premium' | 'luxury',
     bedrooms: property.bedrooms || undefined,
     bathrooms: property.bathrooms || undefined,

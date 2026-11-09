@@ -35,7 +35,7 @@ interface AgentProperty {
   location: string;
   town?: string;
   availability_confirmed_at?: string | null;
-  type: 'rent' | 'sale';
+  type: 'rent' | 'sale' | 'stay';
   category: 'budget' | 'standard' | 'premium' | 'luxury';
   bedrooms?: number;
   bathrooms?: number;

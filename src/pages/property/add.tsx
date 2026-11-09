@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { STAY_KINDS, StayKind } from '@/lib/stays'
 import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
@@ -23,7 +24,11 @@ interface PropertyFormData {
   price: string
   location: string
   town?: string // Town/city where property is located
-  type: 'rent' | 'sale'
+  type: 'rent' | 'sale' | 'stay'
+  /** Stays only. */
+  stayKind?: StayKind
+  checkInTime?: string
+  checkOutTime?: string
   category: 'budget' | 'standard' | 'premium' | 'luxury'
   propertyType: 'single_room' | 'apartment' | 'studio' | 'shop' | 'land' | 'house'
   bedrooms: string
@@ -52,6 +57,7 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
   const { t } = useLanguage()
   const Colors = getColors(colorScheme)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { uploadMultipleImages, uploading } = useStorage()
 
   // Redirect if user is not an agent/landlord (stable deps — avoid reruns when auth object identity changes)
@@ -81,6 +87,9 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
         rentPeriod: initialData.rent_period || 'yearly',
         advance_months_min: initialData.advance_months_min?.toString() || '',
         advance_months_max: initialData.advance_months_max?.toString() || '',
+        stayKind: initialData.stay_kind || 'hotel',
+        checkInTime: initialData.check_in_time?.slice(0, 5) || '14:00',
+        checkOutTime: initialData.check_out_time?.slice(0, 5) || '11:00',
       })
       setExistingImages(initialData.images || [])
     }
@@ -91,7 +100,7 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
     description: '',
     price: '',
     location: '',
-    type: 'rent',
+    type: searchParams.get('type') === 'stay' ? 'stay' : 'rent',
     category: 'budget',
     propertyType: 'apartment',
     bedrooms: '',
@@ -100,6 +109,9 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
     images: [],
     reservationFee: '10000', // Default site visit fee
     rentPeriod: 'yearly',
+    stayKind: 'hotel',
+    checkInTime: '14:00',
+    checkOutTime: '11:00',
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -119,7 +131,8 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
 
   // Auto-set site visit fee based on type (skip if already correct to avoid extra renders)
   useEffect(() => {
-    const nextFee = form.type === 'rent' ? '10000' : '15000'
+    // Stays are booked by the night, not visited.
+    const nextFee = form.type === 'stay' ? '0' : form.type === 'rent' ? '10000' : '15000'
     setForm((prev) => (prev.reservationFee === nextFee ? prev : { ...prev, reservationFee: nextFee }))
   }, [form.type])
 
@@ -252,7 +265,8 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
         : newImageUrls
 
       // Determine category based on price if not set
-      const priceNum = parseFloat(form.price) || 0
+      // Stays are priced per night; compare them on a 30-night basis.
+      const priceNum = (parseFloat(form.price) || 0) * (form.type === 'stay' ? 30 : 1)
       let category = form.category
       if (!category || category === 'budget') {
         if (priceNum >= 10000000) category = 'luxury'
@@ -272,7 +286,10 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
         town: resolveTown(form.town, form.location) || form.town?.trim() || null,
         type: form.type,
         category,
-        property_type: form.propertyType,
+        property_type: form.type === 'stay' ? null : form.propertyType,
+        stay_kind: form.type === 'stay' ? form.stayKind || 'hotel' : null,
+        check_in_time: form.type === 'stay' && /^([01]?\d|2[0-3]):[0-5]\d$/.test(form.checkInTime || '') ? form.checkInTime : form.type === 'stay' ? '14:00' : null,
+        check_out_time: form.type === 'stay' && /^([01]?\d|2[0-3]):[0-5]\d$/.test(form.checkOutTime || '') ? form.checkOutTime : form.type === 'stay' ? '11:00' : null,
         bedrooms: form.bedrooms ? parseInt(form.bedrooms) : null,
         bathrooms: form.bathrooms ? parseInt(form.bathrooms) : null,
         area: form.area ? parseFloat(form.area) : null,
@@ -315,6 +332,9 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
         setError(null)
         if (data?.owner_review_pending) {
           navigate('/agent', { state: { identityListingSaved: true } })
+        } else if (data?.id && form.type === 'stay') {
+          // Next step for a stay: add rooms and set availability.
+          navigate(`/agent/stays/manage/${data.id}?tab=rooms`)
         } else if (data?.id) {
           navigate(`/property/${data.id}`)
         } else {
@@ -595,9 +615,28 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
               >
                 {t('property.sale') || 'For Sale'}
               </button>
+              <button
+                type="button"
+                onClick={() => handleInputChange('type', 'stay')}
+                style={{
+                  flex: 1,
+                  padding: '12px 20px',
+                  borderRadius: '24px',
+                  border: `2px solid ${form.type === 'stay' ? Colors.primary[600] : Colors.neutral[300]}`,
+                  backgroundColor: form.type === 'stay' ? Colors.primary[600] : (colorScheme === 'dark' ? Colors.neutral[200] : Colors.white),
+                  color: form.type === 'stay' ? '#FFFFFF' : Colors.neutral[700],
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {t('stays.typeLabel')}
+              </button>
             </div>
           </div>
 
+          {form.type !== 'stay' && (
           <div className="form-group">
             <label style={{ color: Colors.neutral[700] }}>{t('property.propertyType') || 'Property Type'}</label>
             <select
@@ -617,6 +656,49 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
               <option value="land">{t('property.land') || 'Land'}</option>
             </select>
           </div>
+          )}
+          {form.type === 'stay' && (
+            <>
+              <div className="form-group">
+                <label style={{ color: Colors.neutral[700] }}>{t('stays.form.stayKind')}</label>
+                <select
+                  value={form.stayKind || 'hotel'}
+                  onChange={(e) => handleInputChange('stayKind', e.target.value)}
+                  style={{ borderColor: Colors.neutral[300], backgroundColor: Colors.neutral[50], color: Colors.neutral[900] }}
+                >
+                  {STAY_KINDS.map((kind) => (
+                    <option key={kind} value={kind}>{t(`stays.kinds.${kind}`)}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <div className="form-group" style={{ flex: '1 1 140px' }}>
+                  <label style={{ color: Colors.neutral[700] }}>{t('stays.form.checkInTime')}</label>
+                  <input type="time" value={form.checkInTime || '14:00'} onChange={(e) => handleInputChange('checkInTime', e.target.value)}
+                    style={{ borderColor: Colors.neutral[300], backgroundColor: Colors.neutral[50], color: Colors.neutral[900] }} />
+                </div>
+                <div className="form-group" style={{ flex: '1 1 140px' }}>
+                  <label style={{ color: Colors.neutral[700] }}>{t('stays.form.checkOutTime')}</label>
+                  <input type="time" value={form.checkOutTime || '11:00'} onChange={(e) => handleInputChange('checkOutTime', e.target.value)}
+                    style={{ borderColor: Colors.neutral[300], backgroundColor: Colors.neutral[50], color: Colors.neutral[900] }} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label style={{ color: Colors.neutral[700] }}>{t('stays.form.startingPrice')} *</label>
+                <input
+                  type="number"
+                  value={form.price}
+                  onChange={(e) => handleInputChange('price', e.target.value)}
+                  required
+                  min="500"
+                  placeholder="25000"
+                  style={{ borderColor: Colors.neutral[300], backgroundColor: Colors.neutral[50], color: Colors.neutral[900] }}
+                />
+                <p style={{ fontSize: '12px', color: Colors.neutral[600], marginTop: '4px' }}>{t('stays.form.startingPriceHint')}</p>
+                <p style={{ fontSize: '12px', color: Colors.neutral[600], marginTop: '4px' }}>{t('stays.form.nextRooms')}</p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Pricing Section */}

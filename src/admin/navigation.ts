@@ -10,6 +10,7 @@ export const navigation: { label: string; links: AdminLink[] }[] = [
   { label: 'Marketplace', links: [
     { path: '/properties', label: 'Properties', icon: 'lucide:building-2' },
     { path: '/reservations', label: 'Reservations', icon: 'lucide:calendar-check', queue: 'reservations' },
+    { path: '/stays', label: 'Stays', icon: 'lucide:bed-double', description: 'Commission and deposit terms for stays, and deposits to refund.' },
     { path: '/profiles', label: 'People', icon: 'lucide:users', description: 'Manage accounts and review agent verification applications.', tabs: [
       { path: '/profiles', label: 'Accounts' },
       { path: '/agent_identity_verifications', label: 'ID reviews', queue: 'verifications' },

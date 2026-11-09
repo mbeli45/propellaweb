@@ -12,6 +12,8 @@ import UserProfile from '@/pages/user/Profile'
 import UserExplore from '@/pages/user/Explore'
 import UserCommissions from '@/pages/user/Commissions'
 import Deals from '@/pages/Deals'
+import MyStays from '@/pages/stays/MyStays'
+import BookStay from '@/pages/stays/BookStay'
 import UserSaved from '@/pages/user/Saved'
 import ChatDetail from '@/pages/chat/[id]'
 import ProfileSettings from '@/pages/profile/Settings'
@@ -53,6 +55,8 @@ export default function UserLayout() {
             <Route path="explore" element={<UserExplore />} />
             <Route path="commissions" element={<UserCommissions />} />
             <Route path="deals" element={<Deals />} />
+            <Route path="stays/my" element={<MyStays />} />
+            <Route path="stays/book/:id" element={<BookStay />} />
             <Route path="deals/:dealId" element={<Deals />} />
             <Route path="saved" element={<UserSaved />} />
             <Route path="profile" element={<UserProfile />} />

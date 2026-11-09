@@ -138,7 +138,7 @@ export default function AgentWallet() {
     setWithdrawalMessage(null)
   }
 
-  const isIncome = (type: string) => ['deposit', 'payment', 'deal_commission_income'].includes(type)
+  const isIncome = (type: string) => ['deposit', 'payment', 'deal_commission_income', 'stay_host_income'].includes(type)
 
   return (
     <ReservationsPage narrow label={t('wallet.title')}>
@@ -198,7 +198,7 @@ export default function AgentWallet() {
                 </span>
                 <span className="wl-text">
                   <span className="wl-title">
-                    {transaction.type === 'deal_commission_income' ? 'Property deal commission' : transaction.type.replace(/_/g, ' ')}
+                    {transaction.type === 'deal_commission_income' ? 'Property deal commission' : transaction.type === 'stay_host_income' ? t('stays.walletIncome') : transaction.type.replace(/_/g, ' ')}
                   </span>
                   <span className="wl-date">{new Date(transaction.created_at).toLocaleDateString()}</span>
                 </span>

@@ -21,7 +21,7 @@ export interface PropertyData {
   town?: string // Town/city where property is located (e.g., Yaoundé, Douala, Buea)
   image: string
   images?: string[]
-  type: 'rent' | 'sale'
+  type: 'rent' | 'sale' | 'stay'
   property_type?: string | null
   bedrooms?: number
   bathrooms?: number
@@ -40,6 +40,10 @@ export interface PropertyData {
   advance_months_min?: number
   advance_months_max?: number
   rent_period?: 'monthly' | 'yearly' | null
+  /** Stays only. */
+  stay_kind?: string | null
+  check_in_time?: string | null
+  check_out_time?: string | null
   owner_review_pending?: boolean;
   status?: string
   /** Set by trigger when someone books a visit; only that user still sees the listing. */
@@ -446,7 +450,7 @@ export default function PropertyCard({
           {/* Type Badge (For Rent/For Sale) */}
           <span
           >
-            {property.type === 'rent' ? t('property.forRent') : t('property.forSale')}
+            {property.type === 'stay' ? t('stays.typeLabel') : property.type === 'rent' ? t('property.forRent') : t('property.forSale')}
           </span>
 
           {/* This listing is hidden from everyone else - say why it is still
@@ -511,7 +515,7 @@ export default function PropertyCard({
               marginBottom: '4px',
             }}
           >
-            {formatPriceUtil(property.price)}
+            {property.type === 'stay' ? t('stays.fromPerNight', { price: formatPriceUtil(property.price) }) : formatPriceUtil(property.price)}
           </div>
         )}
 

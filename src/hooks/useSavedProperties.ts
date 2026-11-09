@@ -48,7 +48,7 @@ const transformProperty = (property: any): PropertyData => ({
   location: property.location,
   town: property.town || undefined,
   availability_confirmed_at: property.availability_confirmed_at ?? undefined,
-  type: property.type as 'rent' | 'sale',
+  type: property.type as 'rent' | 'sale' | 'stay',
   property_type: property.property_type || undefined,
   category: property.category as 'budget' | 'standard' | 'premium' | 'luxury',
   bedrooms: property.bedrooms || undefined,

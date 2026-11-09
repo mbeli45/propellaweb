@@ -1046,7 +1046,7 @@ export default function PropertyFeedView({
                         )
                       })() : (
                         <span style={{ fontSize: '16px', fontWeight: '700', color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
-                          {formatPrice(property.price)}
+                          {property.type === 'stay' ? t('stays.fromPerNight', { price: formatPrice(property.price) }) : formatPrice(property.price)}
                         </span>
                       )}
                     </div>
@@ -1060,7 +1060,9 @@ export default function PropertyFeedView({
                         navigate(
                           isReservedByViewer(property, user?.id)
                             ? `/chat/${property.owner_id}?propertyId=${property.id}`
-                            : `/property/${property.id}?action=book`
+                            : property.type === 'stay'
+                              ? `${user ? (user.role === 'agent' || user.role === 'landlord' ? '/agent' : '/user') : ''}/stays/book/${property.id}`
+                              : `/property/${property.id}?action=book`
                         )
                       }}
                       onMouseDown={(e) => e.stopPropagation()}
@@ -1091,7 +1093,9 @@ export default function PropertyFeedView({
                       )}
                       {isReservedByViewer(property, user?.id)
                         ? t('propertyDetails.messageAgent', 'Message the agent')
-                        : t('propertyDetails.bookSiteVisit', 'Book Site Visit')}
+                        : property.type === 'stay'
+                          ? t('stays.checkAvailability')
+                          : t('propertyDetails.bookSiteVisit', 'Book Site Visit')}
                     </button>
                   </div>
 

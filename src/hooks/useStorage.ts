@@ -28,7 +28,7 @@ export type PendingUploadItem = {
     title?: string
     location?: string
     price?: number
-    type?: 'rent' | 'sale'
+    type?: 'rent' | 'sale' | 'stay'
     category?: 'budget' | 'standard' | 'premium' | 'luxury'
   }
 }

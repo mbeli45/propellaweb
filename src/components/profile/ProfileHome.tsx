@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   BadgeCheck,
+  BedDouble,
   BarChart3,
   Bookmark,
   Camera,
@@ -150,6 +151,8 @@ export default function ProfileHome({ workspace }: { workspace: 'user' | 'agent'
           label={t('profileMenu.myDeals')}
           onClick={() => navigate(isAgent ? '/agent/deals' : '/user/deals')}
         />
+        {isAgent && <SettingsRow icon={BedDouble} label={t('stays.hub.title')} onClick={() => navigate('/agent/stays')} />}
+        <SettingsRow icon={BedDouble} label={t('stays.my.title')} onClick={() => navigate(`${base}/stays/my`)} />
         <SettingsRow icon={Bookmark} label={t('saved.title')} onClick={() => navigate(`${base}/saved`)} />
       </SettingsGroup>
 

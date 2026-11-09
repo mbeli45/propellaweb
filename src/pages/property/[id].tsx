@@ -27,6 +27,7 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { useProperty, useSimilarProperties } from '@/hooks/useProperties'
+import { useStayBase } from '@/components/stays/StayUI'
 import { useGeocoding } from '@/hooks/useGeocoding'
 import MapView from '@/components/MapView'
 import { useSavedProperty } from '@/hooks/useSavedProperties'
@@ -383,6 +384,7 @@ export default function PropertyDetail() {
   }, [property, rentPrices])
 
   const isOwner = user?.id === property?.owner_id
+  const stayBase = useStayBase()
 
   if (loading) {
     return <PropertyDetailSkeleton />
@@ -715,7 +717,9 @@ export default function PropertyDetail() {
           <span className="pd-ref">#{String(property.id).slice(0, 8).toUpperCase()}</span>
           <div className="pd-pills">
             <span className="pd-pill" style={{ backgroundColor: Colors.primary[50], color: Colors.primary[700] }}>
-              {property.type === 'rent' ? t('propertyDetails.forRent') : t('propertyDetails.forSale')}
+              {property.type === 'stay'
+                ? (property.stay_kind ? t(`stays.kinds.${property.stay_kind}`) : t('stays.typeLabel'))
+                : property.type === 'rent' ? t('propertyDetails.forRent') : t('propertyDetails.forSale')}
             </span>
             <span className="pd-pill" style={{ backgroundColor: Colors.neutral[100], color: Colors.neutral[700] }}>
               {t(`property.${property.category}`)}
@@ -739,7 +743,19 @@ export default function PropertyDetail() {
 
         {/* Price card: price, rent terms and availability freshness */}
         <div className="pd-price-card">
-          {property.type === 'rent' && rentPrices ? (
+          {property.type === 'stay' ? (
+            <>
+              <div className="pd-price">{t('stays.fromPerNight', { price: formatPrice(property.price) })}</div>
+              {(property.check_in_time || property.check_out_time) && (
+                <div className="pd-price-sub">
+                  {[
+                    property.check_in_time && t('stays.checkInFrom', { time: property.check_in_time.slice(0, 5) }),
+                    property.check_out_time && t('stays.checkOutBy', { time: property.check_out_time.slice(0, 5) }),
+                  ].filter(Boolean).join(' · ')}
+                </div>
+              )}
+            </>
+          ) : property.type === 'rent' && rentPrices ? (
             <>
               <div className="pd-price">{formatPrice(rentPrices.monthlyPrice)} / {t('propertyCard.month')}</div>
               <div className="pd-price-sub">({formatPrice(rentPrices.yearlyPrice)} / {t('propertyCard.year')})</div>
@@ -832,7 +848,7 @@ export default function PropertyDetail() {
         boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.1)',
         zIndex: 100
       }}>
-        {!isOwner && !hasActiveBooking && (
+        {!isOwner && !hasActiveBooking && property.type !== 'stay' && (
           <div className="pd-bottom-summary">
             <span>{t('propertyDetails.visitFee')}</span>
             <strong>{formatPrice(totalFee)}</strong>
@@ -869,7 +885,24 @@ export default function PropertyDetail() {
             fill={isSaved ? Colors.primary[800] : 'transparent'}
           />
         </button>
-        {!isOwner && (
+        {property.type === 'stay' ? (
+          <button
+            onClick={() => navigate(isOwner ? `/agent/stays/manage/${property.id}` : `${stayBase}/stays/book/${property.id}`)}
+            style={{
+              flex: 1,
+              padding: '16px',
+              backgroundColor: Colors.primary[600],
+              color: Colors.white,
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+            }}
+          >
+            {isOwner ? t('stays.manageAvailability') : t('stays.checkAvailability')}
+          </button>
+        ) : !isOwner && (
           hasActiveBooking ? (
             <button
               onClick={() => navigate(`/chat/${property.owner_id}?propertyId=${property.id}`)}
