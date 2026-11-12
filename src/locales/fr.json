@@ -2039,7 +2039,9 @@
       "archived": "Conservé pour l'historique des réservations et masqué aux voyageurs.",
       "empty": "Ajoutez les types de chambres que vous proposez. Chaque type a son prix et ses chambres.",
       "hidden": "Masqué",
-      "noRoomsInType": "Aucune chambre — les voyageurs ne peuvent pas réserver ce type tant que vous n'en ajoutez pas."
+      "noRoomsInType": "Aucune chambre — les voyageurs ne peuvent pas réserver ce type tant que vous n'en ajoutez pas.",
+      "labelTaken": "{{labels}} existe déjà. Utilisez un autre numéro ou nom de chambre.",
+      "removeRoom": "Retirer la chambre {{label}}"
     },
     "block": {
       "title": "Marquer indisponible",
@@ -2132,7 +2134,8 @@
       "security": "Sécurité 24h/24",
       "laundry": "Blanchisserie",
       "kitchen": "Cuisine"
-    }
+    },
+    "editListing": "Modifier l'annonce"
   },
   "market": {
     "properties": "Biens",

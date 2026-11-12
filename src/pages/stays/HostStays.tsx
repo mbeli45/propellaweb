@@ -243,7 +243,7 @@ export default function HostStays({ asHome = false }: { asHome?: boolean }) {
                             <PropertyCard
                               property={toCardProperty(p)}
                               isOwner
-                              onEdit={() => navigate(`/property/edit/${p.id}`)}
+                              onEdit={() => navigate(`/agent/property/edit/${p.id}`)}
                               onClick={() => manage(c.total ? 'calendar' : 'rooms')}
                             />
                             <div className="host-prop-foot">

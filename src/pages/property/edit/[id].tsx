@@ -5,6 +5,7 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { supabase } from '@/lib/supabase'
+import { isListerRole } from '@/lib/identity'
 import AddProperty from '../add'
 import './Edit.css'
 import { FormSkeleton } from '@/components/skeletons'
@@ -22,8 +23,8 @@ export default function EditProperty() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Redirect if user is not an agent
-    if (user && user.role !== 'agent') {
+    // Agents, landlords and hosts edit their own listings; everyone else goes home.
+    if (user && !isListerRole(user.role)) {
       navigate('/user')
       return
     }
@@ -44,8 +45,8 @@ export default function EditProperty() {
         if (fetchError) throw fetchError
         if (!data) throw new Error('Property not found')
 
-        // Check if user is an agent and owns the property
-        if (user?.role !== 'agent' || data.owner_id !== user?.id) {
+        // Only the lister who owns the property can edit it.
+        if (!isListerRole(user?.role) || data.owner_id !== user?.id) {
           throw new Error('You do not have permission to edit this property')
         }
 

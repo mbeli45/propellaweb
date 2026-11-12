@@ -305,10 +305,12 @@ export default function ManageStay() {
                 ) : (
                   <div className="stay-chips">
                     {typeRooms.map((room) => (
-                      <button key={room.id} type="button" className="stay-chip stay-chip--room" onClick={() => deleteRoom(room)} aria-label={t('stays.rooms.removeRoomConfirm', { label: room.label })}>
+                      <span key={room.id} className="stay-chip stay-chip--room">
                         {room.label}
-                        <X size={12} aria-hidden="true" />
-                      </button>
+                        <button type="button" className="stay-chip-remove" onClick={() => deleteRoom(room)} aria-label={t('stays.rooms.removeRoom', { label: room.label })} title={t('stays.rooms.removeRoom', { label: room.label })}>
+                          <X size={12} aria-hidden="true" />
+                        </button>
+                      </span>
                     ))}
                   </div>
                 )}
@@ -354,7 +356,7 @@ export default function ManageStay() {
   return (
     <ReservationsPage label={title || t('stays.title')}>
       <PageHeader title={title || t('stays.title')} subtitle={t('stays.manageAvailability')} onBack={() => navigate(-1)} backLabel={t('common.back')} />
-      <div style={{ margin: '16px 0', maxWidth: 520 }}>
+      <div className="stay-manage-bar">
         <SegmentedControl<Tab>
           label={t('stays.manageAvailability')}
           value={tab}
@@ -365,6 +367,7 @@ export default function ManageStay() {
             { value: 'bookings', label: pendingCount ? `${t('stays.tabs.bookings')} (${pendingCount})` : t('stays.tabs.bookings'), icon: ListChecks },
           ]}
         />
+        {id && <CardButton label={t('stays.editListing')} icon={Pencil} tone="neutral" onClick={() => navigate(`/agent/property/edit/${id}`)} />}
       </div>
       {error && <p className="rsv-error" role="alert" style={{ marginBottom: 12 }}>{error}</p>}
       {notice && <p className="stay-success" role="status" style={{ marginBottom: 12 }}>{notice}</p>}
@@ -543,6 +546,8 @@ function RoomAdder({
   const save = async () => {
     const list = Array.from(new Set(labels.split(',').map((l) => l.trim()).filter(Boolean)))
     if (!list.length) return
+    const taken = list.filter((l) => existingLabels.some((x) => x.toLowerCase() === l.toLowerCase()))
+    if (taken.length) return setError(t('stays.rooms.labelTaken', { labels: taken.join(', ') }))
     setSaving(true)
     setError(null)
     try {

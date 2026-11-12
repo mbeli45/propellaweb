@@ -400,16 +400,8 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
             {isEditMode ? (t('property.editPropertyDescription') || 'Update your property details') : (t('property.addNewProperty') || 'Add a new property to your listings')}
           </p>
         </div>
-        <div style={{
-          backgroundColor: Colors.primary[50],
-          padding: '8px',
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <Plus size={20} color={Colors.primary[600]} />
-        </div>
+        {/* Keeps the title centred opposite the back button. */}
+        <span aria-hidden="true" style={{ width: 40, flexShrink: 0 }} />
       </div>
 
       {/* Form */}
@@ -946,6 +938,9 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
           </div>
         )}
 
+        {/* Property Details: homes only. A stay's rooms are set up in its Rooms tab. */}
+        {form.type !== 'stay' && (
+        <>
         {/* Property Details Section */}
         <div className="form-section" style={{ backgroundColor: Colors.white }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
@@ -1013,6 +1008,8 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
             />
           </div>
         </div>
+        </>
+        )}
 
         {/* Property Photos Section */}
         <div className="form-section" style={{ backgroundColor: Colors.white }}>
@@ -1169,7 +1166,9 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
           >
             {submitting
               ? (t('buttons.saving') || 'Saving...') 
-              : (t('buttons.submit') || 'Submit')
+              : isEditMode
+                ? (t('buttons.saveChanges') || 'Save changes')
+                : (t('buttons.submit') || 'Submit')
             }
           </button>
         </div>

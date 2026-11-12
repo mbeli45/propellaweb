@@ -88,7 +88,12 @@
 .stay-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .stay-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--rsv-line); background: var(--rsv-surface); color: var(--color-neutral-800, #1f2937); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .stay-chip.is-active { border-color: var(--rsv-primary); background: var(--rsv-primary-tint); color: var(--rsv-primary-ink); }
-.stay-chip--room { background: var(--rsv-line-soft); border-color: transparent; }
+.stay-chip--room { background: var(--rsv-line-soft); border-color: transparent; cursor: default; padding-right: 4px; }
+.stay-chip-remove { width: 26px; height: 26px; border: 0; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: var(--rsv-muted); cursor: pointer; }
+.stay-chip-remove:hover { background: var(--rsv-danger-tint, #fee2e2); color: var(--rsv-danger, #dc2626); }
+.stay-chip-remove:focus-visible { outline: 3px solid var(--color-primary-400, #3387ff); outline-offset: 1px; }
+.stay-manage-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 16px 0; }
+.stay-manage-bar > :first-child { flex: 1 1 320px; max-width: 520px; }
 .stay-type-head { display: flex; align-items: flex-start; gap: 8px; }
 .stay-type-head > div { flex: 1; min-width: 0; }
 .stay-icon-btn { width: 40px; height: 40px; border-radius: 10px; border: 0; background: transparent; color: var(--rsv-ink-2); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
@@ -151,6 +156,8 @@
 .host-stat:focus-visible, .host-prop-actions button:focus-visible, .host-add:focus-visible { outline: 3px solid var(--color-primary-400, #3387ff); outline-offset: 2px; }
 
 .host-grid { display: flex; flex-direction: column; }
+/* Sections here hold their own grids (properties, bookings); one column so those get the full width. */
+.host-dash .rsv-grid { grid-template-columns: minmax(0, 1fr); }
 .host-main { min-width: 0; }
 .host-today { min-width: 0; }
 @media (min-width: 1100px) {
@@ -181,7 +188,7 @@
 .host-prop-actions button:hover { border-color: var(--rsv-primary-line); background: var(--rsv-primary-tint); color: var(--rsv-primary-ink); }
 
 .host-add {
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 260px; padding: 24px; border-radius: 16px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 200px; padding: 24px; border-radius: 16px; cursor: pointer;
   border: 2px dashed var(--rsv-line); background: transparent; font: inherit; color: var(--rsv-muted); text-align: center;
 }
 .host-add:hover { border-color: var(--rsv-primary); color: var(--rsv-primary-ink); background: var(--rsv-primary-tint); }

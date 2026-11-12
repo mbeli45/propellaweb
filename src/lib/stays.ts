@@ -143,6 +143,8 @@ export const stayErrorMessage = (error: unknown, fallback: string) => {
   const message = (error as { message?: string } | null)?.message;
   if (!message) return fallback;
   if (message.includes('stay_bookings_no_overlap')) return fallback;
+  // Raw Postgres constraint text is never useful to a host or guest.
+  if (/duplicate key|violates .* constraint/i.test(message)) return fallback;
   return message;
 };
 

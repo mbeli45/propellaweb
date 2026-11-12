@@ -163,7 +163,15 @@ export default function Login() {
         )}
 
         {/* Form */}
-        <div className="auth-form-container">
+        <div
+          className="auth-form-container"
+          onKeyDown={(e) => {
+            // Enter in either field signs in, like a native form.
+            if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT' && isFormValid && !loading) {
+              handleLogin(e as unknown as React.FormEvent)
+            }
+          }}
+        >
           {/* Email Input */}
           <Input
             label={t('auth.emailAddress')}

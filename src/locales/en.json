@@ -2046,7 +2046,9 @@
       "archived": "Kept for booking history and hidden from guests.",
       "empty": "Add the kinds of rooms you offer. Each type has its own price, and the rooms that belong to it.",
       "hidden": "Hidden",
-      "noRoomsInType": "No rooms yet — guests can't book this type until you add one."
+      "noRoomsInType": "No rooms yet — guests can't book this type until you add one.",
+      "labelTaken": "{{labels}} already exists. Use a different room number or name.",
+      "removeRoom": "Remove room {{label}}"
     },
     "block": {
       "title": "Mark unavailable",
@@ -2139,7 +2141,8 @@
       "security": "24h security",
       "laundry": "Laundry",
       "kitchen": "Kitchen"
-    }
+    },
+    "editListing": "Edit listing"
   },
   "market": {
     "properties": "Properties",
