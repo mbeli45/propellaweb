@@ -168,7 +168,7 @@ function Landing() {
                 <div className="stat-lbl">Agents & Landlords</div>
               </div>
             </div>
-            <Link to="/auth/signup" className="text-btn">
+            <Link to="/auth/start" className="text-btn">
               Start Listing
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -197,7 +197,7 @@ function Landing() {
                 Orange Money
               </div>
             </div>
-            <Link to="/auth/signup" className="text-btn-white">
+            <Link to="/auth/start" className="text-btn-white">
               Learn More
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -222,7 +222,7 @@ function Landing() {
             <div className="s-label">WALLET</div>
             <h2 className="s-h2">Track your <i>earnings</i> and withdraw anytime</h2>
             <p>Landlords and agents can manage their earnings, track commission payments, and withdraw funds directly to their mobile money or bank account.</p>
-            <Link to="/auth/signup" className="text-btn">
+            <Link to="/auth/start" className="text-btn">
               Get Started
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7"/>

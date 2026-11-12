@@ -3,18 +3,19 @@ import { Navigate, Routes, Route, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import Login from '@/pages/auth/Login'
 import Signup from '@/pages/auth/Signup'
+import ChooseRole from '@/pages/auth/ChooseRole'
 import ForgotPassword from '@/pages/auth/ForgotPassword'
 import ResetPassword from '@/pages/auth/ResetPassword'
 import Verify from '@/pages/auth/Verify'
 import Callback from '@/pages/auth/Callback'
-import { agentLandingRoute } from '@/lib/identity'
+import { agentLandingRoute, isListerRole } from '@/lib/identity'
 import Loader from '@/components/ui/Loader'
 
 function SignedInLanding({ role }: { role: string }) {
   const [route, setRoute] = useState<string | null>(null)
   useEffect(() => {
     let active = true
-    if (role === 'agent' || role === 'landlord') {
+    if (isListerRole(role)) {
       void agentLandingRoute().then(next => { if (active) setRoute(next) })
     } else setRoute('/user')
     return () => { active = false }
@@ -33,6 +34,7 @@ export default function AuthLayout() {
   return (
     <Routes>
       <Route path="login" element={<Login />} />
+      <Route path="start" element={<ChooseRole />} />
       <Route path="signup" element={<Signup />} />
       <Route path="forgot-password" element={<ForgotPassword />} />
       <Route path="reset-password" element={<ResetPassword />} />

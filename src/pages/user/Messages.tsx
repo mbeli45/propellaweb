@@ -1,3 +1,4 @@
+import { isListerRole } from '@/lib/identity'
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { BadgeCheck, Check, CheckCheck, Image as ImageIcon, MessageCircle, Mic, Paperclip, Search, X } from 'lucide-react'
@@ -37,7 +38,7 @@ export default function UserMessages() {
   const location = useLocation()
   // Mounted under both /user and /agent.
   const basePath = location.pathname.startsWith('/agent') ? '/agent/messages' : '/user/messages'
-  const audience: 'customer' | 'agent' = user?.role === 'agent' || user?.role === 'landlord' ? 'agent' : 'customer'
+  const audience: 'customer' | 'agent' = isListerRole(user?.role) ? 'agent' : 'customer'
 
   const { conversations, loading, error, refresh, unreadCounts, markConversationAsRead } = useChatList(user?.id || '')
   const visits = useChatVisitContext(user?.id, audience)
@@ -79,8 +80,8 @@ export default function UserMessages() {
   // Customers filter to the agents/landlords they talk to; agents to their clients.
   const isPerson = (c: ConversationSummary) =>
     audience === 'customer'
-      ? ['agent', 'landlord'].includes(c.counterpart.role || '')
-      : !['agent', 'landlord'].includes(c.counterpart.role || '')
+      ? isListerRole(c.counterpart.role)
+      : !isListerRole(c.counterpart.role)
   const visitCount = conversations.filter((c) => visits.byCounterpart.has(c.counterpart.id)).length
   const peopleCount = conversations.filter(isPerson).length
 

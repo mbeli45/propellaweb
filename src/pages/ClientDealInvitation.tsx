@@ -82,7 +82,7 @@ export default function ClientDealInvitation() {
             <EmptyState icon={HeartHandshake} title={t('clientInvite.title')} body={t('clientInvite.body')} />
             <div className="rsv-actions">
               <CardButton label={t('clientInvite.login')} icon={LogIn} tone="primary" onClick={() => navigate('/auth/login')} />
-              <CardButton label={t('clientInvite.signup')} icon={UserPlus} tone="neutral" onClick={() => navigate('/auth/signup')} />
+              <CardButton label={t('clientInvite.signup')} icon={UserPlus} tone="neutral" onClick={() => navigate('/auth/signup?role=normal')} />
             </div>
           </>
         )}

@@ -1,3 +1,4 @@
+import { isListerRole } from '@/lib/identity'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 
@@ -14,7 +15,7 @@ export function useBadgeCounts(userId: string, userRole?: string) {
   // Memoize the filter conditions to prevent subscription recreation
   const reservationFilter = useMemo(() => {
     if (!userId) return '';
-    return userRole === 'agent' || userRole === 'landlord' 
+    return isListerRole(userRole) 
       ? '' // We'll handle agent/landlord filtering in the callback
       : `user_id=eq.${userId}`;
   }, [userId, userRole]);
@@ -49,7 +50,7 @@ export function useBadgeCounts(userId: string, userRole?: string) {
         .select('id, status, created_at');
 
       // For agents/landlords, get reservations for their properties
-      if (userRole === 'agent' || userRole === 'landlord') {
+      if (isListerRole(userRole)) {
         // First get the property IDs owned by this user
         const { data: properties, error: propertiesError } = await supabase
           .from('properties')
@@ -148,7 +149,7 @@ export function useBadgeCounts(userId: string, userRole?: string) {
       filter: reservationFilter || undefined,
     }, (payload) => {
       // For agents/landlords, check if the reservation is for their property
-      if (userRole === 'agent' || userRole === 'landlord') {
+      if (isListerRole(userRole)) {
         // We'll let the fetchReservationBadgeCount handle the filtering
         // since it already has the logic to get user's properties
       }

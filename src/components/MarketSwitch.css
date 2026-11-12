@@ -1,0 +1,46 @@
+.market-switch {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--color-neutral-200, #e5e7eb);
+  max-width: 420px;
+}
+.market-switch-item {
+  flex: 1;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-neutral-600, #4b5563);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.market-switch-item.is-active {
+  background: var(--color-white, #fff);
+  color: var(--color-primary-800, #003478);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+.market-switch-item:focus-visible { outline: 3px solid var(--color-primary-400, #3387ff); outline-offset: 2px; }
+
+/* On the video feed: the header's underlined tabs, in white over the video */
+.market-switch--overlay { background: none; border: 0; padding: 0; gap: 4px; border-radius: 0; }
+.market-switch--overlay .market-switch-item {
+  flex: 0 0 auto; min-height: 40px; padding: 0 12px; border-radius: 0; border-bottom: 2px solid transparent;
+  font-size: 15px; font-weight: 700; color: rgba(255, 255, 255, 0.7); text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+.market-switch--overlay .market-switch-item:hover { color: #fff; }
+.market-switch--overlay .market-switch-item.is-active { background: none; box-shadow: none; color: #fff; border-bottom-color: #fff; }
+
+/* Header tabs: no tray, an underline marks the side you are on */
+.market-switch--tabs { background: none; padding: 0; gap: 8px; border-radius: 0; max-width: none; }
+.market-switch--tabs .market-switch-item { flex: 0 0 auto; min-height: 44px; padding: 0 14px; border-radius: 0; border-bottom: 2px solid transparent; font-size: 15px; font-weight: 600; color: var(--color-neutral-500, #6b7280); }
+.market-switch--tabs .market-switch-item:hover { color: var(--color-neutral-900, #111827); }
+.market-switch--tabs .market-switch-item.is-active { background: none; box-shadow: none; color: var(--color-neutral-900, #111827); border-bottom-color: var(--color-neutral-900, #111827); }
+@media (max-width: 1023px) { .market-switch--tabs { justify-content: center; } .market-switch--tabs .market-switch-item { flex: 1; } }

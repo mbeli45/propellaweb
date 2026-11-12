@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
@@ -11,16 +11,21 @@ import { Icon } from '@iconify/react'
 import { signInWithGoogle } from '@/lib/googleAuth'
 import { signInWithApple } from '@/lib/appleAuth'
 import './Auth.css'
-import { SegmentedControl } from '@/components/reservations/ReservationUI'
+import './ChooseRole.css'
 
-type UserType = 'normal' | 'agent' | 'landlord'
+type UserType = 'normal' | 'agent' | 'landlord' | 'host'
 
 export default function Signup() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [hidePassword, setHidePassword] = useState(true)
-  const [userType, setUserType] = useState<UserType>('normal')
+  // "List your hotel" links open sign-up with Host already chosen (?role=host).
+  const [searchParams] = useSearchParams()
+  const roleParam = searchParams.get('role')
+  const [userType] = useState<UserType>(
+    roleParam === 'host' || roleParam === 'agent' || roleParam === 'landlord' ? roleParam : 'normal'
+  )
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [eulaAccepted, setEulaAccepted] = useState(false)
@@ -107,7 +112,9 @@ export default function Signup() {
     } finally {
       setLoading(false)
     }
-  }, [email, password, name, userType, signUp, navigate, getPasswordStrength, Colors, t])
+  // eulaAccepted must be listed: without it the handler kept the unticked value
+  // from first render and every submit failed with "You must accept the terms".
+  }, [email, password, name, userType, eulaAccepted, signUp, navigate, getPasswordStrength, Colors, t])
 
   const handleLogin = useCallback(() => {
     setError(null)
@@ -151,42 +158,27 @@ export default function Signup() {
     setHidePassword(!hidePassword)
   }, [hidePassword])
 
-  return (
-    <div className="auth-container" style={{ backgroundColor: Colors.white }}>
-      <div className="auth-scroll-content">
-        {/* Header */}
-        <div className="auth-header">
-          <button
-            onClick={() => navigate(-1)}
-            className="auth-back-button"
-            style={{
-              backgroundColor: Colors.neutral[100],
-            }}
-          >
-            <ChevronLeft size={20} color={Colors.neutral[700]} />
-          </button>
+  // Sign-up starts by choosing a role; arriving here without one goes back a step.
+  if (!roleParam || !['normal', 'host', 'agent', 'landlord'].includes(roleParam)) {
+    return <Navigate to="/auth/start" replace />
+  }
 
-          <div className="auth-logo-container">
-            <div
-              className="auth-logo"
-              style={{
-                backgroundColor: Colors.primary[600],
-              }}
-            >
-              <img 
-                src="/app-icon.png" 
-                alt="Propella" 
-                style={{ width: '40px', height: '40px', borderRadius: '8px' }}
-              />
-            </div>
-            <h1 className="auth-welcome-title" style={{ color: Colors.neutral[900] }}>
-              {t('signup.createAccount')}
-            </h1>
-            <p className="auth-welcome-subtitle" style={{ color: Colors.neutral[600] }}>
-              {t('signup.joinPropella')}
-            </p>
-          </div>
+  return (
+    <div className="choose-role auth-signup-page">
+      <div className="choose-role-inner">
+        {/* Same top row as step 1 (/auth/start), so the two steps read as one flow. */}
+        <div className="choose-role-top">
+          <button type="button" className="choose-role-back" onClick={() => navigate(-1)} aria-label={t('common.back', 'Back')}>
+            <ChevronLeft size={20} />
+          </button>
+          <Link to="/" className="choose-role-brand">
+            <img src="/app-icon.png" alt="" />
+            <span>Propella</span>
+          </Link>
+          <span className="choose-role-step">{t('chooseRole.step2')}</span>
         </div>
+        <h1 className="choose-role-title">{t('signup.createAccount')}</h1>
+        <p className="choose-role-subtitle">{t('signup.joinPropella')}</p>
 
         {/* Message Display */}
         {error && (
@@ -211,26 +203,13 @@ export default function Signup() {
 
         {/* Form */}
         <form className="auth-form-container" onSubmit={handleSignUp}>
-          {/* Role: a segmented control with the choice explained underneath */}
-          <div className="auth-user-type-container">
-            <h2 className="auth-section-title" id="signup-role-label">{t('signup.iAmA')}</h2>
-            <SegmentedControl<UserType>
-              label={t('signup.iAmA')}
-              options={[
-                { value: 'normal', label: t('signup.tenant') },
-                { value: 'agent', label: t('signup.agent') },
-                { value: 'landlord', label: t('signup.landlord') },
-              ]}
-              value={userType}
-              onChange={setUserType}
-            />
-            <p className="auth-role-hint">
-              {userType === 'agent'
-                ? t('signup.realEstateProfessional')
-                : userType === 'landlord'
-                  ? t('signup.propertyOwner')
-                  : t('signup.lookingForProperties')}
-            </p>
+          {/* Role was chosen on the previous step (/auth/start); show it with a way back. */}
+          <div className="auth-role-chosen">
+            <div>
+              <span className="auth-role-chosen-label">{t('chooseRole.signingUpAs')}</span>
+              <strong>{t(`chooseRole.${userType}.title`)}</strong>
+            </div>
+            <button type="button" onClick={() => navigate('/auth/start')}>{t('chooseRole.changeRole')}</button>
           </div>
 
           {/* Full Name Input */}
@@ -454,43 +433,12 @@ export default function Signup() {
             </span>
           </button>
 
-          {/* Login Section */}
-          <div
-            className="auth-signup-container"
-            style={{
-              backgroundColor: Colors.neutral[50],
-            }}
-          >
-            <p className="auth-signup-text" style={{ color: Colors.neutral[700] }}>
-              {t('signup.alreadyHaveAccount')}
-            </p>
-            <button
-              type="button"
-              onClick={handleLogin}
-              className="auth-signup-button"
-              style={{
-                backgroundColor: Colors.white,
-                borderColor: Colors.primary[200],
-              }}
-            >
-              <span
-                className="auth-signup-button-text"
-                style={{
-                  color: Colors.primary[700],
-                }}
-              >
-                {t('signup.signIn')}
-              </span>
-            </button>
-          </div>
         </form>
 
-        {/* Footer */}
-        <div className="auth-footer">
-          <p className="auth-footer-text" style={{ color: Colors.neutral[500] }}>
-            {t('signup.joinThousands')}
-          </p>
-        </div>
+        <p className="choose-role-login">
+          {t('chooseRole.haveAccount')}{' '}
+          <a href="/auth/login" onClick={(e) => { e.preventDefault(); handleLogin() }}>{t('chooseRole.login')}</a>
+        </p>
       </div>
     </div>
   )

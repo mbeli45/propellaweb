@@ -4,6 +4,10 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { useAllProperties } from '@/hooks/useProperties'
+import { useMarket } from '@/contexts/MarketContext'
+
+// Rent & sale by default; only stays when Home is on the Stays side.
+const STAYS_FILTER = { type: 'stay' as const }
 import { useGeocoding } from '@/hooks/useGeocoding'
 import MapView from '@/components/MapView'
 import MapPropertyCards from '@/components/MapPropertyCards'
@@ -12,7 +16,9 @@ export default function GuestMap() {
   const { colorScheme } = useThemeMode()
   const { t } = useLanguage()
   const Colors = getColors(colorScheme)
-  const { properties, loading } = useAllProperties()
+  const { market } = useMarket()
+  const marketFilter = market === 'stays' ? STAYS_FILTER : undefined
+  const { properties, loading } = useAllProperties(marketFilter)
   const { geocodeLocation } = useGeocoding()
   // Opened from a property's "View on map": centre on it without filtering.
   const [searchParams] = useSearchParams()

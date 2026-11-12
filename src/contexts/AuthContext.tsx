@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { supabase } from '@/lib/supabase'
-import { agentLandingRoute } from '@/lib/identity'
+import { agentLandingRoute, isListerRole } from '@/lib/identity'
 import { Database } from '@/types/supabase'
 import { useNavigate } from 'react-router-dom'
 import { setUser as setSentryUser } from '@/lib/sentry'
@@ -163,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(profileData)
 
         // Navigate based on role - use queueMicrotask to ensure state update is processed
-        const targetRoute = (profileData.role === 'agent' || profileData.role === 'landlord') ? await agentLandingRoute() : '/user'
+        const targetRoute = (isListerRole(profileData.role)) ? await agentLandingRoute() : '/user'
         
         // Use queueMicrotask to allow React to process the state update before navigation
         queueMicrotask(() => {
@@ -376,7 +376,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await fetchProfile(data.user.id, true)
         const userRole = data.user.user_metadata?.role
         // New agents and landlords go to the ID step first (it offers "Do this later").
-        const targetRoute = (userRole === 'agent' || userRole === 'landlord') ? await agentLandingRoute() : '/user'
+        const targetRoute = (isListerRole(userRole)) ? await agentLandingRoute() : '/user'
         navigate(targetRoute)
       }
     } catch (err: any) {

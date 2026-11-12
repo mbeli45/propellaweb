@@ -385,6 +385,13 @@ export default function PropertyDetail() {
 
   const isOwner = user?.id === property?.owner_id
   const stayBase = useStayBase()
+  // Dates and party size picked on Home → Stays carry on to the booking page.
+  const stayQuery = (() => {
+    const q = new URLSearchParams()
+    for (const key of ['checkIn', 'nights', 'guests']) { const v = searchParams.get(key); if (v) q.set(key, v) }
+    const str = q.toString()
+    return str ? `?${str}` : ''
+  })()
 
   if (loading) {
     return <PropertyDetailSkeleton />
@@ -887,7 +894,7 @@ export default function PropertyDetail() {
         </button>
         {property.type === 'stay' ? (
           <button
-            onClick={() => navigate(isOwner ? `/agent/stays/manage/${property.id}` : `${stayBase}/stays/book/${property.id}`)}
+            onClick={() => navigate(isOwner ? `/agent/stays/manage/${property.id}` : `${stayBase}/stays/book/${property.id}${stayQuery}`)}
             style={{
               flex: 1,
               padding: '16px',
@@ -999,7 +1006,8 @@ export default function PropertyDetail() {
               {property.amenities.map((amenity, index) => (
                 <div key={index} className="pd-amenity">
                   <CheckCircle2 size={18} aria-hidden="true" />
-                  <span>{amenity}</span>
+                  {/* Stay amenities are stored as keys ("wifi"); older ones are free text. */}
+                  <span>{t(`stays.amenities.${amenity}`, amenity)}</span>
                 </div>
               ))}
             </div>
@@ -1049,7 +1057,9 @@ export default function PropertyDetail() {
                       ? t('propertyDetails.roleAgent')
                       : property.owner.role === 'landlord'
                         ? t('propertyDetails.roleLandlord')
-                        : t('property.owner')}
+                        : property.owner.role === 'host'
+                          ? t('signup.host')
+                          : t('property.owner')}
                 </span>
               </span>
               <ChevronRight size={18} color={Colors.neutral[400]} aria-hidden="true" />

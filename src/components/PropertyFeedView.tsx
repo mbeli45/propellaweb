@@ -1,3 +1,4 @@
+import { isListerRole } from '@/lib/identity'
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useThemeMode } from '@/contexts/ThemeContext'
@@ -170,6 +171,8 @@ interface PropertyFeedViewProps {
   onLoadMore?: () => void
   hasMore?: boolean
   onSwitchToGrid?: () => void
+  /** Shown above the search row, e.g. the Properties | Stays switch. */
+  header?: React.ReactNode
   onSearch?: (query: string) => void
   searchValue?: string
 }
@@ -180,6 +183,7 @@ export default function PropertyFeedView({
   onLoadMore,
   hasMore = false,
   onSwitchToGrid,
+  header,
   onSearch,
   searchValue = ''
 }: PropertyFeedViewProps) {
@@ -541,11 +545,20 @@ export default function PropertyFeedView({
       onMouseLeave={handleMouseLeave}
       style={{ backgroundColor: Colors.neutral[900] }}
     >
+      {header && (
+        <div
+          style={{ position: 'absolute', top: '16px', left: '16px', right: '68px', maxWidth: '400px', zIndex: 9999 }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
+          {header}
+        </div>
+      )}
       {/* Top bar: search + grid toggle share one row. The right inset
           reserves the corner for the save button. */}
       <div style={{
         position: 'absolute',
-        top: '16px',
+        top: header ? '68px' : '16px',
         left: '16px',
         right: '68px',
         zIndex: 9998,
@@ -683,7 +696,7 @@ export default function PropertyFeedView({
             return (
               <div
                 key={property.id}
-                style={{ width: '100%', height: '100dvh', flexShrink: 0, backgroundColor: '#000' }}
+                style={{ width: '100%', height: '100%', flexShrink: 0, backgroundColor: '#000' }}
               />
             )
           }
@@ -694,7 +707,7 @@ export default function PropertyFeedView({
               className="feed-property-item"
               style={{
                 width: '100%',
-                height: '100dvh',
+                height: '100%',
                 flexShrink: 0,
                 position: 'relative',
                 overflow: 'hidden'
@@ -721,7 +734,7 @@ export default function PropertyFeedView({
                       className="feed-media-item"
                       style={{
                         width: '100%',
-                        height: '100dvh',
+                        height: '100%',
                         flexShrink: 0,
                         position: 'relative',
                         overflow: 'hidden'
@@ -1061,7 +1074,7 @@ export default function PropertyFeedView({
                           isReservedByViewer(property, user?.id)
                             ? `/chat/${property.owner_id}?propertyId=${property.id}`
                             : property.type === 'stay'
-                              ? `${user ? (user.role === 'agent' || user.role === 'landlord' ? '/agent' : '/user') : ''}/stays/book/${property.id}`
+                              ? `${user ? (isListerRole(user.role) ? '/agent' : '/user') : ''}/stays/book/${property.id}`
                               : `/property/${property.id}?action=book`
                         )
                       }}
@@ -1159,7 +1172,8 @@ export default function PropertyFeedView({
             }}
             style={{
               position: 'absolute',
-              bottom: '30%',
+              // Clear of the listing details at the foot of the card.
+              bottom: '45%',
               left: '20px',
               transform: 'translateY(50%)',
               zIndex: 20,

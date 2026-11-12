@@ -260,9 +260,8 @@ export function useAllPropertiesBase(filters?: FilterOptions) {
       if (category && category.length > 0) {
         query = query.in('category', category);
       }
-      if (type) {
-        query = query.eq('type', type);
-      }
+      // Stays live on their own side of the app (Home → Stays).
+      query = type ? query.eq('type', type) : query.neq('type', 'stay');
       if (status) {
         query = query.eq('status', status);
       } else {
@@ -587,7 +586,11 @@ export function useSimilarProperties(currentPropertyId: string, category?: strin
   return { properties, loading, error, refetch: fetchSimilarProperties };
 }
 
-export function useHomeProperties() {
+/**
+ * Home listings for one side of the app: rent & sale (`properties`, the
+ * default) or nightly stays (`stays`). The two never mix.
+ */
+export function useHomeProperties(market: 'properties' | 'stays' = 'properties') {
   const [featuredProperties, setFeaturedProperties] = useState<PropertyData[]>([]);
   const [recentProperties, setRecentProperties] = useState<PropertyData[]>([]);
   const { blockedIds } = useBlockedUserIds();
@@ -599,12 +602,13 @@ export function useHomeProperties() {
   const cacheRef = useRef<{
     data: PropertyData[];
     timestamp: number;
+    market: string;
   } | null>(null);
   const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
 
   const fetchHomeProperties = useCallback(async (forceRefresh = false) => {
     // Check cache first
-    if (!forceRefresh && cacheRef.current &&
+    if (!forceRefresh && cacheRef.current && cacheRef.current.market === market &&
         Date.now() - cacheRef.current.timestamp < CACHE_DURATION) {
       const cached = cacheRef.current.data;
       const featured = cached.filter(p =>
@@ -653,6 +657,7 @@ export function useHomeProperties() {
           advance_months_max,
           owner_id,
           created_at,
+          stay_kind,
           profiles:owner_id (
             id,
             full_name,
@@ -664,6 +669,7 @@ export function useHomeProperties() {
         `)
         .or(visibility)
         .in('category', ['premium', 'luxury'])
+        .filter('type', market === 'stays' ? 'eq' : 'neq', 'stay')
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -694,6 +700,7 @@ export function useHomeProperties() {
           advance_months_max,
           owner_id,
           created_at,
+          stay_kind,
           profiles:owner_id (
             id,
             full_name,
@@ -704,8 +711,9 @@ export function useHomeProperties() {
           )
         `)
         .or(visibility)
+        .filter('type', market === 'stays' ? 'eq' : 'neq', 'stay')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(market === 'stays' ? 40 : 10);
 
       // Execute both queries in parallel
       const [featuredResult, recentResult] = await Promise.all([
@@ -747,6 +755,7 @@ export function useHomeProperties() {
         advance_months_max: property.advance_months_max || undefined,
         isVerified: !!property.profiles?.is_verified_agent,
         owner_id: property.owner_id,
+        stay_kind: property.stay_kind ?? undefined,
         owner: property.profiles ? {
           id: property.profiles.id,
           full_name: property.profiles.full_name || undefined,
@@ -782,6 +791,7 @@ export function useHomeProperties() {
         advance_months_max: property.advance_months_max || undefined,
         isVerified: !!property.profiles?.is_verified_agent,
         owner_id: property.owner_id,
+        stay_kind: property.stay_kind ?? undefined,
         owner: property.profiles ? {
           id: property.profiles.id,
           full_name: property.profiles.full_name || undefined,
@@ -795,7 +805,8 @@ export function useHomeProperties() {
       const allProperties = [...transformedFeatured, ...transformedRecent];
       cacheRef.current = {
         data: allProperties,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        market
       };
 
       setFeaturedProperties(transformedFeatured);
@@ -809,7 +820,7 @@ export function useHomeProperties() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [market]);
 
   useEffect(() => {
     fetchHomeProperties();

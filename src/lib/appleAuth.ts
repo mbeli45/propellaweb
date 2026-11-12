@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
 
 export interface AppleSignInOptions {
-  role?: 'normal' | 'agent' | 'landlord'
+  role?: 'normal' | 'agent' | 'landlord' | 'host'
 }
 
 /**
@@ -74,7 +74,7 @@ export async function handleAppleCallback() {
             id: session.user.id,
             email: session.user.email,
             full_name: fullName,
-            role: pendingRole as 'normal' | 'agent' | 'landlord',
+            role: pendingRole as 'normal' | 'agent' | 'landlord' | 'host',
             avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture,
           }, { onConflict: 'id' })
 
@@ -104,7 +104,7 @@ export async function handleAppleCallback() {
 /**
  * Update user role in profile after Apple Sign-In
  */
-async function updateUserRole(userId: string, role: 'normal' | 'agent' | 'landlord') {
+async function updateUserRole(userId: string, role: 'normal' | 'agent' | 'landlord' | 'host') {
   try {
     const { error } = await supabase
       .from('profiles')

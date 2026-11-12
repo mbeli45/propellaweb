@@ -22,13 +22,13 @@
   background-color: var(--color-neutral-50, #F9FAFB);
 }
 
-/* Desktop: sidebar visible, content has left margin */
+/* Desktop: navigation runs across the top, content uses the full width */
+.app-layout--topnav { flex-direction: column; }
+
 @media (min-width: 1025px) {
   .app-content {
-  min-width: 0;
-    margin-left: var(--sidebar-width, 248px);
-    padding-left: 0;
-    transition: margin-left 0.3s ease;
+    min-width: 0;
+    margin-left: 0;
   }
 
   .main-content {

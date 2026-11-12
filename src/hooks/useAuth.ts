@@ -1,3 +1,4 @@
+import { isListerRole } from '@/lib/identity'
 import { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -153,7 +154,7 @@ export function useAuth() {
         
         // Navigate immediately based on user role
         const userRole = passwordData.user.user_metadata?.role;
-        if (userRole === 'agent' || userRole === 'landlord') {
+        if (isListerRole(userRole)) {
           navigate('/agent');
         } else {
           navigate('/user');
@@ -216,7 +217,7 @@ export function useAuth() {
     }
   }, [fetchProfile, navigate]);
 
-  const signUp = useCallback(async (email: string, password: string, fullName: string, role: 'normal' | 'agent' | 'landlord' = 'normal') => {
+  const signUp = useCallback(async (email: string, password: string, fullName: string, role: 'normal' | 'agent' | 'landlord' | 'host' = 'normal') => {
     try {
       setLoading(true);
       setError(null);
@@ -369,7 +370,7 @@ export function useAuth() {
       } else {
         // OPTIMIZATION: Navigate immediately, defer profile fetching
         const userRole = data.user.user_metadata?.role;
-        const targetRoute = (userRole === 'agent' || userRole === 'landlord') ? '/agent' : '/user';
+        const targetRoute = (isListerRole(userRole)) ? '/agent' : '/user';
         
         setMessage({ type: 'success', text: 'Email verified successfully!' });
         

@@ -1,3 +1,5 @@
+import { isListerRole } from '@/lib/identity'
+import { createPortal } from 'react-dom'
 import React from 'react'
 import { BedDouble, CalendarDays, Minus, Plus, Users } from 'lucide-react'
 /** The app's translate function (I18nContext). */
@@ -29,7 +31,7 @@ export const guestsLabel = (t: TFunction, count: number) =>
 export function useStayBase() {
   const { user } = useAuth()
   if (!user) return ''
-  return user.role === 'agent' || user.role === 'landlord' ? '/agent' : '/user'
+  return isListerRole(user.role) ? '/agent' : '/user'
 }
 
 /** Map stay statuses onto the shared status tones. */
@@ -217,7 +219,9 @@ export function StayDialog({
       previous?.focus?.()
     }
   }, [])
-  return (
+  // Portalled to <body> so it sits above the bottom navigation and sidebar,
+  // whatever stacking context the page renders in.
+  return createPortal(
     <div className="rsv-dialog-backdrop rsv-page stay-dialog-root" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <section
         ref={ref}
@@ -236,6 +240,7 @@ export function StayDialog({
         {children}
         <div className="stay-dialog-foot">{footer}</div>
       </section>
-    </div>
+    </div>,
+    document.body,
   )
 }

@@ -1,3 +1,4 @@
+import { isListerRole } from '@/lib/identity'
 import { useRef } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
@@ -38,7 +39,7 @@ function AppRoutes() {
   // Determine which layout to use based on user role
   const getDefaultRoute = () => {
     if (!user) return '/'
-    if (user.role === 'agent' || user.role === 'landlord') return '/agent'
+    if (isListerRole(user.role)) return '/agent'
     return '/user'
   }
 
@@ -78,7 +79,7 @@ function AppRoutes() {
       <Route path="/user/*" element={user ? <UserLayout /> : <Navigate to="/" />} />
 
       {/* Agent routes */}
-      <Route path="/agent/*" element={user?.role === 'agent' || user?.role === 'landlord' ? <AgentLayout /> : <Navigate to="/user" />} />
+      <Route path="/agent/*" element={isListerRole(user?.role) ? <AgentLayout /> : <Navigate to="/user" />} />
 
       {/* Public agent profile route (accessible to all) */}
       <Route path="/agents/:id" element={<AgentProfilePage />} />
@@ -86,8 +87,8 @@ function AppRoutes() {
       {/* Property routes (accessible to all) */}
       <Route path="/property/:id" element={<PropertyDetail />} />
       <Route path="/stays/book/:id" element={<BookStay />} />
-      <Route path="/property/add" element={user?.role === 'agent' || user?.role === 'landlord' ? <IdentityGate><AddProperty /></IdentityGate> : <Navigate to="/auth/login" />} />
-      <Route path="/property/edit/:id" element={user?.role === 'agent' || user?.role === 'landlord' ? <EditProperty /> : <Navigate to="/auth/login" />} />
+      <Route path="/property/add" element={isListerRole(user?.role) ? <IdentityGate><AddProperty /></IdentityGate> : <Navigate to="/auth/login" />} />
+      <Route path="/property/edit/:id" element={isListerRole(user?.role) ? <EditProperty /> : <Navigate to="/auth/login" />} />
       
       {/* Chat routes */}
       <Route path="/chat/:id" element={user ? <ChatDetail /> : <Navigate to="/auth/login" />} />

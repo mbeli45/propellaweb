@@ -4,6 +4,10 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { useAllProperties } from '@/hooks/useProperties'
+import { useMarket } from '@/contexts/MarketContext'
+
+// Rent & sale by default; only stays when Home is on the Stays side.
+const STAYS_FILTER = { type: 'stay' as const }
 import PropertyCard from '@/components/PropertyCard'
 import FilterModal, { FilterOptions, MAX_PRICE } from '@/components/FilterModal'
 import MapView from '@/components/MapView'
@@ -28,7 +32,9 @@ export default function UserExplore() {
     category: [],
   })
 
-  const { properties: allProperties, loading, error } = useAllProperties()
+  const { market } = useMarket()
+  const marketFilter = market === 'stays' ? STAYS_FILTER : undefined
+  const { properties: allProperties, loading, error } = useAllProperties(marketFilter)
 
   // Filter properties
   const filteredProperties = useMemo(() => {

@@ -110,7 +110,7 @@ export default function GuestAuth() {
           </button>
 
           <button
-            onClick={() => navigate('/auth/signup')}
+            onClick={() => navigate('/auth/start')}
             style={{
               display: 'flex',
               alignItems: 'center',

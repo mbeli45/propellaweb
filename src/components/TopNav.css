@@ -1,0 +1,67 @@
+/* Desktop header. Phones and tablets use the bottom navigation instead. */
+.topnav { display: none; }
+
+@media (min-width: 1024px) {
+  .topnav {
+    position: sticky; top: 0; z-index: 900;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; height: 76px; padding: 0 clamp(16px, 3vw, 40px);
+    background: var(--color-white, #fff); border-bottom: 1px solid var(--color-neutral-200, #e5e7eb);
+  }
+  /* On Home the page's tabs and search continue this header. */
+  .topnav--home { position: relative; border-bottom: 0; }
+  /* The switch lives in the header on desktop, so the page copy hides. */
+  .browse-top > .market-switch { display: none; }
+  .browse-top { padding-top: 0; }
+}
+
+.topnav-start { justify-self: start; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.topnav-brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-primary-700, #003f94); }
+.topnav-brand img { width: 32px; height: 32px; border-radius: 8px; }
+.topnav-center { justify-self: center; }
+
+.topnav-account { position: relative; justify-self: end; display: flex; align-items: center; gap: 12px; }
+.topnav-menu-btn {
+  position: relative; display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 6px 0 14px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--color-neutral-200, #e5e7eb); background: var(--color-white, #fff); color: var(--color-neutral-700, #374151);
+}
+.topnav-menu-btn:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+.topnav-avatar {
+  width: 32px; height: 32px; border-radius: 999px; overflow: hidden; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; background: var(--color-primary-600, #004aad); color: #fff;
+}
+.topnav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.topnav-dot { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; border-radius: 999px; background: var(--color-error-600, #dc2626); border: 2px solid var(--color-white, #fff); }
+
+.topnav-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); min-width: 260px; padding: 8px; border-radius: 16px; z-index: 1;
+  background: var(--color-white, #fff); border: 1px solid var(--color-neutral-200, #e5e7eb); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+}
+.topnav-menu-head { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px 10px; border-bottom: 1px solid var(--color-neutral-100, #f3f4f6); margin-bottom: 4px; }
+.topnav-menu-head strong { font-size: 14px; color: var(--color-neutral-900, #111827); }
+.topnav-menu-head span { font-size: 12px; color: var(--color-neutral-500, #6b7280); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topnav-menu-item {
+  width: 100%; display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px;
+  background: none; font: inherit; font-size: 14px; text-align: left; text-decoration: none; cursor: pointer; color: var(--color-neutral-800, #1f2937);
+}
+.topnav-menu-item span:first-of-type { flex: 1; }
+.topnav-menu-item:hover { background: var(--color-neutral-100, #f3f4f6); }
+.topnav-menu-item.is-active { font-weight: 700; color: var(--color-primary-700, #003f94); background: var(--color-primary-50, #e6f0ff); }
+.topnav-menu-item.is-danger { color: var(--color-error-600, #dc2626); }
+.topnav-menu-sep { height: 1px; margin: 6px 4px; background: var(--color-neutral-100, #f3f4f6); }
+.topnav-count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; background: var(--color-error-600, #dc2626); color: #fff; }
+
+.topnav a:focus-visible, .topnav button:focus-visible { outline: 3px solid var(--color-primary-400, #3387ff); outline-offset: 2px; }
+
+/* Video feed on desktop: no header bar. Logo + switch hang top-left and the
+   menu top-right, on the dark stage either side of the full-height video column. */
+@media (min-width: 1024px) {
+  .topnav--feed {
+    position: fixed; inset: 0 0 auto 0; z-index: 960; height: auto; padding-top: 20px; align-items: start;
+    background: none; border: 0; pointer-events: none;
+  }
+  .topnav--feed > * { pointer-events: auto; }
+  .topnav--feed .topnav-brand { color: #fff; }
+  .topnav--feed .market-switch--overlay { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .topnav--feed .market-switch--overlay .market-switch-item { padding: 0 4px; }
+  .topnav--feed .topnav-menu-btn { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.25); color: #fff; }
+}

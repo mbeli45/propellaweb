@@ -121,9 +121,8 @@ export function useSearch() {
       }
 
       // Apply filters
-      if (filters.type) {
-        query = query.eq('type', filters.type);
-      }
+      // Stays are searched from the Stays side only.
+      query = filters.type ? query.eq('type', filters.type) : query.neq('type', 'stay');
       if (filters.category?.length) {
         query = query.in('category', filters.category.map(toCanonicalCategory));
       }

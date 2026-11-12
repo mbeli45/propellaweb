@@ -1,5 +1,10 @@
 import { dealDb } from './deals'
 
+/** Accounts that list on Propella and use the professional workspace (/agent). */
+export const isListerRole = (role?: string | null) => role === 'agent' || role === 'landlord' || role === 'host'
+/** Hotels and guest houses: they list stays only. */
+export const isHostRole = (role?: string | null) => role === 'host'
+
 /** The caller's ID check, as returned by the identity_verification RPC. */
 export interface IdentityState {
   can_post: boolean

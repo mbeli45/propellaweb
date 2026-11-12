@@ -1,0 +1,112 @@
+/* Home browse layout shared by Properties and Stays. Theme variables, so dark mode follows. */
+
+/* Full width: no centred box, one white surface from header to cards. */
+.home-container.browse-page { max-width: none; background: var(--color-white, #fff); min-height: 100dvh; padding-bottom: 120px; }
+
+.browse-top { padding: 12px var(--browse-gutter, 16px) 0; background: var(--color-white, #fff); border-bottom: 1px solid var(--color-neutral-200, #e5e7eb); }
+
+/* Where · … search pill */
+.browse-search {
+  display: flex; align-items: stretch; width: 100%; max-width: 820px; margin: 12px auto 0; padding: 6px;
+  border-radius: 999px; border: 1px solid var(--color-neutral-200, #e5e7eb); background: var(--color-white, #fff);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+.browse-search-seg {
+  position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 8px 20px;
+  border: 0; border-radius: 999px; background: none; font: inherit; text-align: left; cursor: pointer; color: var(--color-neutral-900, #111827);
+}
+.browse-search-where { flex: 1.4; cursor: text; }
+.browse-search-extra::before {
+  content: ''; position: absolute; left: 0; top: 25%; bottom: 25%; width: 1px; background: var(--color-neutral-200, #e5e7eb);
+}
+.browse-search-seg:hover, .browse-search-seg.is-open, .browse-search-where:focus-within { background: var(--color-neutral-100, #f3f4f6); }
+.browse-search-label { font-size: 12px; font-weight: 700; color: var(--color-neutral-800, #1f2937); }
+.browse-search-value { font-size: 14px; color: var(--color-neutral-600, #4b5563); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.browse-search-input { display: flex; align-items: center; gap: 6px; }
+.browse-search-icon { display: none; flex-shrink: 0; color: var(--color-neutral-500, #6b7280); }
+.browse-search-input input { flex: 1; min-width: 0; border: 0; outline: 0; padding: 0; background: transparent; font: inherit; font-size: 14px; color: var(--color-neutral-900, #111827); }
+.browse-search-input input::-webkit-search-cancel-button { display: none; }
+.browse-search-input button { border: 0; background: none; padding: 2px; display: flex; cursor: pointer; color: var(--color-neutral-500, #6b7280); }
+.browse-search-go {
+  flex-shrink: 0; width: 48px; height: 48px; align-self: center; display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 999px; background: var(--color-primary-600, #004aad); color: #fff; cursor: pointer;
+}
+.browse-search-go:hover { background: var(--color-primary-700, #003f94); }
+.browse-search-more { display: none; }
+.browse-panel { margin: 10px auto 0; max-width: 820px; }
+
+/* Phones: one compact "Where" pill; the other fields open on demand. */
+@media (max-width: 720px) {
+  .browse-search { flex-wrap: wrap; gap: 6px; border-radius: 24px; padding: 4px; margin-top: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); }
+  /* Town field + filter button own the first row; the extra fields wrap below. */
+  .browse-search-where { flex: 1 1 calc(100% - 56px); padding: 6px 12px; border-radius: 20px; }
+  .browse-search-where .browse-search-label { display: none; }
+  .browse-search-icon { display: block; }
+  .browse-search-input input { font-size: 15px; min-height: 36px; }
+  .browse-search-more {
+    flex-shrink: 0; width: 44px; height: 44px; align-self: center; display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--color-neutral-200, #e5e7eb); border-radius: 999px; background: var(--color-white, #fff); color: var(--color-neutral-800, #1f2937); cursor: pointer;
+  }
+  .browse-search.is-expanded .browse-search-more { background: var(--color-neutral-900, #111827); border-color: var(--color-neutral-900, #111827); color: #fff; }
+  .browse-search-extra {
+    display: none; flex: 1 1 calc(50% - 3px); padding: 10px 14px; border-radius: 18px;
+    background: var(--color-neutral-50, #f9fafb); border: 1px solid var(--color-neutral-200, #e5e7eb);
+  }
+  .browse-search-extra:first-of-type { margin-left: 0; }
+  .browse-search-extra::before { display: none; }
+  .browse-search.is-expanded .browse-search-extra { display: flex; }
+  .browse-search-go { display: none; }
+}
+
+/* Slim icon tabs under the search */
+.browse-tabs { display: flex; gap: 4px; overflow-x: auto; margin-top: 10px; }
+@media (min-width: 900px) { .browse-tabs { justify-content: center; gap: 28px; margin-top: 14px; } }
+.browse-tab {
+  flex-shrink: 0; display: inline-flex; flex-direction: column; align-items: center; gap: 4px; min-width: 56px; padding: 6px 8px 10px;
+  border: 0; border-bottom: 2px solid transparent; background: none; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  color: var(--color-neutral-500, #6b7280); white-space: nowrap;
+}
+.browse-tab:hover { color: var(--color-neutral-800, #1f2937); border-bottom-color: var(--color-neutral-200, #e5e7eb); }
+.browse-tab.is-active { color: var(--color-neutral-900, #111827); border-bottom-color: var(--color-neutral-900, #111827); }
+
+/* Floating Explore · Map pill */
+.browse-float {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 800;
+  display: flex; padding: 4px; border-radius: 999px; background: var(--color-neutral-900, #111827); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+@media (min-width: 1024px) { .browse-float { bottom: 28px; } }
+/* Phones and tablets have the bottom navigation instead. */
+@media (max-width: 1023px) { .browse-float { display: none; } }
+.browse-float button {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 0; border-radius: 999px;
+  background: none; color: #fff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.browse-float button:hover { background: rgba(255, 255, 255, 0.12); }
+.browse-float button + button { position: relative; }
+.browse-float button + button::before { content: ''; position: absolute; left: 0; top: 30%; bottom: 30%; width: 1px; background: rgba(255, 255, 255, 0.25); }
+
+/* Rails */
+.browse-rail-track { display: flex; gap: 20px; overflow-x: auto; padding: 0 var(--browse-gutter, 16px) 4px; scroll-snap-type: x mandatory; scroll-padding: 0 var(--browse-gutter, 16px); }
+.browse-rail-item { flex: 0 0 min(300px, 80vw); min-width: 0; scroll-snap-align: start; }
+@media (min-width: 1200px) { .browse-rail-item { flex-basis: 290px; } }
+.browse-rail-title { display: inline-flex; align-items: center; gap: 8px; min-width: 0; border: 0; background: none; padding: 0; font: inherit; cursor: pointer; text-align: left; color: var(--color-neutral-800, #1f2937); }
+.browse-rail-title h2, .browse-rail-heading { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-neutral-800, #1f2937); }
+.browse-rail-go { flex-shrink: 0; width: 28px; height: 28px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: var(--color-neutral-100, #f3f4f6); color: var(--color-neutral-800, #1f2937); }
+.browse-rail-title:hover .browse-rail-go { background: var(--color-neutral-200, #e5e7eb); }
+.browse-rail-arrows { display: none; gap: 8px; flex-shrink: 0; }
+@media (hover: hover) and (min-width: 769px) { .browse-rail-arrows { display: flex; } }
+.browse-rail-arrows button {
+  width: 32px; height: 32px; border-radius: 999px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  border: 1px solid var(--color-neutral-200, #e5e7eb); background: var(--color-white, #fff); color: var(--color-neutral-800, #1f2937);
+}
+.browse-rail-arrows button:disabled { opacity: 0.35; cursor: default; }
+
+.browse-top button:focus-visible, .browse-rail button:focus-visible, .browse-float button:focus-visible { outline: 3px solid var(--color-primary-400, #3387ff); outline-offset: 2px; }
+
+/* Video feed from Home. Phones: full screen. Desktop: full height on a dark stage; the
+   header floats over it (TopNav --feed) and carries the Properties | Stays switch. */
+.browse-feed { position: fixed; inset: 0; z-index: 950; overflow: hidden; background: #000; }
+@media (min-width: 1024px) {
+  .browse-feed { z-index: 800; background: var(--color-neutral-900, #111827); }
+  .browse-feed .market-switch--overlay { display: none; }
+}

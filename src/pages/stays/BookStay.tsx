@@ -43,8 +43,9 @@ export default function BookStay() {
 
   const [property, setProperty] = useState<StayProperty | null>(null)
   const [checkIn, setCheckIn] = useState(initial && initial >= todayISO() ? initial : todayISO())
-  const [nights, setNights] = useState(1)
-  const [guests, setGuests] = useState(1)
+  // Home → Stays hands over the nights and party size the guest already picked.
+  const [nights, setNights] = useState(() => Math.min(30, Math.max(1, Number(params.get('nights')) || 1)))
+  const [guests, setGuests] = useState(() => Math.min(20, Math.max(1, Number(params.get('guests')) || 1)))
   const [rooms, setRooms] = useState<RoomAvailability[] | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [note, setNote] = useState('')

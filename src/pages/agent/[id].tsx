@@ -121,7 +121,9 @@ export default function AgentProfile() {
       ? t('propertyDetails.roleAgent')
       : agent.role === 'landlord'
         ? t('propertyDetails.roleLandlord')
-        : t('property.owner')
+        : agent.role === 'host'
+          ? t('signup.host')
+          : t('property.owner')
   const shownProperties = showAllProperties ? properties : properties.slice(0, 6)
   const shownReviews = showAllReviews ? reviews : reviews.slice(0, 4)
 

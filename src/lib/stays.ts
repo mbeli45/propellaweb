@@ -8,6 +8,15 @@ export const stayDb = supabase as unknown as SupabaseClient;
 
 export type StayKind = 'hotel' | 'guest_house' | 'apartment' | 'lodge';
 export const STAY_KINDS: StayKind[] = ['hotel', 'guest_house', 'apartment', 'lodge'];
+/**
+ * What a stay can offer guests, stored as these keys in properties.amenities.
+ * Labels live under stays.amenities.<key>; older free-text amenities show as typed.
+ */
+export const STAY_AMENITIES = [
+  'wifi', 'parking', 'air_conditioning', 'hot_water', 'breakfast', 'restaurant',
+  'pool', 'backup_power', 'tv', 'security', 'laundry', 'kitchen',
+] as const;
+export type StayAmenity = (typeof STAY_AMENITIES)[number];
 export type BlockReason = 'offline_booking' | 'maintenance' | 'other';
 export type StayStatus = 'pending' | 'confirmed' | 'declined' | 'cancelled' | 'expired';
 /** Deposit lifecycle: due after the host accepts, paid by the guest, released to the host on check-in day. */
@@ -255,12 +264,17 @@ export async function fetchMyStays(userId: string) {
 export async function fetchHostStayProperties(ownerId: string) {
   const { data, error } = await supabase
     .from('properties')
-    .select('id,title,location,town,images,price,status,owner_review_pending')
+    .select('id,title,location,town,images,price,status,owner_review_pending,owner_id,category,stay_kind,amenities,check_in_time,check_out_time,availability_confirmed_at')
     .eq('owner_id', ownerId)
     .eq('type', 'stay' as never)
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return (data || []) as Array<{ id: string; title: string; location: string; town: string | null; images: string[] | null; price: number; status: string | null; owner_review_pending: boolean }>;
+  return (data || []) as Array<{
+    id: string; title: string; location: string; town: string | null; images: string[] | null; price: number;
+    status: string | null; owner_review_pending: boolean; owner_id: string; category: string | null;
+    stay_kind: string | null; amenities: string[] | null; check_in_time: string | null; check_out_time: string | null;
+    availability_confirmed_at: string | null;
+  }>;
 }
 
 // ---------------------------------------------------------------------------

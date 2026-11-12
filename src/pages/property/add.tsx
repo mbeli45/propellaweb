@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { STAY_KINDS, StayKind } from '@/lib/stays'
+import { STAY_AMENITIES, STAY_KINDS, StayKind } from '@/lib/stays'
 import { useAuth } from '@/contexts/AuthContext'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { supabase } from '@/lib/supabase'
-import { identityCommand } from '@/lib/identity'
+import { identityCommand, isHostRole, isListerRole } from '@/lib/identity'
 import { useStorage } from '@/hooks/useStorage'
 import { ChevronLeft, Plus, X, Star, DollarSign, Square, Home, MapPin } from 'lucide-react'
 import LocationSearchInput from '@/components/LocationSearchInput'
@@ -27,8 +27,11 @@ interface PropertyFormData {
   type: 'rent' | 'sale' | 'stay'
   /** Stays only. */
   stayKind?: StayKind
+  /** "HH:MM", or empty when the stay has no set time. */
   checkInTime?: string
   checkOutTime?: string
+  /** Stays only: keys from STAY_AMENITIES. */
+  amenities?: string[]
   category: 'budget' | 'standard' | 'premium' | 'luxury'
   propertyType: 'single_room' | 'apartment' | 'studio' | 'shop' | 'land' | 'house'
   bedrooms: string
@@ -62,7 +65,7 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
 
   // Redirect if user is not an agent/landlord (stable deps — avoid reruns when auth object identity changes)
   useEffect(() => {
-    if (user && user.role !== 'agent' && user.role !== 'landlord') {
+    if (user && !isListerRole(user.role)) {
       navigate('/user')
     }
   }, [user?.id, user?.role, navigate])
@@ -88,8 +91,9 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
         advance_months_min: initialData.advance_months_min?.toString() || '',
         advance_months_max: initialData.advance_months_max?.toString() || '',
         stayKind: initialData.stay_kind || 'hotel',
-        checkInTime: initialData.check_in_time?.slice(0, 5) || '14:00',
-        checkOutTime: initialData.check_out_time?.slice(0, 5) || '11:00',
+        checkInTime: initialData.check_in_time?.slice(0, 5) || '',
+        checkOutTime: initialData.check_out_time?.slice(0, 5) || '',
+        amenities: initialData.amenities || [],
       })
       setExistingImages(initialData.images || [])
     }
@@ -100,7 +104,8 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
     description: '',
     price: '',
     location: '',
-    type: searchParams.get('type') === 'stay' ? 'stay' : 'rent',
+    // Host accounts list stays only.
+    type: isHostRole(user?.role) || searchParams.get('type') === 'stay' ? 'stay' : 'rent',
     category: 'budget',
     propertyType: 'apartment',
     bedrooms: '',
@@ -110,8 +115,10 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
     reservationFee: '10000', // Default site visit fee
     rentPeriod: 'yearly',
     stayKind: 'hotel',
-    checkInTime: '14:00',
-    checkOutTime: '11:00',
+    // Not every stay has set times; the host fills them only if they do.
+    checkInTime: '',
+    checkOutTime: '',
+    amenities: [],
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -212,7 +219,7 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user?.id || (user.role !== 'agent' && user.role !== 'landlord')) {
+    if (!user?.id || (!isListerRole(user.role))) {
       setError(t('auth.mustBeAgentToAdd') || 'Only agents can add properties')
       navigate('/user')
       return
@@ -288,8 +295,9 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
         category,
         property_type: form.type === 'stay' ? null : form.propertyType,
         stay_kind: form.type === 'stay' ? form.stayKind || 'hotel' : null,
-        check_in_time: form.type === 'stay' && /^([01]?\d|2[0-3]):[0-5]\d$/.test(form.checkInTime || '') ? form.checkInTime : form.type === 'stay' ? '14:00' : null,
-        check_out_time: form.type === 'stay' && /^([01]?\d|2[0-3]):[0-5]\d$/.test(form.checkOutTime || '') ? form.checkOutTime : form.type === 'stay' ? '11:00' : null,
+        check_in_time: form.type === 'stay' && /^([01]?\d|2[0-3]):[0-5]\d$/.test(form.checkInTime || '') ? form.checkInTime : null,
+        check_out_time: form.type === 'stay' && /^([01]?\d|2[0-3]):[0-5]\d$/.test(form.checkOutTime || '') ? form.checkOutTime : null,
+        ...(form.type === 'stay' ? { amenities: form.amenities || [] } : {}),
         bedrooms: form.bedrooms ? parseInt(form.bedrooms) : null,
         bathrooms: form.bathrooms ? parseInt(form.bathrooms) : null,
         area: form.area ? parseFloat(form.area) : null,
@@ -578,62 +586,50 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
             <label style={{ color: Colors.neutral[700], marginBottom: '12px', display: 'block' }}>
               {t('propertyForm.listingType') || 'Listing Type'}
             </label>
+            {/* Hosts list stays only; agents and landlords rent and sell. A stay
+                listed before hosts existed keeps its type. */}
+            {isHostRole(user?.role) || (isEditMode && form.type === 'stay') ? (
+              <p style={{ margin: 0, fontWeight: 600, color: Colors.neutral[800] }}>{t('stays.typeLabel')}</p>
+            ) : (
             <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                type="button"
-                onClick={() => handleInputChange('type', 'rent')}
-                style={{
-                  flex: 1,
-                  padding: '12px 20px',
-                  borderRadius: '24px',
-                  border: `2px solid ${form.type === 'rent' ? Colors.primary[600] : Colors.neutral[300]}`,
-                  backgroundColor: form.type === 'rent' ? Colors.primary[600] : (colorScheme === 'dark' ? Colors.neutral[200] : Colors.white),
-                  color: form.type === 'rent' ? '#FFFFFF' : Colors.neutral[700],
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {t('property.rent') || 'For Rent'}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleInputChange('type', 'sale')}
-                style={{
-                  flex: 1,
-                  padding: '12px 20px',
-                  borderRadius: '24px',
-                  border: `2px solid ${form.type === 'sale' ? Colors.primary[600] : Colors.neutral[300]}`,
-                  backgroundColor: form.type === 'sale' ? Colors.primary[600] : (colorScheme === 'dark' ? Colors.neutral[200] : Colors.white),
-                  color: form.type === 'sale' ? '#FFFFFF' : Colors.neutral[700],
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {t('property.sale') || 'For Sale'}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleInputChange('type', 'stay')}
-                style={{
-                  flex: 1,
-                  padding: '12px 20px',
-                  borderRadius: '24px',
-                  border: `2px solid ${form.type === 'stay' ? Colors.primary[600] : Colors.neutral[300]}`,
-                  backgroundColor: form.type === 'stay' ? Colors.primary[600] : (colorScheme === 'dark' ? Colors.neutral[200] : Colors.white),
-                  color: form.type === 'stay' ? '#FFFFFF' : Colors.neutral[700],
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {t('stays.typeLabel')}
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => handleInputChange('type', 'rent')}
+                  style={{
+                    flex: 1,
+                    padding: '12px 20px',
+                    borderRadius: '24px',
+                    border: `2px solid ${form.type === 'rent' ? Colors.primary[600] : Colors.neutral[300]}`,
+                    backgroundColor: form.type === 'rent' ? Colors.primary[600] : (colorScheme === 'dark' ? Colors.neutral[200] : Colors.white),
+                    color: form.type === 'rent' ? '#FFFFFF' : Colors.neutral[700],
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {t('property.rent') || 'For Rent'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleInputChange('type', 'sale')}
+                  style={{
+                    flex: 1,
+                    padding: '12px 20px',
+                    borderRadius: '24px',
+                    border: `2px solid ${form.type === 'sale' ? Colors.primary[600] : Colors.neutral[300]}`,
+                    backgroundColor: form.type === 'sale' ? Colors.primary[600] : (colorScheme === 'dark' ? Colors.neutral[200] : Colors.white),
+                    color: form.type === 'sale' ? '#FFFFFF' : Colors.neutral[700],
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {t('property.sale') || 'For Sale'}
+                </button>
+              </div>
+            )}
           </div>
 
           {form.type !== 'stay' && (
@@ -672,15 +668,45 @@ export default function AddProperty({ propertyId, initialData, isEditMode = fals
                 </select>
               </div>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <div className="form-group" style={{ flex: '1 1 140px' }}>
-                  <label style={{ color: Colors.neutral[700] }}>{t('stays.form.checkInTime')}</label>
-                  <input type="time" value={form.checkInTime || '14:00'} onChange={(e) => handleInputChange('checkInTime', e.target.value)}
-                    style={{ borderColor: Colors.neutral[300], backgroundColor: Colors.neutral[50], color: Colors.neutral[900] }} />
-                </div>
-                <div className="form-group" style={{ flex: '1 1 140px' }}>
-                  <label style={{ color: Colors.neutral[700] }}>{t('stays.form.checkOutTime')}</label>
-                  <input type="time" value={form.checkOutTime || '11:00'} onChange={(e) => handleInputChange('checkOutTime', e.target.value)}
-                    style={{ borderColor: Colors.neutral[300], backgroundColor: Colors.neutral[50], color: Colors.neutral[900] }} />
+                {([['checkInTime', 'stays.form.checkInTime'], ['checkOutTime', 'stays.form.checkOutTime']] as const).map(([field, label]) => (
+                  <div key={field} className="form-group" style={{ flex: '1 1 140px' }}>
+                    <label style={{ color: Colors.neutral[700] }}>{t(label)} <span style={{ fontWeight: 400, color: Colors.neutral[500] }}>({t('common.optional', 'optional')})</span></label>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input type="time" value={form[field] || ''} onChange={(e) => handleInputChange(field, e.target.value)}
+                        style={{ flex: 1, minWidth: 0, borderColor: Colors.neutral[300], backgroundColor: Colors.neutral[50], color: Colors.neutral[900] }} />
+                      {form[field] && (
+                        <button type="button" onClick={() => handleInputChange(field, '')}
+                          style={{ border: 0, background: 'none', color: Colors.primary[600], fontWeight: 600, cursor: 'pointer', padding: '8px' }}>
+                          {t('common.clear', 'Clear')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: '12px', color: Colors.neutral[600], margin: '-8px 0 16px' }}>{t('stays.form.timesHint')}</p>
+              <div className="form-group">
+                <label style={{ color: Colors.neutral[700] }}>{t('stays.form.amenities')}</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }} role="group" aria-label={t('stays.form.amenities')}>
+                  {STAY_AMENITIES.map((key) => {
+                    const on = (form.amenities || []).includes(key)
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => handleInputChange('amenities', on ? (form.amenities || []).filter((a) => a !== key) : [...(form.amenities || []), key])}
+                        style={{
+                          minHeight: '40px', padding: '0 14px', borderRadius: '999px', cursor: 'pointer', fontSize: '14px', fontWeight: 600,
+                          border: `1px solid ${on ? Colors.primary[600] : Colors.neutral[300]}`,
+                          backgroundColor: on ? Colors.primary[50] : Colors.white,
+                          color: on ? Colors.primary[700] : Colors.neutral[700],
+                        }}
+                      >
+                        {on ? '✓ ' : ''}{t(`stays.amenities.${key}`)}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
               <div className="form-group">

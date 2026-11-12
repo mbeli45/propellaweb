@@ -1,3 +1,4 @@
+import { isListerRole } from '@/lib/identity'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, Bookmark } from 'lucide-react'
 import { useThemeMode } from '@/contexts/ThemeContext'
@@ -18,7 +19,7 @@ export default function SavedProperties() {
   const { properties, loading, error, refresh, removeSaved } = useSavedProperties(user?.id)
 
   // Agents/landlords browse from their own listings area; renters use Explore.
-  const browsePath = user?.role === 'agent' || user?.role === 'landlord' ? '/agent' : '/user/explore'
+  const browsePath = isListerRole(user?.role) ? '/agent' : '/user/explore'
 
   const renderEmptyState = (title: string, hint: string, actionLabel: string, onAction: () => void) => (
     <div className="saved-empty" style={{ backgroundColor: Colors.white }}>

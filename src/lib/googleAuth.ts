@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
 
 export interface GoogleSignInOptions {
-  role?: 'normal' | 'agent' | 'landlord'
+  role?: 'normal' | 'agent' | 'landlord' | 'host'
 }
 
 /**
@@ -69,7 +69,7 @@ export async function handleGoogleCallback() {
             id: session.user.id,
             email: session.user.email,
             full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
-            role: pendingRole as 'normal' | 'agent' | 'landlord',
+            role: pendingRole as 'normal' | 'agent' | 'landlord' | 'host',
             avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture,
           })
 
@@ -100,7 +100,7 @@ export async function handleGoogleCallback() {
 /**
  * Update user role in profile after Google Sign-In
  */
-async function updateUserRole(userId: string, role: 'normal' | 'agent' | 'landlord') {
+async function updateUserRole(userId: string, role: 'normal' | 'agent' | 'landlord' | 'host') {
   try {
     const { error } = await supabase
       .from('profiles')

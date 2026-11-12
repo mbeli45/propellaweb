@@ -74,6 +74,7 @@ const ROLE_TONE: Record<string, { bg: string; fg: string }> = {
   admin:    { bg: Colors.primary[100],  fg: Colors.primary[800] },
   agent:    { bg: Colors.success[100],  fg: Colors.success[800] },
   landlord: { bg: Colors.info[100],     fg: Colors.info[800] },
+  host:     { bg: Colors.warning[100],  fg: Colors.warning[800] },
   user:     { bg: Colors.neutral[200],  fg: Colors.neutral[700] },
   normal:   { bg: Colors.neutral[200],  fg: Colors.neutral[700] },
 };
@@ -103,6 +104,7 @@ const ProfileFilter = (props: any) => (
         { id: 'normal', name: 'User' },
         { id: 'agent', name: 'Agent' },
         { id: 'landlord', name: 'Landlord' },
+        { id: 'host', name: 'Host' },
       ]}
       alwaysOn
     />
@@ -255,6 +257,7 @@ const ProfileDetail = () => {
                 { id: 'normal', name: 'User' },
                 { id: 'agent', name: 'Agent' },
                 { id: 'landlord', name: 'Landlord' },
+                { id: 'host', name: 'Host' },
               ]}
             />
             <TextInput source="avatar_url" label="Avatar URL" />

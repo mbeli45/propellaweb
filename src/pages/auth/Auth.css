@@ -694,3 +694,22 @@
 .auth-user-type-container { margin-bottom: 24px; }
 .auth-section-title { font-size: 11px !important; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--color-neutral-500, #6b7280) !important; margin: 0 0 8px 4px !important; }
 .auth-role-hint { margin: 8px 0 0 4px; font-size: 13px; color: var(--color-neutral-600, #4b5563); }
+
+/* Sign-up: the role chosen on /auth/start, with a way back to change it */
+.auth-role-chosen {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; margin-bottom: 16px;
+  border-radius: 12px; border: 1px solid var(--color-primary-100, #cce1ff); background: var(--color-primary-50, #e6f0ff);
+}
+.auth-role-chosen > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.auth-role-chosen-label { font-size: 12px; color: var(--color-neutral-600, #4b5563); }
+.auth-role-chosen strong { font-size: 15px; color: var(--color-neutral-900, #111827); }
+.auth-role-chosen button { flex-shrink: 0; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 0; cursor: pointer; font: inherit; font-size: 14px; font-weight: 700; background: var(--color-white, #fff); color: var(--color-primary-700, #003f94); }
+
+/* Sign-up is step 2 of the role flow: same centred column as /auth/start. */
+.auth-signup-page { align-items: flex-start; }
+.auth-signup-page .choose-role-subtitle { margin-bottom: 20px; }
+.auth-signup-page .auth-form-container { text-align: left; padding: 0; margin: 0; max-width: none; width: 100%; }
+.auth-signup-page .auth-terms-container { background: var(--color-neutral-100, #f3f4f6) !important; margin: 8px 0 20px !important; }
+.auth-signup-page .auth-terms-text { text-align: left; }
+.auth-signup-page .auth-primary-button { border-radius: 14px; min-height: 52px; }
+.auth-signup-page .auth-google-button { border-radius: 14px; }

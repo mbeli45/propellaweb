@@ -1,7 +1,8 @@
+import { isListerRole } from '@/lib/identity'
 import React, { useEffect } from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import BottomNavigation from '@/components/BottomNavigation'
-import Sidebar from '@/components/Sidebar'
+import TopNav from '@/components/TopNav'
 import { Home, Map, User } from 'lucide-react'
 import GuestHome from '@/pages/guest/Home'
 import GuestMap from '@/pages/guest/Map'
@@ -25,14 +26,14 @@ export default function GuestLayout() {
   // Redirect logged-in users to their appropriate route
   useEffect(() => {
     if (user) {
-      const targetRoute = user.role === 'agent' ? '/agent' : '/user'
+      const targetRoute = isListerRole(user.role) ? '/agent' : '/user'
       navigate(targetRoute, { replace: true })
     }
   }, [user, navigate])
 
   return (
-    <div className="app-layout">
-      <Sidebar items={navItems} userRole="guest" />
+    <div className="app-layout app-layout--topnav">
+      <TopNav items={navItems} userRole="guest" />
       <div className="app-content">
         <main className="main-content">
           <Routes>

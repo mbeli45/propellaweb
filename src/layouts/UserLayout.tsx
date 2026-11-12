@@ -1,7 +1,7 @@
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 import BottomNavigation from '@/components/BottomNavigation'
-import Sidebar from '@/components/Sidebar'
+import TopNav from '@/components/TopNav'
 import { Home, Map, User, CalendarDays, HeartHandshake } from 'lucide-react'
 import MessageSquareText from '@/components/icons/MessageSquareText'
 import UserHome from '@/pages/user/Home'
@@ -42,8 +42,8 @@ export default function UserLayout() {
   ]
 
   return (
-    <div className="app-layout">
-      <Sidebar items={navItems} userRole="user" />
+    <div className="app-layout app-layout--topnav">
+      <TopNav items={navItems} userRole="user" />
       <div className="app-content">
         <main className="main-content">
           <Routes>

@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 import { AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/I18nContext'
@@ -21,6 +22,23 @@ export default function EULAGate() {
 
   const needsAcceptance = !!user && !((user as any).eula_accepted_at)
 
+  // Accepted on the sign-up form, but the profile couldn't be written then:
+  // with email confirmation there is no session until the email is verified.
+  // Carry that acceptance over on first sign-in instead of asking again.
+  const [checkingSignup, setCheckingSignup] = useState(true)
+  useEffect(() => {
+    if (!needsAcceptance) { setCheckingSignup(false); return }
+    let active = true
+    setCheckingSignup(true)
+    supabase.auth.getSession()
+      .then(async ({ data }) => {
+        if (data.session?.user?.user_metadata?.eula_accepted_at) await acceptEula()
+      })
+      .catch(() => {})
+      .finally(() => { if (active) setCheckingSignup(false) })
+    return () => { active = false }
+  }, [needsAcceptance, acceptEula])
+
   const handleAccept = useCallback(async () => {
     if (!accepted || submitting) return
     try {
@@ -34,7 +52,7 @@ export default function EULAGate() {
     }
   }, [accepted, submitting, acceptEula, t])
 
-  if (!needsAcceptance) return null
+  if (!needsAcceptance || checkingSignup) return null
 
   return (
     <div

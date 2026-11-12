@@ -1,3 +1,4 @@
+import { isListerRole } from '@/lib/identity'
 // Web compatibility: expo-router and expo-notifications are not available in web builds
 // These are stubs for the web version
 const router = {
@@ -83,7 +84,7 @@ function navigateFromNotification(url: string, notificationType: 'chat' | 'reser
     if (notificationType === 'chat') {
       // Navigate to the appropriate messages screen first, then to the chat
       // This ensures there's a proper back navigation
-      const messagesRoute = (userRole === 'agent' || userRole === 'landlord') ? '/(agent)/messages' : '/(user)/messages';
+      const messagesRoute = (isListerRole(userRole)) ? '/(agent)/messages' : '/(user)/messages';
       
       // Use push instead of replace to maintain proper navigation stack
       router.push(messagesRoute);
@@ -116,13 +117,13 @@ export function handleNotificationNavigation(data: NotificationData, currentUser
         break;
       case 'stay': {
         // Hosts get requests and guest cancellations; guests get replies.
-        const isHost = userRole === 'agent' || userRole === 'landlord';
+        const isHost = isListerRole(userRole);
         const audience = data.audience;
         router.push(audience === 'host' && isHost ? '/agent/stays' : `${isHost ? '/agent' : '/user'}/stays/my`);
         break;
       }
       case 'deal':
-        router.push(userRole === 'agent' || userRole === 'landlord' ? '/agent/deals' : '/user/deals');
+        router.push(isListerRole(userRole) ? '/agent/deals' : '/user/deals');
         break;
       case 'chat':
         handleChatNotification(data, currentUserId, userRole);

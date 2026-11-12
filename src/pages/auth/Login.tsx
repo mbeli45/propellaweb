@@ -60,7 +60,7 @@ export default function Login() {
 
   const handleSignUp = useCallback(() => {
     setError(null)
-    navigate('/auth/signup')
+    navigate('/auth/start')
   }, [navigate])
 
   const handleForgotPassword = useCallback(() => {

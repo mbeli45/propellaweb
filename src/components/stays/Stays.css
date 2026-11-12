@@ -98,7 +98,9 @@
 .stay-stack { display: flex; flex-direction: column; gap: 12px; }
 .stay-field-hint { font-size: 12px; font-weight: 400; color: var(--rsv-faint); }
 .stay-dialog-foot { position: sticky; bottom: -20px; margin: 0 -20px -20px; padding: 16px 20px; background: var(--rsv-surface); border-top: 1px solid var(--rsv-line); display: flex; justify-content: flex-end; gap: 10px; }
-.stay-dialog-root.rsv-page { min-height: 0; max-width: none; background: rgba(0,0,0,.5); padding: 0; }
+.stay-dialog-root.rsv-page { min-height: 0; max-width: none; background: rgba(0,0,0,.5); padding: 0; z-index: 1100; }
+/* dvh: the phone browser bar must not hide the Save button. */
+.stay-dialog-root .rsv-dialog { max-height: 92dvh; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
 @media (min-width: 640px) { .stay-dialog-root.rsv-page { padding: 24px; } }
 .stay-dialog-close { font-size: 24px; line-height: 1; border: 0; background: transparent; cursor: pointer; color: var(--rsv-ink); }
 .stay-error { margin: 0; color: var(--rsv-error); font-size: 14px; }
@@ -123,3 +125,76 @@
 .stay-phone span { color: var(--rsv-faint); }
 .stay-phone input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: var(--rsv-ink); padding: 10px 0; }
 .stay-phone:focus-within { outline: 3px solid var(--color-primary-400, #3387ff); outline-offset: 1px; }
+
+/* Host dashboard: the shared listing card, with tonight's rooms underneath. */
+.stay-prop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.stay-prop-card { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.stay-prop-card .stay-prop-state { display: inline-flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--rsv-line-soft); background: var(--rsv-surface); font: inherit; font-size: 13px; cursor: pointer; text-align: left; }
+
+/* Host dashboard: stats row, then Today beside the listings on wide screens. */
+.rsv-page:has(.host-dash) { max-width: 1440px; }
+.host-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 20px; }
+.host-stat {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 108px; padding: 14px 16px; border-radius: 14px; cursor: pointer;
+  border: 1px solid var(--rsv-line); background: var(--rsv-surface); font: inherit; text-align: left; color: var(--rsv-ink);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.host-stat:hover { border-color: var(--rsv-primary-line); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05); }
+.host-stat-label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--rsv-muted); }
+.host-stat-value { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+.host-stat-value--link { display: inline-flex; align-items: center; gap: 2px; font-size: 18px; color: var(--rsv-primary-ink); margin-top: 6px; }
+.host-stat-sub { font-size: 12px; color: var(--rsv-faint); }
+.host-stat--attention { border-color: var(--rsv-warning); background: var(--rsv-warning-tint); }
+.host-stat--attention .host-stat-value { color: var(--rsv-warning-ink); }
+.host-stat--warn .host-stat-value { color: var(--rsv-warning-ink); }
+.host-stat--wallet { background: var(--rsv-primary-tint); border-color: var(--rsv-primary-line); }
+.host-stat:focus-visible, .host-prop-actions button:focus-visible, .host-add:focus-visible { outline: 3px solid var(--color-primary-400, #3387ff); outline-offset: 2px; }
+
+.host-grid { display: flex; flex-direction: column; }
+.host-main { min-width: 0; }
+.host-today { min-width: 0; }
+@media (min-width: 1100px) {
+  .host-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 28px; align-items: start; }
+  .host-main { grid-column: 1; grid-row: 1; }
+  .host-today {
+    grid-column: 2; grid-row: 1; position: sticky; top: 96px; margin-top: 28px; padding: 4px 16px 16px; border-radius: 16px;
+    border: 1px solid var(--rsv-line); background: var(--rsv-surface);
+  }
+  .host-today .rsv-section { margin-top: 16px; }
+  /* Compact identity banner on wide screens: text left, button right. */
+  .host-dash .rsv-banner { flex-direction: row; align-items: center; justify-content: space-between; }
+  .host-dash .rsv-banner-actions { flex-shrink: 0; }
+  .host-dash .rsv-banner-actions .rsv-btn { flex: 0 0 auto; padding: 0 20px; }
+}
+.host-quiet { margin: 0; padding: 14px; border-radius: 12px; background: var(--rsv-ground); font-size: 13px; color: var(--rsv-muted); }
+
+.host-prop-foot { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--rsv-line-soft); background: var(--rsv-surface); }
+.host-prop-state { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
+.host-prop-state--ok { color: var(--rsv-success-ink); }
+.host-prop-state--warn { color: var(--rsv-warning-ink); }
+.host-prop-dot { width: 8px; height: 8px; border-radius: 999px; background: currentColor; flex-shrink: 0; }
+.host-prop-actions { display: flex; gap: 8px; }
+.host-prop-actions button {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--rsv-line); background: var(--rsv-surface); font: inherit; font-size: 13px; font-weight: 600; color: var(--rsv-ink-2);
+}
+.host-prop-actions button:hover { border-color: var(--rsv-primary-line); background: var(--rsv-primary-tint); color: var(--rsv-primary-ink); }
+
+.host-add {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 260px; padding: 24px; border-radius: 16px; cursor: pointer;
+  border: 2px dashed var(--rsv-line); background: transparent; font: inherit; color: var(--rsv-muted); text-align: center;
+}
+.host-add:hover { border-color: var(--rsv-primary); color: var(--rsv-primary-ink); background: var(--rsv-primary-tint); }
+.host-add strong { font-size: 15px; color: var(--rsv-ink); }
+.host-add span:last-child { font-size: 13px; }
+.host-add-icon { width: 48px; height: 48px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: var(--rsv-primary-tint); color: var(--rsv-primary); }
+
+.host-booking-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+@media (max-width: 520px) {
+  .host-stats { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .host-stat { min-height: 96px; padding: 12px; }
+  .host-stat-value { font-size: 24px; }
+  .host-stat--wallet { grid-column: 1 / -1; min-height: 0; }
+  .host-add { min-height: 140px; }
+  .host-booking-grid { grid-template-columns: 1fr; }
+}

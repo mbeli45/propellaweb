@@ -1,11 +1,12 @@
 .property-feed-container {
   position: fixed;
-  top: 0;
+  /* --feed-top lets Home start the feed below the desktop header. */
+  top: var(--feed-top, 0px);
   left: 0;
   right: 0;
   bottom: 0;
   width: 100%;
-  height: 100dvh; /* Dynamic viewport height for mobile browsers */
+  height: calc(100dvh - var(--feed-top, 0px)); /* Dynamic viewport height for mobile browsers */
   overflow: hidden;
   touch-action: none; /* Disable default touch actions, handle everything in JS */
   user-select: none;
@@ -15,7 +16,7 @@
 /* Fallback for browsers that don't support dvh */
 @supports not (height: 100dvh) {
   .property-feed-container {
-    height: 100vh;
+    height: calc(100vh - var(--feed-top, 0px));
   }
 }
 

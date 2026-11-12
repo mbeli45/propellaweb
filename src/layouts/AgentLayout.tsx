@@ -1,8 +1,8 @@
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 import BottomNavigation from '@/components/BottomNavigation'
-import Sidebar from '@/components/Sidebar'
-import { List, CalendarDays, Wallet, User } from 'lucide-react'
+import TopNav from '@/components/TopNav'
+import { List, CalendarDays, Wallet, User, BedDouble } from 'lucide-react'
 import MessageSquareText from '@/components/icons/MessageSquareText'
 import AgentListings from '@/pages/agent/Listings'
 import AgentReservations from '@/pages/agent/Reservations'
@@ -30,6 +30,7 @@ import FAQ from '@/pages/profile/help/FAQ'
 import Privacy from '@/pages/profile/help/Privacy'
 import Terms from '@/pages/profile/help/Terms'
 import { useAuth } from '@/contexts/AuthContext'
+import { isHostRole } from '@/lib/identity'
 import { useBadgeCounts } from '@/hooks/useBadgeCounts'
 import './Layout.css'
 
@@ -38,7 +39,14 @@ export default function AgentLayout() {
   const { reservationBadgeCount, messageBadgeCount } = useBadgeCounts(user?.id || '', user?.role)
 
 
-  const navItems = [
+  // Hosts (hotels, guest houses): stays dashboard first, no site-visit bookings or deals.
+  const isHost = isHostRole(user?.role)
+  const navItems = isHost ? [
+    { path: '/agent', icon: BedDouble, label: 'stays.title' },
+    { path: '/agent/messages', icon: MessageSquareText, label: 'navigation.messages', badge: messageBadgeCount > 0 ? messageBadgeCount : undefined },
+    { path: '/agent/wallet', icon: Wallet, label: 'navigation.wallet' },
+    { path: '/agent/profile', icon: User, label: 'navigation.profile' },
+  ] : [
     { path: '/agent', icon: List, label: 'navigation.listings' },
     // Deals live under the Bookings tab (switch inside the page); Wallet is sidebar-only, reached on phones
     // from Profile and Listings. The phone bottom bar keeps to 4 items.
@@ -48,12 +56,12 @@ export default function AgentLayout() {
     { path: '/agent/profile', icon: User, label: 'navigation.profile' },
   ]
   return (
-    <div className="app-layout">
-      <Sidebar items={navItems} userRole="agent" />
+    <div className="app-layout app-layout--topnav">
+      <TopNav items={navItems} userRole="agent" />
       <div className="app-content">
         <main className="main-content">
           <Routes>
-            <Route index element={<AgentListings />} />
+            <Route index element={isHost ? <HostStays asHome /> : <AgentListings />} />
             <Route path="reservations" element={<AgentReservations />} />
             <Route path="messages" element={<UserMessages />} />
             <Route path="messages/:id" element={<ChatDetail />} />

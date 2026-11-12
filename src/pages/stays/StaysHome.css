@@ -1,0 +1,30 @@
+/* Home → Stays (web). Colours come from the theme variables, so dark mode follows. */
+.stays-home { background: var(--color-neutral-100, #f3f4f6); padding-bottom: 96px; min-height: 100dvh; }
+.stays-home-next {
+  display: flex; align-items: center; gap: 12px; width: calc(100% - 32px); max-width: 688px; margin: 14px var(--browse-gutter, 16px) 0; padding: 12px;
+  border-radius: 12px; border: 1px solid var(--color-primary-200, #99c2ff); background: var(--color-white, #fff);
+  font: inherit; text-align: left; cursor: pointer; color: var(--color-neutral-500, #6b7280);
+}
+.stays-home-next-icon { width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--color-primary-50, #e6f0ff); color: var(--color-primary-700, #003f94); }
+.stays-home-next-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; font-size: 13px; color: var(--color-neutral-600, #4b5563); }
+.stays-home-next-body strong { font-size: 15px; color: var(--color-neutral-900, #111827); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stays-home-next-label { font-size: 12px; font-weight: 700; color: var(--color-primary-700, #003f94); }
+
+.stays-home .properties-section { margin-top: 24px; }
+.stays-home-h2 { margin: 0; font-size: 18px; font-weight: 600; color: var(--color-neutral-800, #1f2937); }
+.stays-home .see-all-button { color: var(--color-primary-800, #003478); }
+.stays-home-empty { padding: 40px 24px; text-align: center; color: var(--color-neutral-600, #4b5563); font-size: 14px; line-height: 1.5; }
+.stays-home-empty p { margin: 0 0 6px; }
+.stays-home-empty-title { font-size: 16px; font-weight: 700; color: var(--color-neutral-800, #1f2937); }
+.stays-home-link { margin-top: 8px; border: 0; background: none; padding: 12px; font: inherit; font-size: 14px; font-weight: 700; color: var(--color-primary-600, #004aad); cursor: pointer; }
+
+/* Doorway at the foot of Properties */
+.stays-doorway {
+  display: flex; align-items: center; gap: 12px; width: calc(100% - 32px); max-width: 688px; margin: 24px 16px 8px; padding: 14px;
+  border-radius: 12px; border: 1px solid var(--color-primary-200, #99c2ff); background: var(--color-primary-50, #e6f0ff);
+  color: var(--color-primary-700, #003f94); font: inherit; text-align: left; cursor: pointer;
+}
+.stays-doorway-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.stays-doorway-body strong { font-size: 15px; color: var(--color-primary-800, #003478); }
+
+.stays-home button:focus-visible, .stays-doorway:focus-visible { outline: 3px solid var(--color-primary-400, #3387ff); outline-offset: 2px; }

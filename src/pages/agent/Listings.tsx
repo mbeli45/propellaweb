@@ -202,7 +202,6 @@ export default function AgentListings() {
       />
 
       <div className="ds-shortcuts">
-        <CardButton label={t('stays.title')} icon={BedDouble} tone="neutral" onClick={() => navigate('/agent/stays')} />
         <CardButton label={t('reservations.dealsButton')} icon={HeartHandshake} tone="neutral" onClick={() => navigate('/agent/deals')} />
         <CardButton label={t('profileMenu.analytics')} icon={BarChart3} tone="neutral" onClick={() => navigate('/agent/analytics')} />
         <CardButton label={t('navigation.wallet')} icon={Wallet} tone="neutral" onClick={() => navigate('/agent/wallet')} />
