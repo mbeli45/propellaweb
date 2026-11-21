@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowRight, ChevronLeft, ChevronRight, Search, SlidersHorizontal, X, type LucideIcon } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState, type ReactNode, useSyncExternalStore } from 'react'
+import { ArrowRight, ChevronLeft, ChevronRight, Clapperboard, Compass, MapPin, Search, SlidersHorizontal, X, type LucideIcon } from 'lucide-react'
 import './Browse.css'
 
 /**
@@ -64,6 +64,10 @@ export function SearchPill({
   submitLabel,
   clearLabel,
   moreLabel,
+  picks,
+  picksLabel,
+  onExplore,
+  exploreLabel,
 }: {
   whereLabel: string
   value: string
@@ -77,9 +81,19 @@ export function SearchPill({
   clearLabel: string
   /** Phones show only "Where" until this toggle opens the other fields. */
   moreLabel: string
+  /** Towns offered as one-tap picks while the field is focused and empty. */
+  picks?: { label: string; active?: boolean; onPick: () => void }[]
+  picksLabel?: string
+  /** Small screens: a compass in the pill that opens the Explore page. */
+  onExplore?: () => void
+  exploreLabel?: string
 }) {
   const [expanded, setExpanded] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const blurTimer = useRef<number>()
+  const showPicks = !!picks?.length && focused && !value
   return (
+    <>
     <form
       className={`browse-search${expanded ? ' is-expanded' : ''}`}
       role="search"
@@ -89,7 +103,15 @@ export function SearchPill({
         <span className="browse-search-label">{whereLabel}</span>
         <span className="browse-search-input">
           <Search size={16} aria-hidden="true" className="browse-search-icon" />
-          <input type="search" value={value} onFocus={onFocus} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+          <input
+            type="search"
+            value={value}
+            onFocus={() => { window.clearTimeout(blurTimer.current); setFocused(true); onFocus?.() }}
+            // Wait a moment so a tap on a pick lands before the picks hide.
+            onBlur={() => { blurTimer.current = window.setTimeout(() => setFocused(false), 150) }}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+          />
           {value && onClear && (
             <button type="button" onClick={onClear} aria-label={clearLabel}>
               <X size={14} />
@@ -97,6 +119,11 @@ export function SearchPill({
           )}
         </span>
       </label>
+      {onExplore && (
+        <button type="button" className="browse-search-explore" onClick={onExplore} aria-label={exploreLabel} title={exploreLabel}>
+          <Compass size={18} />
+        </button>
+      )}
       <button
         type="button"
         className="browse-search-more"
@@ -123,6 +150,40 @@ export function SearchPill({
         <Search size={20} />
       </button>
     </form>
+    {showPicks && (
+      <div className="browse-picks hidden-scrollbar" role="group" aria-label={picksLabel}>
+        {picks!.map((p) => (
+          <button
+            key={p.label}
+            type="button"
+            className={`browse-pick${p.active ? ' is-active' : ''}`}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => { p.onPick(); setFocused(false) }}
+          >
+            <MapPin size={14} aria-hidden="true" />
+            {p.label}
+          </button>
+        ))}
+      </div>
+    )}
+    </>
+  )
+}
+
+/**
+ * Top row of Home on phones and tablets: Properties | Stays, and a button to
+ * the video feed (the feed's own top row has the grid button back).
+ */
+export function BrowseHead({ children, onFeed, feedLabel }: { children: ReactNode; onFeed?: () => void; feedLabel: string }) {
+  return (
+    <div className="browse-head">
+      <div className="browse-head-main">{children}</div>
+      {onFeed && (
+        <button type="button" className="browse-head-feed" onClick={onFeed} aria-label={feedLabel} title={feedLabel}>
+          <Clapperboard size={22} aria-hidden="true" />
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -130,6 +191,28 @@ export function SearchPill({
  * Tells the bottom navigation whether Home is showing the video feed, so it
  * switches to its see-through style (it reads `homeViewMode`).
  */
+type HomeView = 'feed' | 'grid'
+let homeView: HomeView | null = null
+const homeViewListeners = new Set<() => void>()
+const subscribeHomeView = (l: () => void) => {
+  homeViewListeners.add(l)
+  return () => { homeViewListeners.delete(l) }
+}
+
+/**
+ * Feed or grid on Home, shared by Properties and Stays so switching between
+ * them keeps the view. `initial` only applies before anything has been chosen.
+ */
+export function useHomeView(initial: HomeView) {
+  if (homeView === null) homeView = initial
+  const view = useSyncExternalStore(subscribeHomeView, () => homeView as HomeView, () => homeView as HomeView)
+  const setView = useCallback((v: HomeView) => {
+    homeView = v
+    homeViewListeners.forEach((l) => l())
+  }, [])
+  return [view, setView] as const
+}
+
 export function useFeedSignal(feed: boolean) {
   useEffect(() => {
     try { localStorage.setItem('homeViewMode', feed ? 'feed' : 'grid') } catch { /* per-viewer only */ }
@@ -160,7 +243,7 @@ export function FloatingActions({ actions }: { actions: { key: string; label: st
   return (
     <div className="browse-float" role="group">
       {actions.map(({ key, label, Icon, onClick }) => (
-        <button key={key} type="button" onClick={onClick}>
+        <button key={key} type="button" onClick={onClick} data-action={key}>
           <Icon size={18} aria-hidden="true" />
           <span>{label}</span>
         </button>

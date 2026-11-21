@@ -18,6 +18,7 @@ import {
   stayRef,
 } from '@/lib/stays'
 import './Stays.css'
+import { AirVent, Car, ChefHat, CheckCircle2, Coffee, ShieldCheck, Shirt, ShowerHead, Tv, UtensilsCrossed, Waves, Wifi, Zap } from 'lucide-react'
 
 export const formatFcfa = (amount: number | null | undefined) =>
   `${Math.round(Number(amount || 0)).toLocaleString('fr-FR').replace(/ | /g, ' ')} FCFA`
@@ -123,6 +124,7 @@ export function StayBookingCard({
   perspective,
   actions,
   onOpen,
+  highlight = false,
 }: {
   booking: StayBooking
   t: TFunction
@@ -130,13 +132,14 @@ export function StayBookingCard({
   perspective: 'guest' | 'host'
   actions?: CardAction[]
   onOpen?: () => void
+  highlight?: boolean
 }) {
   const nights = nightsBetween(booking.check_in, booking.check_out)
   const image = booking.property?.images?.[0]
   const status = displayStatus(booking)
   const deposit = depositNote(booking, perspective, t, locale)
   return (
-    <article className="rsv-card">
+    <article className={`rsv-card${highlight ? ' is-highlight' : ''}`} id={`stay-${booking.id}`}>
       <div className="rsv-body">
         <button type="button" className="rsv-compact-top" onClick={onOpen} disabled={!onOpen}>
           {perspective === 'guest' && (
@@ -244,3 +247,20 @@ export function StayDialog({
     document.body,
   )
 }
+
+/** An icon per stay amenity key; free-text amenities on older listings get a check. */
+export const AMENITY_ICONS: Record<string, typeof Wifi> = {
+  wifi: Wifi,
+  parking: Car,
+  air_conditioning: AirVent,
+  hot_water: ShowerHead,
+  breakfast: Coffee,
+  restaurant: UtensilsCrossed,
+  pool: Waves,
+  backup_power: Zap,
+  tv: Tv,
+  security: ShieldCheck,
+  laundry: Shirt,
+  kitchen: ChefHat,
+}
+export const amenityIcon = (key: string) => AMENITY_ICONS[key] || CheckCircle2

@@ -291,3 +291,11 @@
 .form-submit-btn { min-height: 48px; border-radius: 12px; font-size: 15px; font-weight: 700; background-color: var(--color-primary-600, #004aad); max-width: 760px; display: block; margin: 0 auto; }
 .form-submit-btn:hover:not(:disabled) { background-color: var(--color-primary-700, #003b8a); transform: none; box-shadow: none; }
 .success-message, .error-message { border-radius: 10px !important; border-left: 0 !important; }
+
+/* Phones: sections run edge to edge with a divider instead of a card inside the
+   page gutter, so fields get the full screen width. */
+@media (max-width: 600px) {
+  .property-form-content { padding-inline: 0; }
+  .form-section { border: 0; border-bottom: 1px solid var(--color-neutral-100, #f3f4f6); border-radius: 0; margin: 0; padding: 20px 16px; }
+  .form-submit-btn { width: calc(100% - 32px); }
+}

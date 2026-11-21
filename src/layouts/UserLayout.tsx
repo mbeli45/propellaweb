@@ -33,12 +33,12 @@ export default function UserLayout() {
 
 
   const navItems = [
-    { path: '/user', icon: Home as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.home' },
+    { path: '/user', icon: Home as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.home', tabIcon: 'home' as const },
     { path: '/user/deals', icon: HeartHandshake, label: 'reservations.myDeals', sidebarOnly: true },
-    { path: '/user/map', icon: Map as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.map', sidebarOnly: true },
-    { path: '/user/reservations', icon: CalendarDays as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.reservations', badge: reservationBadgeCount > 0 ? reservationBadgeCount : undefined },
-    { path: '/user/messages', icon: MessageSquareText as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.messages', badge: messageBadgeCount > 0 ? messageBadgeCount : undefined },
-    { path: '/user/profile', icon: User as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.profile' },
+    { path: '/user/map', icon: Map as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.map', tabIcon: 'map' as const, sidebarOnly: true },
+    { path: '/user/reservations', icon: CalendarDays as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.reservations', tabIcon: 'reservations' as const, badge: reservationBadgeCount > 0 ? reservationBadgeCount : undefined },
+    { path: '/user/messages', icon: MessageSquareText as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.messages', tabIcon: 'messages' as const, badge: messageBadgeCount > 0 ? messageBadgeCount : undefined },
+    { path: '/user/profile', icon: User as React.ComponentType<{ size?: number; color?: string }>, label: 'navigation.profile', tabIcon: 'profile' as const },
   ]
 
   return (

@@ -129,3 +129,14 @@
     margin: 0 auto;
   }
 }
+
+/* FAQ, Terms and Privacy: same page column as the rest of the site
+   (rsv-page: 1200px, centred), no full-width white bar. Text stays at a
+   readable 800px, aligned with the heading. */
+.doc-page { width: 100%; max-width: 1200px; margin-inline: auto; padding: 24px clamp(16px, 3vw, 32px) 48px; box-sizing: border-box; }
+.doc-page .doc-head { background: transparent !important; border-bottom: 0 !important; padding: 0 0 4px !important; position: static !important; }
+.doc-page .doc-head > button { margin-left: -8px; }
+.doc-page .doc-head h1 { font-size: clamp(22px, 3vw, 28px) !important; font-weight: 700 !important; letter-spacing: -0.02em; }
+.doc-page .doc-body { max-width: 800px !important; margin: 0 !important; padding: 12px 0 0 !important; }
+.doc-page .doc-body > p:first-child { text-align: left !important; }
+@media (max-width: 640px) { .doc-page { padding-top: 16px; } }

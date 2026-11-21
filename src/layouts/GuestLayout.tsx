@@ -14,9 +14,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import './Layout.css'
 
 const navItems = [
-  { path: '/guest', icon: Home, label: 'navigation.home' },
-  { path: '/guest/map', icon: Map, label: 'navigation.map' },
-  { path: '/guest/auth', icon: User, label: 'auth.login' },
+  { path: '/guest', icon: Home, label: 'navigation.home', tabIcon: 'home' as const },
+  { path: '/guest/map', icon: Map, label: 'navigation.map', tabIcon: 'map' as const },
+  { path: '/guest/auth', icon: User, label: 'auth.login', tabIcon: 'profile' as const },
 ]
 
 export default function GuestLayout() {

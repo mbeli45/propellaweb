@@ -22,3 +22,19 @@
 .property-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,280px),1fr)); gap: 20px; padding: 16px; align-items: stretch; }
 .property-grid > * { min-width: 0; }
 @media (prefers-reduced-motion: reduce) { .property-card { transition: none !important; } .property-card:hover { transform: none; } }
+
+/* Stay cards: a row of amenity icons in place of bed/bath/m². */
+.pc-amenities {
+  list-style: none; margin: 10px 0 0; padding: 10px 0 0;
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  border-top: 1px solid var(--pc-divider, #f1f5f9);
+}
+.pc-amenities li {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 8px;
+  background: #f8fafc; color: #1e3a8a;
+}
+.pc-amenities li.pc-amenities-more { width: auto; padding: 0 8px; font-size: 12px; font-weight: 600; color: #475569; }
+[data-theme="dark"] .pc-amenities li, .dark .pc-amenities li { background: rgba(255,255,255,0.06); color: #bfdbfe; }
+[data-theme="dark"] .pc-amenities, .dark .pc-amenities { border-top-color: rgba(255,255,255,0.08); }
+.pc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

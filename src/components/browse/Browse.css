@@ -75,8 +75,9 @@
   display: flex; padding: 4px; border-radius: 999px; background: var(--color-neutral-900, #111827); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 @media (min-width: 1024px) { .browse-float { bottom: 28px; } }
-/* Phones and tablets have the bottom navigation instead. */
-@media (max-width: 1023px) { .browse-float { display: none; } }
+/* Phones and tablets: Map lives in the bottom navigation, so only Explore
+   (the video feed) floats here. */
+@media (max-width: 1023px) { .browse-float button:not([data-action="explore"]) { display: none; } .browse-float:not(:has([data-action="explore"])) { display: none; } }
 .browse-float button {
   display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 0; border-radius: 999px;
   background: none; color: #fff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;
@@ -110,3 +111,41 @@
   .browse-feed { z-index: 800; background: var(--color-neutral-900, #111827); }
   .browse-feed .market-switch--overlay { display: none; }
 }
+
+/* The floating Explore · Map pill is for large screens; phones get the feed
+   button in the top row and Map in the bottom navigation. */
+@media (max-width: 1023px) { .browse-float { display: none !important; } }
+
+.browse-head { display: flex; align-items: center; gap: 4px; }
+.browse-head-main { flex: 1; min-width: 0; }
+.browse-head-feed {
+  flex-shrink: 0; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 999px; background: none; color: var(--color-neutral-800, #1f2937); cursor: pointer;
+}
+.browse-head-feed:hover { background: var(--color-neutral-100, #f3f4f6); }
+.browse-head-feed:focus-visible { outline: 3px solid var(--color-primary-400, #3387ff); outline-offset: 2px; }
+@media (min-width: 1024px) { .browse-head { display: none; } }
+
+/* Town picks under the search while it is focused. */
+.browse-picks { display: flex; gap: 8px; overflow-x: auto; max-width: 820px; margin: 10px auto 0; padding-bottom: 2px; }
+.browse-pick {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px;
+  border-radius: 999px; border: 1px solid var(--color-neutral-200, #e5e7eb); background: var(--color-white, #fff);
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--color-neutral-700, #374151); cursor: pointer; white-space: nowrap;
+}
+.browse-pick:hover { background: var(--color-neutral-50, #f9fafb); }
+.browse-pick.is-active { border-color: var(--color-neutral-900, #111827); color: var(--color-neutral-900, #111827); }
+.browse-pick:focus-visible { outline: 3px solid var(--color-primary-400, #3387ff); outline-offset: 2px; }
+
+/* Compass in the search pill (small screens): opens the Explore page. */
+.browse-search-explore { display: none; }
+@media (max-width: 1023px) {
+  .browse-search-explore {
+    flex-shrink: 0; width: 44px; height: 44px; align-self: center; display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--color-neutral-200, #e5e7eb); border-radius: 999px; background: var(--color-white, #fff);
+    color: var(--color-neutral-800, #1f2937); cursor: pointer;
+  }
+  .browse-search-explore:hover { background: var(--color-neutral-50, #f9fafb); }
+  .browse-search-explore:focus-visible { outline: 3px solid var(--color-primary-400, #3387ff); outline-offset: 2px; }
+}
+@media (max-width: 720px) { .browse-search-where { flex-basis: calc(100% - 106px); } }

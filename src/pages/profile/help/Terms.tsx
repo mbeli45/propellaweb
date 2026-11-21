@@ -13,9 +13,9 @@ export default function Terms() {
   const navigate = useNavigate()
 
   return (
-    <div style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh' }}>
+    <div className="doc-page" style={{ backgroundColor: Colors.neutral[50], minHeight: '100vh' }}>
       {/* Header */}
-      <div style={{
+      <div className="doc-head" style={{
         backgroundColor: Colors.white,
         padding: '16px',
         borderBottom: `1px solid ${Colors.neutral[200]}`,
@@ -49,7 +49,7 @@ export default function Terms() {
         </h1>
       </div>
 
-      <div style={{ padding: '20px 16px', maxWidth: '800px', margin: '0 auto' }}>
+      <div className="doc-body" style={{ padding: '20px 16px', maxWidth: '800px', margin: '0 auto' }}>
         <p style={{
           fontSize: '14px',
           color: Colors.neutral[500],

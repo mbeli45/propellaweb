@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import type { StayFit } from '@/hooks/useStayAvailability'
 import { useNavigate } from 'react-router-dom'
 import { MapPin, BedDouble, Bath, Share2, Edit, Trash2, Play, ShieldCheck } from 'lucide-react'
 import { useThemeMode } from '@/contexts/ThemeContext'
@@ -10,6 +11,7 @@ import { isVideoUrl } from '@/utils/videoUtils'
 import { formatLastVerified, isAvailabilityStale } from '@/hooks/usePropertyAvailability'
 import { useAuth } from '@/hooks/useAuth'
 import { isReservedByViewer } from '@/lib/propertyVisibility'
+import { AMENITY_ICONS } from '@/components/stays/StayUI'
 import './PropertyCard.css'
 import VideoThumbnail from './VideoThumbnail'
 
@@ -76,6 +78,8 @@ interface PropertyCardProps {
   confirmingAvailability?: boolean
   onClick?: () => void
   source?: string
+  /** Stays on Home: what's free for the guest's dates (price and rooms left). */
+  stayFit?: StayFit | null
 }
 
 export default function PropertyCard({
@@ -89,6 +93,7 @@ export default function PropertyCard({
   onConfirmAvailability,
   confirmingAvailability = false,
   onClick,
+  stayFit,
 }: PropertyCardProps) {
   const { user } = useAuth()
   const { colorScheme } = useThemeMode()
@@ -515,7 +520,14 @@ export default function PropertyCard({
               marginBottom: '4px',
             }}
           >
-            {property.type === 'stay' ? t('stays.fromPerNight', { price: formatPriceUtil(property.price) }) : formatPriceUtil(property.price)}
+            {property.type === 'stay'
+              ? t('stays.fromPerNight', { price: formatPriceUtil(stayFit?.fromPrice ?? property.price) })
+              : formatPriceUtil(property.price)}
+          </div>
+        )}
+        {property.type === 'stay' && stayFit && !stayFit.noRooms && (
+          <div className={`pc-stay-fit pc-stay-fit--${stayFit.full ? 'full' : stayFit.roomsLeft <= 2 ? 'low' : 'ok'}`}>
+            {stayFit.full ? t('stays.fullForDates') : t('stays.roomsLeftForDates', { count: stayFit.roomsLeft })}
           </div>
         )}
 
@@ -562,7 +574,8 @@ export default function PropertyCard({
         <div
           className="property-card-features"
           style={{
-            display: 'flex',
+            // Stays: rooms are chosen on the stay page, so no bed/bath/m² chips.
+            display: property.type === 'stay' ? 'none' : 'flex',
             gap: horizontal ? '12px' : '20px',
             alignItems: 'center',
           }}
@@ -635,6 +648,28 @@ export default function PropertyCard({
             </div>
           )}
         </div>
+
+        {property.type === 'stay' && (() => {
+          // Amenities we have an icon for; free-text ones on older listings stay on the stay page.
+          const known = (property.amenities || []).filter((a) => AMENITY_ICONS[a])
+          if (!known.length) return null
+          const shown = known.slice(0, 5)
+          return (
+            <ul className="pc-amenities" aria-label={t('propertyDetails.amenities', 'Amenities')}>
+              {shown.map((a) => {
+                const Icon = AMENITY_ICONS[a]
+                const label = t(`stays.amenities.${a}`, a)
+                return (
+                  <li key={a} title={label}>
+                    <Icon size={horizontal ? 14 : 16} aria-hidden="true" />
+                    <span className="pc-sr">{label}</span>
+                  </li>
+                )
+              })}
+              {known.length > shown.length && <li className="pc-amenities-more">+{known.length - shown.length}</li>}
+            </ul>
+          )
+        })()}
       </div>
     </div>
   )

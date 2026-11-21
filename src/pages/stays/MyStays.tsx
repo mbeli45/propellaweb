@@ -38,6 +38,7 @@ export default function MyStays() {
   const [paying, setPaying] = useState<StayBooking | null>(null)
   const [terms, setTerms] = useState<StayTerms>(NO_DEPOSIT_TERMS)
   const sent = params.get('sent') === '1'
+  const focusId = params.get('booking')
 
   const load = useCallback(async () => {
     if (!user?.id) return
@@ -55,6 +56,11 @@ export default function MyStays() {
   useEffect(() => {
     fetchStayTerms().then(setTerms)
   }, [])
+  // Arriving from a booking confirmation: bring that booking into view.
+  useEffect(() => {
+    if (!focusId || !bookings) return
+    document.getElementById(`stay-${focusId}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [focusId, bookings])
 
   const { upcoming, past } = useMemo(() => {
     const today = todayISO()
@@ -145,14 +151,14 @@ export default function MyStays() {
           {upcoming.length > 0 && (
             <ReservationSectionView icon={CalendarDays} title={t('stays.my.upcoming')} meta={String(upcoming.length)}>
               {upcoming.map((b) => (
-                <StayBookingCard key={b.id} booking={b} t={t} locale={locale} perspective="guest" actions={actionsFor(b)} onOpen={() => open(b)} />
+                <StayBookingCard key={b.id} booking={b} t={t} locale={locale} perspective="guest" actions={actionsFor(b)} onOpen={() => open(b)} highlight={b.id === focusId} />
               ))}
             </ReservationSectionView>
           )}
           {past.length > 0 && (
             <ReservationSectionView icon={History} title={t('stays.my.past')} meta={String(past.length)}>
               {past.map((b) => (
-                <StayBookingCard key={b.id} booking={b} t={t} locale={locale} perspective="guest" onOpen={() => open(b)} />
+                <StayBookingCard key={b.id} booking={b} t={t} locale={locale} perspective="guest" onOpen={() => open(b)} highlight={b.id === focusId} />
               ))}
             </ReservationSectionView>
           )}

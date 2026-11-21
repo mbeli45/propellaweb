@@ -9,10 +9,10 @@ import FilterModal, { FilterOptions, MAX_PRICE } from '@/components/FilterModal'
 import PropertyCard, { PropertyData } from '@/components/PropertyCard'
 import PropertyFeedView from '@/components/PropertyFeedView'
 import MarketSwitch from '@/components/MarketSwitch'
-import { BrowseTab, BrowseTabs, FloatingActions, Rail, RailItem, SearchPill, useFeedSignal, useIsDesktop } from '@/components/browse/Browse'
+import { BrowseHead, BrowseTab, BrowseTabs, FloatingActions, Rail, RailItem, SearchPill, useFeedSignal, useHomeView, useIsDesktop } from '@/components/browse/Browse'
 import { PropertyCardSkeleton } from '@/components/skeletons'
 import { StaysDoorway } from '@/pages/stays/StaysHome'
-import { resolveTown } from '@/utils/towns'
+import { POPULAR_TOWNS, resolveTown } from '@/utils/towns'
 import '../user/Home.css'
 import '../HomeBrowse.css'
 import './PropertiesHome.css'
@@ -54,7 +54,7 @@ export default function PropertiesHome({ basePath, showAgents = false }: { baseP
   const [deal, setDeal] = useState<Deal | null>(null)
   const [filters, setFilters] = useState<FilterOptions>(DEFAULT_FILTERS)
   const [filterVisible, setFilterVisible] = useState(false)
-  const [viewMode, setViewMode] = useState<'grid' | 'feed'>('feed')
+  const [viewMode, setViewMode] = useHomeView('feed')
   const [topAgents, setTopAgents] = useState<any[]>([])
 
   useEffect(() => {
@@ -100,9 +100,7 @@ export default function PropertiesHome({ basePath, showAgents = false }: { baseP
     setFilterVisible(false)
   }, [updateFilters])
 
-  const changeView = useCallback((mode: 'grid' | 'feed') => {
-    setViewMode(mode)
-  }, [])
+  const changeView = setViewMode
 
   useFeedSignal(viewMode === 'feed')
 
@@ -141,8 +139,7 @@ export default function PropertiesHome({ basePath, showAgents = false }: { baseP
           loading={searching ? searchLoading : homeLoading}
           onSwitchToGrid={() => changeView('grid')}
           header={isDesktop ? undefined : <MarketSwitch overlay />}
-          onSearch={(q) => { setWhere(q); q.trim() ? search(q) : clearSearch() }}
-          searchValue={searchTerm}
+          onOpenSearch={() => { changeView('grid'); window.setTimeout(() => document.querySelector<HTMLInputElement>('.browse-search input')?.focus(), 60) }}
         />
       </div>
     )
@@ -179,8 +176,14 @@ export default function PropertiesHome({ basePath, showAgents = false }: { baseP
   return (
     <div className="home-container browse-page properties-home">
       <div className="browse-top">
-        <MarketSwitch tabs />
+        <BrowseHead onFeed={all.length > 0 ? () => changeView('feed') : undefined} feedLabel={t('feedView.videoFeed')}>
+          <MarketSwitch tabs />
+        </BrowseHead>
         <SearchPill
+          picks={POPULAR_TOWNS.map((town) => ({ label: town, onPick: () => openTown(town) }))}
+          picksLabel={t('browse.where')}
+          onExplore={() => navigate(`${basePath}/explore`)}
+          exploreLabel={t('browse.explore')}
           whereLabel={t('browse.where')}
           value={where}
           onChange={setWhere}

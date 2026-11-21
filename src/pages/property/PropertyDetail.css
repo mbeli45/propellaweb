@@ -401,3 +401,51 @@
 .pd-inline-map { position: relative; height: 280px; border-radius: 12px; overflow: hidden; background: var(--color-neutral-100, #f3f4f6); }
 .pd-inline-map > * { height: 100% !important; min-height: 0 !important; }
 @media (min-width: 900px) { .property-detail .pd-inline-map { border-radius: 0; height: 320px; } }
+
+/* ---- Large-screen pass ---- */
+/* Sections read as one flat column: dividers, no half-boxes. */
+.property-detail .property-content > .pd-card { border: 0; border-bottom: 1px solid rgba(128,145,166,.2); border-radius: 0; background: transparent; padding: 24px 0; margin: 0; }
+.pd-price--stay { font-size: 24px; }
+.thumbnail-more { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; background: rgba(15,23,42,.55); color: #fff; font-size: 22px; font-weight: 700; }
+.property-detail .thumbnail-more { display: none; }
+.property-detail .property-similar { min-width: 0; padding: 8px 20px 24px; }
+.property-detail .property-similar h3 { margin-top: 0; }
+@media (max-width: 899px) { .property-detail .property-similar { padding-bottom: 110px; } }
+@media (max-width: 480px) { .property-detail .property-similar { padding-inline: 16px; } }
+@media (min-width: 900px) {
+  /* Gallery: one large photo and up to four tiles in a 2x2 block. */
+  .property-detail .property-images:has(.thumbnail-container) { grid-template-columns: minmax(0,1.6fr) minmax(0,1fr); }
+  .property-detail .main-image-container,
+  .property-detail .thumbnail-container { height: clamp(380px, 32vw, 500px); }
+  .property-detail .thumbnail-container { grid-template-rows: repeat(2, minmax(0,1fr)); grid-auto-rows: 0; }
+  .property-detail .thumbnail-container .thumbnail:nth-child(n+6) { display: none; }
+  .property-detail .thumbnail-container .thumbnail { border: 0; }
+  .property-detail .thumbnail-container .thumbnail.active { outline: 3px solid var(--color-primary-500, #0069ff); outline-offset: -3px; }
+  .property-detail .thumbnail-container .thumbnail img { transition: transform .3s ease, filter .2s; }
+  .property-detail .thumbnail-container .thumbnail:hover img { transform: scale(1.04); filter: brightness(.92); }
+  .property-detail .thumbnail-more { display: flex; }
+  .property-detail .property-images[data-media-count="2"] .thumbnail-container { grid-template-rows: minmax(0,1fr); }
+  .property-detail .property-images[data-media-count="4"] .thumbnail-container { grid-template-columns: 1fr 1fr; }
+  .property-detail .property-images[data-media-count="4"] .thumbnail:nth-child(2) { grid-column: 1 / -1; }
+  .property-detail .property-images { margin-bottom: 8px; }
+  /* Similar listings span both columns. */
+  .property-detail .property-similar { grid-column: 1 / -1; grid-row: 4; padding-inline: 0; border-top: 1px solid rgba(128,145,166,.2); padding-top: 32px; margin-top: 8px; }
+  .property-detail .property-similar .property-grid.horizontal-scroll { padding-inline: 0; }
+}
+@media (min-width: 1440px) {
+  .property-detail { max-width: 1280px; }
+  .property-detail .property-bottom-bar { max-width: none; }
+}
+/* The title bar stays pinned; keep the booking card clear of it. */
+@media (min-width: 900px) { .property-detail .property-summary { top: 96px; } }
+
+/* Big screens: no white panel on the grey page. The page ground runs edge to
+   edge; only the booking card is a white surface. Same 1200px column as the
+   rest of the site. */
+@media (min-width: 900px) {
+  .property-detail { background-color: transparent !important; }
+  .property-detail > .property-header { background-color: var(--color-neutral-50, #f9fafb) !important; border-bottom: 0 !important; }
+  .property-detail .property-summary { background: var(--color-white, #fff); }
+  .property-detail .pd-price-card { background: var(--color-neutral-50, #f9fafb); }
+}
+@media (min-width: 1440px) { .property-detail { max-width: 1200px; } }

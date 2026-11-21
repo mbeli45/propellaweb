@@ -5,13 +5,14 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { useMarket } from '@/contexts/MarketContext'
 import { useHomeProperties } from '@/hooks/useProperties'
+import { useStayAvailability } from '@/hooks/useStayAvailability'
 import PropertyCard, { PropertyData } from '@/components/PropertyCard'
 import PropertyFeedView from '@/components/PropertyFeedView'
 import MarketSwitch from '@/components/MarketSwitch'
-import { BrowseTab, BrowseTabs, FloatingActions, Rail, RailItem, SearchPill, useFeedSignal, useIsDesktop } from '@/components/browse/Browse'
+import { BrowseHead, BrowseTab, BrowseTabs, FloatingActions, Rail, RailItem, SearchPill, useFeedSignal, useHomeView, useIsDesktop } from '@/components/browse/Browse'
 import { PropertyCardSkeleton } from '@/components/skeletons'
 import { DayStrip, Stepper, guestsLabel, nightsLabel, useStayBase } from '@/components/stays/StayUI'
-import { resolveTown, townSearchTerms } from '@/utils/towns'
+import { POPULAR_TOWNS, resolveTown, townSearchTerms } from '@/utils/towns'
 import { STAY_KINDS, StayBooking, StayKind, addDays, displayStatus, fetchMyStays, formatStayDay, formatStayRange, todayISO } from '@/lib/stays'
 import '@/components/stays/Stays.css'
 import '../user/Home.css'
@@ -39,7 +40,9 @@ export default function StaysHome({ mapPath }: { mapPath: string }) {
   const [nights, setNights] = useState(1)
   const [guests, setGuests] = useState(1)
   const [panel, setPanel] = useState<'when' | 'who' | null>(null)
-  const [feed, setFeed] = useState(false)
+  const [view, setView] = useHomeView('grid')
+  const feed = view === 'feed'
+  const setFeed = (on: boolean) => setView(on ? 'feed' : 'grid')
   const [nextStay, setNextStay] = useState<StayBooking | null>(null)
 
   // The guest's next booking, so Home answers "where am I staying?" first.
@@ -79,6 +82,14 @@ export default function StaysHome({ mapPath }: { mapPath: string }) {
   }, [stays, filtering, query, town, kind])
   useFeedSignal(feed && results.length > 0)
 
+  // What each stay has free for the picked dates and party: real "from" price,
+  // rooms left, and full stays moved to the end of a list.
+  const fit = useStayAvailability(useMemo(() => stays.map((p) => p.id), [stays]), checkIn, addDays(checkIn, nights), guests)
+  const byFit = useCallback(
+    (list: PropertyData[]) => [...list].sort((a, b) => Number(!!fit[a.id]?.full) - Number(!!fit[b.id]?.full)),
+    [fit],
+  )
+
   // Rails by town, busiest first: a traveller starts with "where am I going?"
   const rails = useMemo(() => {
     const byTown = new Map<string, PropertyData[]>()
@@ -110,8 +121,7 @@ export default function StaysHome({ mapPath }: { mapPath: string }) {
           loading={loading}
           header={isDesktop ? undefined : <MarketSwitch overlay />}
           onSwitchToGrid={() => setFeed(false)}
-          onSearch={(q) => setQuery(q)}
-          searchValue={query}
+          onOpenSearch={() => { setFeed(false); window.setTimeout(() => document.querySelector<HTMLInputElement>('.browse-search input')?.focus(), 60) }}
         />
       </div>
     )
@@ -125,7 +135,7 @@ export default function StaysHome({ mapPath }: { mapPath: string }) {
     const key = i === 0 ? 'available' : i % 2 ? 'popular' : 'explore'
     return t(`staysHome.townRail.${key}`, { town: name, when: whenPhrase })
   }
-  const card = (p: PropertyData) => <PropertyCard key={p.id} property={p} onClick={() => openStay(p)} />
+  const card = (p: PropertyData) => <PropertyCard key={p.id} property={p} stayFit={fit[p.id]} onClick={() => openStay(p)} />
   const tabs: BrowseTab<StayKind>[] = [
     { key: null, label: t('staysHome.tabAll'), Icon: LayoutGrid },
     ...STAY_KINDS.map((k) => ({ key: k, label: t(`staysHome.rail.${k}`), Icon: KIND_ICONS[k] })),
@@ -134,8 +144,12 @@ export default function StaysHome({ mapPath }: { mapPath: string }) {
   return (
     <div className="home-container browse-page stays-home">
       <div className="browse-top">
-        <MarketSwitch tabs />
+        <BrowseHead onFeed={results.length > 0 ? () => setFeed(true) : undefined} feedLabel={t('feedView.videoFeed')}>
+          <MarketSwitch tabs />
+        </BrowseHead>
         <SearchPill
+          picks={POPULAR_TOWNS.map((name) => ({ label: name, active: town === name, onPick: () => { setTown(name); setQuery('') } }))}
+          picksLabel={t('staysHome.where')}
           whereLabel={t('staysHome.where')}
           value={town && !query ? town : query}
           onChange={(v) => { setQuery(v); setTown(null) }}
@@ -209,7 +223,7 @@ export default function StaysHome({ mapPath }: { mapPath: string }) {
           {results.length === 0 ? (
             <Empty title={t('staysHome.noMatchTitle')} text={t('home.tryAdjustingSearch')} />
           ) : (
-            <div className="property-grid">{results.map(card)}</div>
+            <div className="property-grid">{byFit(results).map(card)}</div>
           )}
         </section>
       ) : rails.length === 0 ? (
@@ -223,7 +237,7 @@ export default function StaysHome({ mapPath }: { mapPath: string }) {
             prevLabel={t('staysHome.prev')}
             nextLabel={t('staysHome.next')}
           >
-            {rail.items.map((p) => <RailItem key={p.id}>{card(p)}</RailItem>)}
+            {byFit(rail.items).map((p) => <RailItem key={p.id}>{card(p)}</RailItem>)}
           </Rail>
         ))
       )}

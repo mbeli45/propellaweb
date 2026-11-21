@@ -42,18 +42,18 @@ export default function AgentLayout() {
   // Hosts (hotels, guest houses): stays dashboard first, no site-visit bookings or deals.
   const isHost = isHostRole(user?.role)
   const navItems = isHost ? [
-    { path: '/agent', icon: BedDouble, label: 'stays.title' },
-    { path: '/agent/messages', icon: MessageSquareText, label: 'navigation.messages', badge: messageBadgeCount > 0 ? messageBadgeCount : undefined },
-    { path: '/agent/wallet', icon: Wallet, label: 'navigation.wallet' },
-    { path: '/agent/profile', icon: User, label: 'navigation.profile' },
+    { path: '/agent', icon: BedDouble, label: 'stays.title', tabIcon: 'stays' as const },
+    { path: '/agent/messages', icon: MessageSquareText, label: 'navigation.messages', tabIcon: 'messages' as const, badge: messageBadgeCount > 0 ? messageBadgeCount : undefined },
+    { path: '/agent/wallet', icon: Wallet, label: 'navigation.wallet', tabIcon: 'wallet' as const },
+    { path: '/agent/profile', icon: User, label: 'navigation.profile', tabIcon: 'profile' as const },
   ] : [
-    { path: '/agent', icon: List, label: 'navigation.listings' },
+    { path: '/agent', icon: List, label: 'navigation.listings', tabIcon: 'listings' as const },
     // Deals live under the Bookings tab (switch inside the page); Wallet is sidebar-only, reached on phones
     // from Profile and Listings. The phone bottom bar keeps to 4 items.
-    { path: '/agent/reservations', icon: CalendarDays, label: 'navigation.bookings', badge: reservationBadgeCount > 0 ? reservationBadgeCount : undefined, activePaths: ['/agent/deals'] },
-    { path: '/agent/messages', icon: MessageSquareText, label: 'navigation.messages', badge: messageBadgeCount > 0 ? messageBadgeCount : undefined },
-    { path: '/agent/wallet', icon: Wallet, label: 'navigation.wallet', sidebarOnly: true },
-    { path: '/agent/profile', icon: User, label: 'navigation.profile' },
+    { path: '/agent/reservations', icon: CalendarDays, label: 'navigation.bookings', tabIcon: 'reservations' as const, badge: reservationBadgeCount > 0 ? reservationBadgeCount : undefined, activePaths: ['/agent/deals'] },
+    { path: '/agent/messages', icon: MessageSquareText, label: 'navigation.messages', tabIcon: 'messages' as const, badge: messageBadgeCount > 0 ? messageBadgeCount : undefined },
+    { path: '/agent/wallet', icon: Wallet, label: 'navigation.wallet', tabIcon: 'wallet' as const, sidebarOnly: true },
+    { path: '/agent/profile', icon: User, label: 'navigation.profile', tabIcon: 'profile' as const },
   ]
   return (
     <div className="app-layout app-layout--topnav">

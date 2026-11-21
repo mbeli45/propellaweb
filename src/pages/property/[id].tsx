@@ -27,7 +27,8 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { getColors } from '@/constants/Colors'
 import { useProperty, useSimilarProperties } from '@/hooks/useProperties'
-import { useStayBase } from '@/components/stays/StayUI'
+import { StayRooms, readStaySearch, type StaySearch } from '@/components/stays/StayRooms'
+import { amenityIcon } from '@/components/stays/StayUI'
 import { useGeocoding } from '@/hooks/useGeocoding'
 import MapView from '@/components/MapView'
 import { useSavedProperty } from '@/hooks/useSavedProperties'
@@ -60,7 +61,7 @@ type PaymentMethod = 'mtn' | 'orange'
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   // The feed's "Book Site Visit" button deep-links here rather than
   // duplicating the reservation modal inside the feed.
   const requestedAction = searchParams.get('action')
@@ -384,7 +385,6 @@ export default function PropertyDetail() {
   }, [property, rentPrices])
 
   const isOwner = user?.id === property?.owner_id
-  const stayBase = useStayBase()
   // Dates and party size picked on Home → Stays carry on to the booking page.
   const stayQuery = (() => {
     const q = new URLSearchParams()
@@ -392,6 +392,21 @@ export default function PropertyDetail() {
     const str = q.toString()
     return str ? `?${str}` : ''
   })()
+  const staySearch = readStaySearch(searchParams)
+  // Changing dates in the Rooms section updates the URL, so back/forward and
+  // the booking page keep the same search.
+  const setStaySearch = (next: StaySearch) =>
+    setSearchParams(
+      (prev) => {
+        const q = new URLSearchParams(prev)
+        q.set('checkIn', next.checkIn)
+        q.set('nights', String(next.nights))
+        q.set('guests', String(next.guests))
+        return q
+      },
+      { replace: true },
+    )
+  const scrollToRooms = () => document.getElementById('stay-rooms')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   if (loading) {
     return <PropertyDetailSkeleton />
@@ -668,7 +683,11 @@ export default function PropertyDetail() {
                     }}
                     className={`thumbnail ${currentMediaIndex === idx ? 'active' : ''}`}
                     style={{ position: 'relative' }}
+                    aria-label={t('propertyDetails.showPhoto', { n: idx + 1, total: allMedia.length })}
                   >
+                    {idx === 4 && allMedia.length > 5 && (
+                      <span className="thumbnail-more" aria-hidden="true">+{allMedia.length - 5}</span>
+                    )}
                     {isVideo && !thumbnail ? (
                       <VideoThumbnail src={media}
                         alt="Property video"
@@ -752,7 +771,7 @@ export default function PropertyDetail() {
         <div className="pd-price-card">
           {property.type === 'stay' ? (
             <>
-              <div className="pd-price">{t('stays.fromPerNight', { price: formatPrice(property.price) })}</div>
+              <div className="pd-price pd-price--stay">{t('stays.fromPerNight', { price: formatPrice(property.price) })}</div>
               {(property.check_in_time || property.check_out_time) && (
                 <div className="pd-price-sub">
                   {[
@@ -823,7 +842,8 @@ export default function PropertyDetail() {
               ? { icon: CalendarClock, value: property.rent_period === 'yearly' ? t('propertyDetails.yearly') : t('propertyDetails.monthly'), label: t('propertyDetails.rentPeriod') }
               : null,
           ].filter(Boolean) as { icon: typeof BedDouble; value: string; label: string }[]
-          if (specs.length === 0) return null
+          // Bedrooms/bathrooms/area describe a home; a stay's rooms are listed under Rooms.
+          if (specs.length === 0 || property.type === 'stay') return null
           return (
             <>
               <div className="pd-section-label">{t('propertyDetails.specifications')}</div>
@@ -894,7 +914,7 @@ export default function PropertyDetail() {
         </button>
         {property.type === 'stay' ? (
           <button
-            onClick={() => navigate(isOwner ? `/agent/stays/manage/${property.id}` : `${stayBase}/stays/book/${property.id}${stayQuery}`)}
+            onClick={() => (isOwner ? navigate(`/agent/stays/manage/${property.id}`) : scrollToRooms())}
             style={{
               flex: 1,
               padding: '16px',
@@ -907,64 +927,38 @@ export default function PropertyDetail() {
               cursor: 'pointer',
             }}
           >
-            {isOwner ? t('stays.manageAvailability') : t('stays.checkAvailability')}
+            {isOwner ? t('stays.manageAvailability') : t('stays.seeRooms')}
           </button>
         ) : !isOwner && (
-          hasActiveBooking ? (
-            <button
-              onClick={() => navigate(`/chat/${property.owner_id}?propertyId=${property.id}`)}
-              style={{
-                flex: 1,
-                padding: '16px',
-                backgroundColor: Colors.primary[600],
-                color: Colors.white,
-                border: 'none',
-                borderRadius: '12px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'background 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = Colors.primary[700]
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = Colors.primary[600]
-              }}
-            >
-              {t('propertyDetails.messageAgent')}
-            </button>
-          ) : (
-            <button
-              onClick={handleReserve}
-              disabled={reservationLoading || paymentLoading}
-              style={{
-                flex: 1,
-                padding: '16px',
-                backgroundColor: Colors.primary[600],
-                color: Colors.white,
-                border: 'none',
-                borderRadius: '12px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: (reservationLoading || paymentLoading) ? 'not-allowed' : 'pointer',
-                opacity: (reservationLoading || paymentLoading) ? 0.6 : 1,
-                transition: 'background 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                if (!reservationLoading && !paymentLoading) {
-                  e.currentTarget.style.backgroundColor = Colors.primary[700]
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!reservationLoading && !paymentLoading) {
-                  e.currentTarget.style.backgroundColor = Colors.primary[600]
-                }
-              }}
-            >
-              {reservationLoading || paymentLoading ? t('buttons.processing') : t('propertyDetails.bookSiteVisit')}
-            </button>
-          )
+          // Rent and sale: the guest messages the agent and they agree a visit time in the chat.
+          <button
+            onClick={() => navigate(user ? `/chat/${property.owner_id}?propertyId=${property.id}` : '/auth/login')}
+            style={{
+              flex: 1,
+              padding: '16px',
+              backgroundColor: Colors.primary[600],
+              color: Colors.white,
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'background 0.2s',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = Colors.primary[700]
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = Colors.primary[600]
+            }}
+          >
+            <MessageCircle size={18} aria-hidden="true" />
+            {hasActiveBooking ? t('propertyDetails.messageAgent') : t('propertyDetails.messageToVisit')}
+          </button>
         )}
       </div>
 
@@ -998,6 +992,22 @@ export default function PropertyDetail() {
           </div>
         )}
 
+        {/* Stays: the rooms, priced for the guest's dates, before amenities. */}
+        {property.type === 'stay' && (
+          <StayRooms
+            propertyId={property.id}
+            search={staySearch}
+            onSearchChange={setStaySearch}
+            onMessageHost={() => navigate(`/chat/${property.owner_id}?propertyId=${property.id}`)}
+            isOwner={isOwner}
+            directions={
+              mapCoordinate
+                ? `${mapCoordinate[1]},${mapCoordinate[0]}`
+                : [property.location, property.town].filter(Boolean).join(', ') || undefined
+            }
+          />
+        )}
+
         {/* Amenities */}
         {property.amenities && property.amenities.length > 0 && (
           <div className="pd-card">
@@ -1005,7 +1015,7 @@ export default function PropertyDetail() {
             <div className="pd-amenities">
               {property.amenities.map((amenity, index) => (
                 <div key={index} className="pd-amenity">
-                  <CheckCircle2 size={18} aria-hidden="true" />
+                  {(() => { const Icon = amenityIcon(amenity); return <Icon size={18} aria-hidden="true" /> })()}
                   {/* Stay amenities are stored as keys ("wifi"); older ones are free text. */}
                   <span>{t(`stays.amenities.${amenity}`, amenity)}</span>
                 </div>
@@ -1036,7 +1046,7 @@ export default function PropertyDetail() {
         {/* Agent: who lists this property. Contact opens once a visit is booked. */}
         {property.owner && (
           <div className="pd-card">
-            <h3>{t('propertyDetails.propertyAgent')}</h3>
+            <h3>{property.type === 'stay' ? t('stays.yourHost') : t('propertyDetails.propertyAgent')}</h3>
             <button type="button" className="pd-owner-row" onClick={() => navigate(`/agents/${property.owner?.id}`)}>
               {property.owner.avatar_url ? (
                 <img src={property.owner.avatar_url} alt="" className="pd-owner-avatar" loading="lazy" />
@@ -1065,7 +1075,7 @@ export default function PropertyDetail() {
               <ChevronRight size={18} color={Colors.neutral[400]} aria-hidden="true" />
             </button>
             {!isOwner && (
-              hasActiveBooking ? (
+              hasActiveBooking || property.type === 'stay' ? (
                 <div className="pd-owner-actions">
                   <button
                     type="button"
@@ -1073,7 +1083,7 @@ export default function PropertyDetail() {
                     onClick={() => navigate(`/chat/${property.owner_id}?propertyId=${property.id}`)}
                   >
                     <MessageCircle size={16} aria-hidden="true" />
-                    {t('propertyDetails.messageAgent')}
+                    {property.type === 'stay' ? t('stays.messageHost') : t('propertyDetails.messageAgent')}
                   </button>
                 </div>
               ) : (
@@ -1084,7 +1094,7 @@ export default function PropertyDetail() {
         )}
 
         {/* Reviews */}
-        <div style={{ marginTop: '40px' }}>
+        <div>
           <h3 style={{
             fontSize: '20px',
             fontWeight: '600',
@@ -1099,7 +1109,7 @@ export default function PropertyDetail() {
             <ListItemSkeleton count={2} leading="avatar" lines={3} flush />
           ) : propertyReviews.length === 0 ? (
             <div style={{ border: `1px solid ${Colors.neutral[100]}`, backgroundColor: Colors.white }}>
-              <EmptyState compact icon={Star} title={t('propertyDetails.reviewsEmptyTitle')} body={t('propertyDetails.reviewsEmptyBody')} />
+              <EmptyState compact icon={Star} title={t('propertyDetails.reviewsEmptyTitle')} body={property.type === 'stay' ? t('stays.reviewsEmptyBody') : t('propertyDetails.reviewsEmptyBody')} />
             </div>
           ) : (
             <>
@@ -1141,9 +1151,12 @@ export default function PropertyDetail() {
           )}
         </div>
 
-        {/* Similar Properties */}
-        {similarProperties.length > 0 && (
-          <div style={{ marginTop: '40px', position: 'relative' }}>
+      </div>
+
+      {/* Similar Properties: full width under both columns */}
+      {similarProperties.length > 0 && (
+        <div className="property-similar">
+          <div style={{ position: 'relative' }}>
             <h3 style={{ 
               fontSize: '20px', 
               fontWeight: '600', 
@@ -1241,8 +1254,8 @@ export default function PropertyDetail() {
               </svg>
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {saveError && (
         <div

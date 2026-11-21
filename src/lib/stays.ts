@@ -33,6 +33,8 @@ export interface StayRoomType {
   amenities: string[];
   sort_order: number;
   active: boolean;
+  /** Up to 6 photo URLs (stay_room_photos migration); absent before it runs. */
+  images?: string[];
 }
 
 export interface StayRoom {
@@ -81,6 +83,7 @@ export interface RoomAvailability {
   amenities: string[];
   total_rooms: number;
   available_rooms: number;
+  images?: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -279,6 +282,64 @@ export async function fetchHostStayProperties(ownerId: string) {
   }>;
 }
 
+/** Rooms held each night from `from` on (for the host's occupancy chart). */
+export function occupancyByNight(
+  bookings: Pick<StayBooking, 'check_in' | 'check_out' | 'status' | 'expires_at' | 'payment_status' | 'payment_due_at'>[],
+  days = 14,
+  from = todayISO(),
+) {
+  const holding = bookings.filter(isHolding);
+  return Array.from({ length: days }, (_, i) => {
+    const night = addDays(from, i);
+    return { night, booked: holding.filter((b) => b.check_in <= night && b.check_out > night).length };
+  });
+}
+
+/** Value of confirmed guest bookings by check-in month, oldest first ("YYYY-MM"). */
+export async function fetchHostMonthlyRevenue(propertyIds: string[], months = 6) {
+  const now = new Date();
+  const keys = Array.from({ length: months }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (months - 1 - i), 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const totals: Record<string, number> = Object.fromEntries(keys.map((k) => [k, 0]));
+  if (propertyIds.length) {
+    const { data, error } = await stayDb
+      .from('stay_bookings')
+      .select('check_in,total_amount,status,payment_status,payment_due_at,expires_at')
+      .in('property_id', propertyIds)
+      .eq('kind', 'guest')
+      .eq('status', 'confirmed')
+      .gte('check_in', `${keys[0]}-01`)
+      .limit(1000);
+    if (error) throw error;
+    (data || []).forEach((b: any) => {
+      const k = String(b.check_in).slice(0, 7);
+      if (k in totals && !depositLapsed(b)) totals[k] += Number(b.total_amount) || 0;
+    });
+  }
+  return keys.map((month) => ({ month, total: totals[month] }));
+}
+
+/**
+ * Delete a stay the host owns. Refused while a guest still holds a room in it
+ * (deleting would silently drop their booking): returns 'has_bookings'.
+ */
+export async function deleteHostStay(propertyId: string, ownerId: string) {
+  const { data, error } = await stayDb
+    .from('stay_bookings')
+    .select('status,expires_at,payment_status,payment_due_at')
+    .eq('property_id', propertyId)
+    .eq('kind', 'guest')
+    .in('status', ['pending', 'confirmed'])
+    .gt('check_out', todayISO());
+  if (error) throw error;
+  if ((data || []).some((b: any) => isHolding(b))) return 'has_bookings' as const;
+  const { error: delError } = await supabase.from('properties').delete().eq('id', propertyId).eq('owner_id', ownerId);
+  if (delError) throw delError;
+  return 'deleted' as const;
+}
+
 // ---------------------------------------------------------------------------
 // Commands
 // ---------------------------------------------------------------------------
@@ -317,6 +378,9 @@ export async function setRoomAvailability(input: { roomId: string; from: string;
   return data as number;
 }
 
+/** Photos per room type; matches stay_room_types_images_max. */
+export const MAX_ROOM_PHOTOS = 6;
+
 export async function saveRoomType(propertyId: string, input: Partial<StayRoomType> & { name: string; nightly_price: number; max_guests: number }) {
   const row = {
     property_id: propertyId,
@@ -328,6 +392,8 @@ export async function saveRoomType(propertyId: string, input: Partial<StayRoomTy
     amenities: input.amenities || [],
     sort_order: input.sort_order ?? 0,
     active: input.active ?? true,
+    // Only sent when photos were touched, so saving works before the column exists.
+    ...(input.images !== undefined ? { images: input.images.slice(0, MAX_ROOM_PHOTOS) } : {}),
   };
   const query = input.id
     ? stayDb.from('stay_room_types').update(row).eq('id', input.id).select().single()
@@ -369,6 +435,14 @@ export async function removeRoom(id: string) {
   const { error } = await stayDb.from('stay_rooms').delete().eq('id', id);
   if (error) throw error;
   return 'deleted' as const;
+}
+
+/** Rename one room. Labels are unique per property (stay_rooms_property_id_label_key). */
+export async function renameRoom(id: string, label: string) {
+  const { data, error } = await stayDb.from('stay_rooms').update({ label: label.trim() }).eq('id', id).select('id');
+  if (error) throw error;
+  // RLS blocks silently: no error, no row. Surface it instead of pretending it saved.
+  if (!data || data.length === 0) throw new Error('Room not found or not yours to change.');
 }
 
 /** Suggest the next labels, e.g. after "101, 102" comes "103". */

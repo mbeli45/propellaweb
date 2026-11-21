@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BedDouble, Building2, ShieldCheck, Wallet, CalendarCheck, CalendarDays, ChevronRight, Check, MessageCircle, Plus, X } from 'lucide-react'
+import { BedDouble, Building2, ShieldCheck, Wallet, CalendarCheck, CalendarDays, ChevronRight, Check, Edit3, MessageCircle, Plus, Trash2, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import { ListItemSkeleton } from '@/components/skeletons'
@@ -8,13 +8,17 @@ import { Banner, EmptyState, ReservationSectionView, ReservationsHeader, Reserva
 import { useIdentityGate } from '@/hooks/useIdentityGate'
 import type { CardAction } from '@/components/reservations/ReservationUI'
 import { StayBookingCard } from '@/components/stays/StayUI'
-import PropertyCard, { PropertyData } from '@/components/PropertyCard'
+import HostCharts from '@/components/stays/HostCharts'
+import { useDialog } from '@/contexts/DialogContext'
 import {
   StayBooking,
+  deleteHostStay,
   displayStatus,
   fetchHostBookings,
+  fetchHostMonthlyRevenue,
   fetchHostStayProperties,
   isHolding,
+  occupancyByNight,
   respondStayBooking,
   stayDb,
   stayErrorMessage,
@@ -23,27 +27,6 @@ import {
 
 
 type HostProperty = Awaited<ReturnType<typeof fetchHostStayProperties>>[number]
-
-/** A host's stay in the shape the shared listing card expects. */
-const toCardProperty = (p: HostProperty): PropertyData => ({
-  id: p.id,
-  title: p.title,
-  price: p.price,
-  location: p.location,
-  town: p.town || undefined,
-  image: p.images?.[0] || '',
-  images: p.images || [],
-  type: 'stay',
-  category: (p.category as PropertyData['category']) || 'standard',
-  status: p.status || undefined,
-  owner_id: p.owner_id,
-  owner_review_pending: p.owner_review_pending,
-  stay_kind: p.stay_kind,
-  amenities: p.amenities || [],
-  check_in_time: p.check_in_time,
-  check_out_time: p.check_out_time,
-  availability_confirmed_at: p.availability_confirmed_at,
-} as PropertyData)
 
 /**
  * The host's dashboard: requests to answer, today's arrivals, each stay with
@@ -60,6 +43,8 @@ export default function HostStays({ asHome = false }: { asHome?: boolean }) {
   const [tonight, setTonight] = useState<Record<string, { total: number; taken: number }>>({})
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [revenue, setRevenue] = useState<{ month: string; total: number }[]>([])
+  const { confirm } = useDialog()
 
   const load = useCallback(async () => {
     if (!user?.id) return
@@ -67,12 +52,13 @@ export default function HostStays({ asHome = false }: { asHome?: boolean }) {
       const props = await fetchHostStayProperties(user.id)
       const ids = props.map((p) => p.id)
       const today = todayISO()
-      const [list, rooms, occupied] = await Promise.all([
+      const [list, rooms, occupied, months] = await Promise.all([
         fetchHostBookings(ids),
         ids.length ? stayDb.from('stay_rooms').select('id,property_id').in('property_id', ids).eq('active', true) : Promise.resolve({ data: [] }),
         ids.length
           ? stayDb.from('stay_bookings').select('room_id,property_id,status,expires_at,payment_status,payment_due_at').in('property_id', ids).in('status', ['pending', 'confirmed']).lte('check_in', today).gt('check_out', today)
           : Promise.resolve({ data: [] }),
+        fetchHostMonthlyRevenue(ids).catch(() => []),
       ])
       const counts: Record<string, { total: number; taken: number }> = {}
       ids.forEach((id) => (counts[id] = { total: 0, taken: 0 }))
@@ -87,6 +73,7 @@ export default function HostStays({ asHome = false }: { asHome?: boolean }) {
       setProperties(props)
       setBookings(list)
       setTonight(counts)
+      setRevenue(months)
     } catch (e) {
       setProperties((p) => p || [])
       setError(stayErrorMessage(e, t('stays.errors.generic')))
@@ -142,9 +129,34 @@ export default function HostStays({ asHome = false }: { asHome?: boolean }) {
 
   const listStay = () => navigate('/agent/property/add?type=stay')
 
+  const removeStay = async (p: HostProperty) => {
+    if (!user?.id) return
+    const ok = await confirm({
+      title: t('stays.hub.deleteTitle'),
+      message: t('stays.hub.deleteBody', { title: p.title }),
+      confirmText: t('common.delete'),
+      cancelText: t('common.cancel'),
+      variant: 'danger',
+    })
+    if (!ok) return
+    setError(null)
+    try {
+      const result = await deleteHostStay(p.id, user.id)
+      if (result === 'has_bookings') {
+        setError(t('stays.hub.deleteBlocked'))
+        return
+      }
+      setProperties((list) => (list || []).filter((x) => x.id !== p.id))
+      load()
+    } catch (e) {
+      setError(stayErrorMessage(e, t('stays.hub.deleteFailed')))
+    }
+  }
+
   // Headline numbers for the stats row.
   const roomTotals = Object.values(tonight).reduce((acc, c) => ({ total: acc.total + c.total, taken: acc.taken + c.taken }), { total: 0, taken: 0 })
   const freeTonight = roomTotals.total - roomTotals.taken
+  const occupancy = useMemo(() => occupancyByNight(bookings), [bookings])
   const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   const stats = [
     {
@@ -218,6 +230,8 @@ export default function HostStays({ asHome = false }: { asHome?: boolean }) {
               )}
             </div>
 
+            <HostCharts occupancy={occupancy} totalRooms={roomTotals.total} revenue={revenue} t={t} locale={locale} />
+
             <div className="host-grid">
               {/* Today: what needs the host now. Beside the listings on wide screens, first on phones. */}
               <aside className="host-today" id="host-today" aria-label={t('stays.hub.todayLabel')}>
@@ -232,33 +246,60 @@ export default function HostStays({ asHome = false }: { asHome?: boolean }) {
               <div className="host-main">
                 <div id="host-properties">
                   <ReservationSectionView icon={Building2} title={t('stays.hub.properties')} meta={String(properties.length)}>
-                    {/* Same card agents see on their listings; tap opens the rooms calendar. */}
-                    <div className="stay-prop-grid">
+                    {/* Compact rows; tap opens the rooms calendar. */}
+                    <div className="host-rows">
                       {properties.map((p) => {
                         const c = tonight[p.id] || { total: 0, taken: 0 }
                         const ok = c.total > 0 && c.total - c.taken > 0 && !p.owner_review_pending
                         const manage = (tab: 'calendar' | 'rooms') => navigate(`/agent/stays/manage/${p.id}?tab=${tab}`)
+                        const place = [p.town, p.location].filter(Boolean).join(' · ')
                         return (
-                          <div key={p.id} className="stay-prop-card">
-                            <PropertyCard
-                              property={toCardProperty(p)}
-                              isOwner
-                              onEdit={() => navigate(`/agent/property/edit/${p.id}`)}
-                              onClick={() => manage(c.total ? 'calendar' : 'rooms')}
-                            />
-                            <div className="host-prop-foot">
-                              <span className={`host-prop-state host-prop-state--${ok ? 'ok' : 'warn'}`}>
-                                <span className="host-prop-dot" aria-hidden="true" />
-                                {p.owner_review_pending
-                                  ? t('stays.hub.awaitingReview')
-                                  : c.total
-                                    ? t('stays.hub.freeTonight', { free: c.total - c.taken, total: c.total })
-                                    : t('stays.hub.noRooms')}
+                          <div key={p.id} className="host-row">
+                            <button type="button" className="host-row-main" onClick={() => manage(c.total ? 'calendar' : 'rooms')}>
+                              {p.images?.[0] ? (
+                                <img className="host-row-img" src={p.images[0]} alt="" loading="lazy" />
+                              ) : (
+                                <span className="host-row-img"><BedDouble size={22} aria-hidden="true" /></span>
+                              )}
+                              <span className="host-row-info">
+                                <span className="host-row-title">{p.title}</span>
+                                {place && <span className="host-row-place">{place}</span>}
+                                <span className={`host-prop-state host-prop-state--${ok ? 'ok' : 'warn'}`}>
+                                  <span className="host-prop-dot" aria-hidden="true" />
+                                  <span>
+                                    {p.owner_review_pending
+                                      ? t('stays.hub.awaitingReview')
+                                      : c.total
+                                        ? t('stays.hub.freeTonight', { free: c.total - c.taken, total: c.total })
+                                        : t('stays.hub.noRooms')}
+                                  </span>
+                                </span>
                               </span>
+                            </button>
+                            <div className="host-row-foot">
                               <div className="host-prop-actions">
                                 <button type="button" onClick={() => manage('rooms')}><BedDouble size={15} aria-hidden="true" />{t('stays.tabs.rooms')}</button>
                                 <button type="button" onClick={() => manage('calendar')}><CalendarDays size={15} aria-hidden="true" />{t('stays.tabs.calendar')}</button>
                               </div>
+                              <span className="host-row-spacer" />
+                              <button
+                                type="button"
+                                className="host-row-icon"
+                                onClick={() => navigate(`/agent/property/edit/${p.id}`)}
+                                aria-label={`${t('common.edit')}: ${p.title}`}
+                                title={t('common.edit')}
+                              >
+                                <Edit3 size={16} aria-hidden="true" />
+                              </button>
+                              <button
+                                type="button"
+                                className="host-row-icon host-row-icon--danger"
+                                onClick={() => removeStay(p)}
+                                aria-label={`${t('common.delete')}: ${p.title}`}
+                                title={t('common.delete')}
+                              >
+                                <Trash2 size={16} aria-hidden="true" />
+                              </button>
                             </div>
                           </div>
                         )

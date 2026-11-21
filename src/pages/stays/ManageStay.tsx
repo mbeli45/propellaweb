@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { BedDouble, CalendarDays, CalendarX2, Check, ChevronLeft, ChevronRight, ListChecks, Loader2, MessageCircle, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { BedDouble, CalendarDays, CalendarX2, Check, ChevronLeft, ChevronRight, ImagePlus, ListChecks, Loader2, MessageCircle, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useLanguage } from '@/contexts/I18nContext'
+import { useStorage } from '@/hooks/useStorage'
 import { supabase } from '@/lib/supabase'
 import { CardButton, EmptyState, Hint, PageHeader, ReservationSectionView, ReservationsPage, SegmentedControl } from '@/components/reservations/ReservationUI'
 import type { CardAction } from '@/components/reservations/ReservationUI'
@@ -13,6 +14,7 @@ import {
   StayRoomType,
   addDays,
   addRooms,
+  MAX_ROOM_PHOTOS,
   cancelStayBooking,
   coversNight,
   displayStatus,
@@ -23,6 +25,7 @@ import {
   fromISODate,
   nightsBetween,
   removeRoom,
+  renameRoom,
   removeRoomType,
   respondStayBooking,
   saveRoomType,
@@ -60,6 +63,7 @@ export default function ManageStay() {
   const [detail, setDetail] = useState<StayBooking | null>(null)
   const [typeEditor, setTypeEditor] = useState<Partial<StayRoomType> | null>(null)
   const [roomAdder, setRoomAdder] = useState<StayRoomType | null>(null)
+  const [roomRenamer, setRoomRenamer] = useState<StayRoom | null>(null)
   const [blocker, setBlocker] = useState(false)
 
   const today = todayISO()
@@ -285,6 +289,11 @@ export default function ManageStay() {
                   {formatFcfa(rt.nightly_price)} / {t('stays.perNight')} · {t('stays.sleeps', { count: rt.max_guests })}
                   {rt.beds ? ` · ${rt.beds}` : ''}
                 </div>
+                {!!rt.images?.length && (
+                  <div className="stay-photo-row stay-photo-row--peek">
+                    {rt.images.slice(0, 4).map((src, i) => <img key={src} src={src} alt={t('stays.rooms.photoAlt', { name: rt.name, n: i + 1 })} loading="lazy" />)}
+                  </div>
+                )}
               </div>
               {rt.active && (
                 <>
@@ -306,7 +315,9 @@ export default function ManageStay() {
                   <div className="stay-chips">
                     {typeRooms.map((room) => (
                       <span key={room.id} className="stay-chip stay-chip--room">
-                        {room.label}
+                        <button type="button" className="stay-chip-name" onClick={() => setRoomRenamer(room)} aria-label={t('stays.rooms.renameRoom', { label: room.label })} title={t('stays.rooms.renameRoom', { label: room.label })}>
+                          {room.label}
+                        </button>
                         <button type="button" className="stay-chip-remove" onClick={() => deleteRoom(room)} aria-label={t('stays.rooms.removeRoom', { label: room.label })} title={t('stays.rooms.removeRoom', { label: room.label })}>
                           <X size={12} aria-hidden="true" />
                         </button>
@@ -338,7 +349,7 @@ export default function ManageStay() {
       list.length > 0 && (
         <ReservationSectionView title={label} meta={String(list.length)}>
           {list.map((b) => (
-            <StayBookingCard key={b.id} booking={b} t={t} locale={locale} perspective="host" actions={bookingActions(b)} />
+            <StayBookingCard key={b.id} booking={b} t={t} locale={locale} perspective="host" actions={bookingActions(b)} onOpen={() => setDetail(b)} />
           ))}
         </ReservationSectionView>
       )
@@ -381,7 +392,7 @@ export default function ManageStay() {
           footer={
             <>
               <CardButton label={t('common.close')} tone="neutral" onClick={() => setDetail(null)} />
-              <CardButton label={t('stays.tabs.bookings')} tone="primary" onClick={() => { setDetail(null); setTab('bookings') }} />
+              {tab !== 'bookings' && <CardButton label={t('stays.tabs.bookings')} tone="primary" onClick={() => { setDetail(null); setTab('bookings') }} />}
             </>
           }
         >
@@ -419,6 +430,17 @@ export default function ManageStay() {
           onClose={() => setRoomAdder(null)}
           onSaved={async () => {
             setRoomAdder(null)
+            await Promise.all([loadSetup(), loadCalendar()])
+          }}
+        />
+      )}
+      {roomRenamer && (
+        <RoomRenamer
+          room={roomRenamer}
+          existingLabels={rooms.filter((r) => r.id !== roomRenamer.id).map((r) => r.label)}
+          onClose={() => setRoomRenamer(null)}
+          onSaved={async () => {
+            setRoomRenamer(null)
             await Promise.all([loadSetup(), loadCalendar()])
           }}
         />
@@ -469,6 +491,21 @@ function RoomTypeEditor({
   const [count, setCount] = useState(1)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Photos: kept URLs plus new files, uploaded on Save.
+  const { uploadImage } = useStorage()
+  const [photos, setPhotos] = useState<string[]>(value.images || [])
+  const [newFiles, setNewFiles] = useState<File[]>([])
+  const previews = useMemo(() => newFiles.map((f) => URL.createObjectURL(f)), [newFiles])
+  useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews])
+  const slotsLeft = MAX_ROOM_PHOTOS - photos.length - newFiles.length
+  const photosTouched = newFiles.length > 0 || photos.length !== (value.images || []).length
+  const addFiles = (list: FileList | null) => {
+    const files = Array.from(list || []).filter((f) => f.type.startsWith('image/'))
+    const tooBig = files.find((f) => f.size > 15 * 1024 * 1024)
+    if (tooBig) return setError(t('stays.rooms.photoTooBig', { name: tooBig.name }))
+    setError(null)
+    setNewFiles((cur) => [...cur, ...files].slice(0, MAX_ROOM_PHOTOS - photos.length))
+  }
 
   const save = async () => {
     const nightly = Number(price.replace(/\D/g, ''))
@@ -477,7 +514,14 @@ function RoomTypeEditor({
     setSaving(true)
     setError(null)
     try {
-      const saved = await saveRoomType(propertyId, { id: value.id, name, nightly_price: nightly, max_guests: maxGuests, beds, description, sort_order: value.sort_order ?? sortOrder })
+      const uploaded: string[] = []
+      for (const file of newFiles) {
+        const res = await uploadImage(file, 'properties', 'rooms')
+        if (!res || res.error || !res.url) throw new Error(t('stays.rooms.photoFailed'))
+        uploaded.push(res.url)
+      }
+      const images = photosTouched ? [...photos, ...uploaded] : undefined
+      const saved = await saveRoomType(propertyId, { id: value.id, name, nightly_price: nightly, max_guests: maxGuests, beds, description, images, sort_order: value.sort_order ?? sortOrder })
       if (isNew && count > 0) await addRooms(propertyId, saved.id, suggestRoomLabels(existingLabels, count))
       onSaved()
     } catch (e) {
@@ -514,6 +558,35 @@ function RoomTypeEditor({
         {t('stays.rooms.description')}
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={1000} />
       </label>
+      <div className="rsv-field">
+        {t('stays.rooms.photos')}
+        <div className="stay-photo-row">
+          {photos.map((src, i) => (
+            <span key={src} className="stay-photo">
+              <img src={src} alt={t('stays.rooms.photoAlt', { name: name || t('stays.rooms.name'), n: i + 1 })} />
+              <button type="button" onClick={() => setPhotos((cur) => cur.filter((x) => x !== src))} aria-label={t('stays.rooms.removePhoto', { n: i + 1 })}>
+                <X size={14} aria-hidden="true" />
+              </button>
+            </span>
+          ))}
+          {previews.map((src, i) => (
+            <span key={src} className="stay-photo is-new">
+              <img src={src} alt={t('stays.rooms.photoAlt', { name: name || t('stays.rooms.name'), n: photos.length + i + 1 })} />
+              <button type="button" onClick={() => setNewFiles((cur) => cur.filter((_, j) => j !== i))} aria-label={t('stays.rooms.removePhoto', { n: photos.length + i + 1 })}>
+                <X size={14} aria-hidden="true" />
+              </button>
+            </span>
+          ))}
+          {slotsLeft > 0 && (
+            <label className="stay-photo-add">
+              <ImagePlus size={20} aria-hidden="true" />
+              <span>{t('stays.rooms.addPhotos')}</span>
+              <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(e) => { addFiles(e.target.files); e.target.value = '' }} />
+            </label>
+          )}
+        </div>
+        <span className="stay-field-hint">{t('stays.rooms.photosHint', { max: MAX_ROOM_PHOTOS })}</span>
+      </div>
       {isNew && (
         <div className="rsv-field">
           {t('stays.rooms.howMany')}
@@ -570,6 +643,60 @@ function RoomAdder({
         {t('stays.rooms.roomLabels')}
         <input value={labels} onChange={(e) => setLabels(e.target.value)} />
         <span className="stay-field-hint">{t('stays.rooms.roomLabelsHint')}</span>
+      </label>
+      {error && <p className="stay-error" role="alert">{error}</p>}
+    </StayDialog>
+  )
+}
+
+function RoomRenamer({
+  room,
+  existingLabels,
+  onClose,
+  onSaved,
+}: {
+  room: StayRoom
+  existingLabels: string[]
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const { t } = useLanguage()
+  const [label, setLabel] = useState(room.label)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const save = async () => {
+    const next = label.trim()
+    if (!next) return setError(t('stays.rooms.labelRequired'))
+    if (next === room.label) return onClose()
+    if (existingLabels.some((x) => x.toLowerCase() === next.toLowerCase())) return setError(t('stays.rooms.labelTaken', { labels: next }))
+    setSaving(true)
+    setError(null)
+    try {
+      await renameRoom(room.id, next)
+      onSaved()
+    } catch (e) {
+      setError(stayErrorMessage(e, t('stays.errors.generic')))
+    } finally {
+      setSaving(false)
+    }
+  }
+  return (
+    <StayDialog
+      title={t('stays.rooms.renameTitle')}
+      onClose={onClose}
+      closeLabel={t('common.close')}
+      footer={<CardButton label={t('stays.rooms.save')} tone="primary" onClick={save} busy={saving} />}
+    >
+      <label className="rsv-field">
+        {t('stays.rooms.roomLabel')}
+        <input
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') save() }}
+          maxLength={40}
+          autoFocus
+        />
+        <span className="stay-field-hint">{t('stays.rooms.renameHint')}</span>
       </label>
       {error && <p className="stay-error" role="alert">{error}</p>}
     </StayDialog>

@@ -47,7 +47,11 @@ export default function BookStay() {
   const [nights, setNights] = useState(() => Math.min(30, Math.max(1, Number(params.get('nights')) || 1)))
   const [guests, setGuests] = useState(() => Math.min(20, Math.max(1, Number(params.get('guests')) || 1)))
   const [rooms, setRooms] = useState<RoomAvailability[] | null>(null)
-  const [selected, setSelected] = useState<string | null>(null)
+  // Arriving from "Select" on the stay page: that room type is already chosen,
+  // so the page is a review step; "Change room" opens the full list.
+  const roomParam = params.get('room')
+  const [selected, setSelected] = useState<string | null>(roomParam)
+  const [showAllRooms, setShowAllRooms] = useState(!roomParam)
   const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -79,7 +83,10 @@ export default function BookStay() {
       setRooms(list)
       setSelected((current) => {
         const still = list.find((r) => r.room_type_id === current)
-        return still && still.available_rooms > 0 && still.max_guests >= guests ? current : null
+        const ok = !!still && still.available_rooms > 0 && still.max_guests >= guests
+        // The chosen room no longer fits (dates or party changed): show every option.
+        if (!ok) setShowAllRooms(true)
+        return ok ? current : null
       })
     } catch (e) {
       setError(stayErrorMessage(e, t('stays.errors.load')))
@@ -162,7 +169,7 @@ export default function BookStay() {
             )}
           </div>
 
-          <ReservationSectionView title={t('stays.selectRoom')} meta={loading ? t('stays.loadingRooms') : undefined}>
+          <ReservationSectionView title={showAllRooms ? t('stays.selectRoom') : t('stays.yourRoom')} meta={loading ? t('stays.loadingRooms') : undefined}>
             {rooms === null ? null : rooms.length === 0 ? (
               <EmptyState
                 compact
@@ -175,7 +182,7 @@ export default function BookStay() {
                 }
               />
             ) : (
-              rooms.map((r) => {
+              rooms.filter((r) => showAllRooms || r.room_type_id === selected).map((r) => {
                 const tooSmall = r.max_guests < guests
                 const full = r.available_rooms <= 0
                 const active = selected === r.room_type_id
@@ -190,6 +197,7 @@ export default function BookStay() {
                     className={`stay-room${active ? ' is-active' : ''}`}
                     onClick={() => setSelected(r.room_type_id)}
                   >
+                    {!!r.images?.length && <img className="stay-room-photo" src={r.images[0]} alt={t('stays.rooms.photoAlt', { name: r.name, n: 1 })} loading="lazy" />}
                     <span className="stay-room-head">
                       <span>
                         <span className="stay-room-name">{r.name}</span>
@@ -215,6 +223,11 @@ export default function BookStay() {
                   </button>
                 )
               })
+            )}
+            {!showAllRooms && rooms && rooms.length > 1 && (
+              <div>
+                <CardButton label={t('stays.changeRoom')} tone="neutral" onClick={() => setShowAllRooms(true)} />
+              </div>
             )}
           </ReservationSectionView>
         </div>

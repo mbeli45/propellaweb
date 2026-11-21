@@ -7,9 +7,10 @@ import { getColors } from '@/constants/Colors'
 import { PropertyData } from './PropertyCard'
 import { formatPrice, calculateRentPrices } from '@/utils/shareUtils'
 import { isVideoUrl, separateMedia } from '@/utils/videoUtils'
-import { MapPin, BedDouble, Bath, Share2, Eye, ChevronUp, ChevronDown, LayoutGrid, Grid3x3, Search, X, Heart, Bookmark, CalendarCheck, MessageCircle, ShieldCheck } from 'lucide-react'
+import { MapPin, BedDouble, Bath, Share2, Eye, ChevronUp, ChevronDown, LayoutGrid, Search, Heart, Play, Bookmark, CalendarCheck, MessageCircle, ShieldCheck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSavedProperty } from '@/hooks/useSavedProperties'
+import { useShare } from '@/hooks/useShare'
 import { usePropertyLike } from '@/hooks/usePropertyLikes'
 import { isReservedByViewer } from '@/lib/propertyVisibility'
 import { formatLastVerified, isAvailabilityStale } from '@/hooks/usePropertyAvailability'
@@ -29,14 +30,30 @@ const ACTION_BUTTON_STYLE: React.CSSProperties = {
   padding: 0
 }
 
-const ACTION_CIRCLE_STYLE: React.CSSProperties = {
-  width: '48px',
-  height: '48px',
-  borderRadius: '50%',
-  backgroundColor: 'rgba(50,50,50,0.4)',
+const ACTION_ICON_STYLE: React.CSSProperties = {
+  width: '44px',
+  height: '36px',
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'center'
+  justifyContent: 'center',
+  filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.6))'
+}
+
+/** Top-row icons: search and grid, plain like the action rail. */
+const TOP_ICON_STYLE: React.CSSProperties = {
+  flexShrink: 0,
+  width: '44px',
+  height: '44px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: 'none',
+  border: 'none',
+  borderRadius: '50%',
+  padding: 0,
+  cursor: 'pointer',
+  pointerEvents: 'auto',
+  filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.6))'
 }
 
 const ACTION_LABEL_STYLE: React.CSSProperties = {
@@ -46,119 +63,67 @@ const ACTION_LABEL_STYLE: React.CSSProperties = {
   textShadow: '0 2px 6px rgba(0,0,0,0.9)'
 }
 
-/**
- * Save toggle for the property currently on screen. Sits in the top-right
- * corner, so it is a sibling of the feed rather than part of the action rail.
- */
-function FeedSaveButton({ property }: { property?: PropertyData }) {
-  const { user } = useAuth()
-  const navigate = useNavigate()
-  const { t } = useLanguage()
-  const { isSaved, toggleSaved } = useSavedProperty(user?.id, property?.id)
-
-  if (!property) return null
-
-  const label = isSaved
-    ? t('saved.removeFromSaved', 'Remove from saved')
-    : t('saved.addToSaved', 'Save property')
-
-  return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation()
-        if (!user) {
-          navigate('/auth/login')
-          return
-        }
-        toggleSaved()
-      }}
-      onMouseDown={(e) => e.stopPropagation()}
-      onTouchStart={(e) => e.stopPropagation()}
-      style={{
-        position: 'absolute',
-        top: '16px',
-        right: '12px',
-        zIndex: 10000,
-        width: '44px',
-        height: '44px',
-        borderRadius: '50%',
-        backgroundColor: 'rgba(0,0,0,0.45)',
-        border: '1px solid rgba(255,255,255,0.3)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-        pointerEvents: 'auto'
-      }}
-      title={label}
-      aria-label={label}
-    >
-      <Bookmark size={22} color="#fff" fill={isSaved ? '#fff' : 'transparent'} />
-    </button>
-  )
-}
-
-/** View / Like / Share for the active slide. Save lives in the top-right corner. */
+/** View / Like / Save / Share for the active slide, TikTok style: plain icons. */
 function FeedActionRail({ property }: { property: PropertyData }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { t } = useLanguage()
   const { isLiked, likeCount, toggleLike } = usePropertyLike(user?.id, property.id)
+  const { isSaved, toggleSaved } = useSavedProperty(user?.id, property.id)
+  const { shareProperty } = useShare()
 
   const requireAuth = () => {
     if (user) return true
     navigate('/auth/login')
     return false
   }
+  const stop = { onMouseDown: (e: React.MouseEvent) => e.stopPropagation(), onTouchStart: (e: React.TouchEvent) => e.stopPropagation() }
+  const saveLabel = isSaved ? t('saved.removeFromSaved', 'Remove from saved') : t('saved.addToSaved', 'Save property')
 
   return (
     <div style={{
       position: 'absolute',
-      right: '12px',
+      right: '8px',
       bottom: '160px',
       zIndex: 10,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      gap: '20px'
+      gap: '14px'
     }}>
-      <button
-        onClick={(e) => { e.stopPropagation(); navigate(`/property/${property.id}`) }}
-        style={ACTION_BUTTON_STYLE}
-      >
-        <div style={ACTION_CIRCLE_STYLE}>
-          <Eye size={24} color="#fff" />
-        </div>
+      <button {...stop} onClick={(e) => { e.stopPropagation(); navigate(`/property/${property.id}`) }} style={ACTION_BUTTON_STYLE}>
+        <span style={ACTION_ICON_STYLE}><Eye size={30} color="#fff" /></span>
         <span style={ACTION_LABEL_STYLE}>{t('feedView.viewDetails', 'View')}</span>
       </button>
 
       <button
-        onClick={(e) => {
-          e.stopPropagation()
-          if (!requireAuth()) return
-          toggleLike()
-        }}
+        {...stop}
+        onClick={(e) => { e.stopPropagation(); if (requireAuth()) toggleLike() }}
         style={ACTION_BUTTON_STYLE}
+        aria-pressed={isLiked}
       >
-        <div style={ACTION_CIRCLE_STYLE}>
-          <Heart
-            size={24}
-            color={isLiked ? '#FF3B5C' : '#fff'}
-            fill={isLiked ? '#FF3B5C' : 'transparent'}
-          />
-        </div>
-        <span style={ACTION_LABEL_STYLE}>
-          {likeCount > 0 ? likeCount : t('feedView.like', 'Like')}
+        <span style={ACTION_ICON_STYLE}>
+          <Heart size={30} color={isLiked ? '#FF3B5C' : '#fff'} fill={isLiked ? '#FF3B5C' : 'transparent'} />
         </span>
+        <span style={ACTION_LABEL_STYLE}>{likeCount > 0 ? likeCount : t('feedView.like', 'Like')}</span>
       </button>
 
       <button
-        onClick={(e) => { e.stopPropagation() }}
+        {...stop}
+        onClick={(e) => { e.stopPropagation(); if (requireAuth()) toggleSaved() }}
         style={ACTION_BUTTON_STYLE}
+        aria-pressed={isSaved}
+        aria-label={saveLabel}
+        title={saveLabel}
       >
-        <div style={ACTION_CIRCLE_STYLE}>
-          <Share2 size={24} color="#fff" />
-        </div>
+        <span style={ACTION_ICON_STYLE}>
+          <Bookmark size={30} color={isSaved ? '#FFC93C' : '#fff'} fill={isSaved ? '#FFC93C' : 'transparent'} />
+        </span>
+        <span style={ACTION_LABEL_STYLE} aria-hidden="true">{isSaved ? t('feedView.saved', 'Saved') : t('feedView.save', 'Save')}</span>
+      </button>
+
+      <button {...stop} onClick={(e) => { e.stopPropagation(); shareProperty(property as any) }} style={ACTION_BUTTON_STYLE}>
+        <span style={ACTION_ICON_STYLE}><Share2 size={30} color="#fff" /></span>
         <span style={ACTION_LABEL_STYLE}>{t('feedView.share', 'Share')}</span>
       </button>
     </div>
@@ -171,10 +136,10 @@ interface PropertyFeedViewProps {
   onLoadMore?: () => void
   hasMore?: boolean
   onSwitchToGrid?: () => void
-  /** Shown above the search row, e.g. the Properties | Stays switch. */
+  /** Left of the top row, e.g. the Properties | Stays switch. */
   header?: React.ReactNode
-  onSearch?: (query: string) => void
-  searchValue?: string
+  /** Search icon: the host leaves the feed and focuses its search box. */
+  onOpenSearch?: () => void
 }
 
 export default function PropertyFeedView({
@@ -184,8 +149,7 @@ export default function PropertyFeedView({
   hasMore = false,
   onSwitchToGrid,
   header,
-  onSearch,
-  searchValue = ''
+  onOpenSearch
 }: PropertyFeedViewProps) {
   const { colorScheme } = useThemeMode()
   const { t, currentLanguage } = useLanguage()
@@ -196,7 +160,6 @@ export default function PropertyFeedView({
   const [currentPropertyIndex, setCurrentPropertyIndex] = useState(0)
   const [currentMediaIndex, setCurrentMediaIndex] = useState<{ [propertyId: string]: number }>({})
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
-  const [feedSearchQuery, setFeedSearchQuery] = useState(searchValue)
   const containerRef = useRef<HTMLDivElement>(null)
   const [requestedVideo, setRequestedVideo] = useState<string | null>(null)
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({})
@@ -207,28 +170,6 @@ export default function PropertyFeedView({
   const isTransitioning = useRef<boolean>(false)
   const isDragging = useRef<boolean>(false)
   const wheelTimeout = useRef<NodeJS.Timeout | null>(null)
-
-  // Sync search query with prop
-  useEffect(() => {
-    setFeedSearchQuery(searchValue)
-  }, [searchValue])
-
-  // Handle search input change
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value
-    setFeedSearchQuery(query)
-    if (onSearch) {
-      onSearch(query)
-    }
-  }
-
-  // Handle clear search
-  const handleClearSearch = () => {
-    setFeedSearchQuery('')
-    if (onSearch) {
-      onSearch('')
-    }
-  }
 
   // Get media for a property (videos first, then images)
   const getPropertyMedia = useCallback((property: PropertyData) => {
@@ -524,9 +465,54 @@ export default function PropertyFeedView({
     }
   }, [currentPropertyIndex, currentProperty])
 
+  // Top row: Properties | Stays, then search and grid. Search takes the guest
+  // to the grid with its search box focused.
+  const topRow = (
+      <div
+        style={{
+          position: 'absolute',
+          top: '12px',
+          left: '12px',
+          right: '8px',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          minHeight: '44px'
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>{header}</div>
+        {onOpenSearch && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onOpenSearch() }}
+            style={TOP_ICON_STYLE}
+            aria-label={t('feedView.search', 'Search')}
+            title={t('feedView.search', 'Search')}
+          >
+            <Search size={26} color="#fff" />
+          </button>
+        )}
+        {onSwitchToGrid && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onSwitchToGrid() }}
+            style={TOP_ICON_STYLE}
+            aria-label={t('home.modeBrowse', 'Browse')}
+            title={t('home.modeBrowse', 'Browse')}
+          >
+            <LayoutGrid size={26} color="#fff" />
+          </button>
+        )}
+      </div>
+  )
+
   if (properties.length === 0 && !loading) {
     return (
-      <div className="feed-empty-state" style={{ color: Colors.neutral[600] }}>
+      <div className="feed-empty-state" style={{ color: Colors.neutral[300], backgroundColor: Colors.neutral[900], position: 'relative' }}>
+        {topRow}
         <p>{t('home.noPropertiesAvailable')}</p>
       </div>
     )
@@ -545,132 +531,7 @@ export default function PropertyFeedView({
       onMouseLeave={handleMouseLeave}
       style={{ backgroundColor: Colors.neutral[900] }}
     >
-      {header && (
-        <div
-          style={{ position: 'absolute', top: '16px', left: '16px', right: '68px', maxWidth: '400px', zIndex: 9999 }}
-          onMouseDown={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.stopPropagation()}
-        >
-          {header}
-        </div>
-      )}
-      {/* Top bar: search + grid toggle share one row. The right inset
-          reserves the corner for the save button. */}
-      <div style={{
-        position: 'absolute',
-        top: header ? '68px' : '16px',
-        left: '16px',
-        right: '68px',
-        zIndex: 9998,
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '8px',
-        pointerEvents: 'none'
-      }}>
-      {onSearch && (
-        <div style={{
-          flex: 1,
-          minWidth: 0,
-          maxWidth: '400px',
-          pointerEvents: 'auto'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            backgroundColor: 'rgba(0,0,0,0.55)',
-            borderRadius: '22px',
-            border: '1px solid rgba(255,255,255,0.3)',
-            paddingLeft: '12px',
-            paddingRight: '12px',
-            height: '44px',
-            backdropFilter: 'blur(10px)'
-          }}>
-            <Search size={18} color="rgba(255,255,255,0.9)" />
-            <input
-              type="text"
-              value={feedSearchQuery}
-              onChange={handleSearchChange}
-              placeholder={t('home.searchPlaceholder') || 'Search properties...'}
-              style={{
-                flex: 1,
-                marginLeft: '8px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                outline: 'none',
-                color: '#fff',
-                fontSize: '15px',
-                fontFamily: 'Inter-Medium',
-                padding: 0
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-            />
-            {feedSearchQuery.length > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); handleClearSearch() }}
-                onMouseDown={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
-                style={{
-                  marginLeft: '8px',
-                  padding: '4px',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <X size={16} color="rgba(255,255,255,0.9)" />
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Grid toggle — matches mobile actionButton style: circle + label below */}
-      {onSwitchToGrid && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onSwitchToGrid() }}
-          onMouseDown={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.stopPropagation()}
-          style={{
-            flexShrink: 0,
-            marginLeft: 'auto',
-            zIndex: 9999,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '4px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-            pointerEvents: 'auto'
-          }}
-          title="Switch to Grid View"
-        >
-          <div style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '50%',
-            backgroundColor: Colors.primary[600],
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.4)'
-          }}>
-            <Grid3x3 size={24} color="#fff" />
-          </div>
-          <span style={{ fontSize: '11px', color: '#fff', fontWeight: '600', textShadow: '0 2px 6px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' }}>
-            {t('home.modeBrowse', 'Browse')}
-          </span>
-        </button>
-      )}
-      </div>
-
-      {/* Save - top right corner */}
-      <FeedSaveButton property={properties[currentPropertyIndex]} />
+      {topRow}
 
       {/* Vertical Swiping Container - Properties */}
       <div className="feed-properties-wrapper" style={{
@@ -751,8 +612,12 @@ export default function PropertyFeedView({
                             type="button"
                             aria-label={t('property.playVideo', 'Play property video')}
                             onClick={(event) => { event.stopPropagation(); setRequestedVideo(`${property.id}-${mediaItem}`) }}
-                            style={{width:'100%',height:'100%',background:'#111',color:'#fff',display:'grid',placeContent:'center',fontSize:18}}
-                          >▶ {t('property.playVideo', 'Play property video')}</button>
+                            style={{width:'100%',height:'100%',background:'#111',border:0,display:'grid',placeContent:'center',cursor:'pointer'}}
+                          >
+                            <span style={{width:72,height:72,borderRadius:'50%',background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',filter:'drop-shadow(0 2px 6px rgba(0,0,0,0.5))'}}>
+                              <Play size={34} color="#fff" fill="#fff" style={{marginLeft:4}} aria-hidden="true" />
+                            </span>
+                          </button>
                         ) : null
                       ) : (() => {
                         const imgKey = `${property.id}-${mediaItem}`
@@ -1024,7 +889,7 @@ export default function PropertyFeedView({
                         </span>
                       </div>
 
-                      {(property.bedrooms || property.bathrooms || property.area) && (
+                      {property.type !== 'stay' && (property.bedrooms || property.bathrooms || property.area) && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           {property.bedrooms && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
