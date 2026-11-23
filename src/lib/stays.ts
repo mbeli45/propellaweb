@@ -254,6 +254,16 @@ export async function fetchHostBookings(propertyIds: string[]) {
   return (data || []) as StayBooking[];
 }
 
+/** One booking with its property, room type and room, e.g. right after booking it. */
+export async function fetchStayBooking(id: string) {
+  const { data, error } = await stayDb.from('stay_bookings').select(BOOKING_SELECT).eq('id', id).single();
+  if (error) throw error;
+  return data as StayBooking;
+}
+
+/** Instant booking: holding the room until the deposit is paid. */
+export const awaitingDeposit = (b: Pick<StayBooking, 'status' | 'payment_status'>) => b.status === 'confirmed' && b.payment_status === 'due';
+
 export async function fetchMyStays(userId: string) {
   const { data, error } = await stayDb
     .from('stay_bookings')

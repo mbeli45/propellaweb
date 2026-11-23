@@ -1946,7 +1946,7 @@
     "selectRoom": "Choose a room",
     "noteLabel": "Message to the host (optional)",
     "notePlaceholder": "Arrival time, special requests…",
-    "payAtProperty": "You pay the host at the property. The host has 24 hours to confirm your request.",
+    "payAtProperty": "Booked straight away. You pay the host at the property.",
     "requestSent": "Request sent",
     "requestSentBody": "We'll notify you when the host replies. You can follow it in My stays.",
     "noRoomsYet": "This stay hasn't added its rooms yet. Message the host to ask about availability.",
@@ -1975,16 +1975,16 @@
     "viewStay": "View stay",
     "my": {
       "title": "My stays",
-      "subtitle": "Hotel and guest house bookings you've requested.",
+      "subtitle": "Your hotel and guest house bookings.",
       "empty": "No stays yet",
-      "emptyBody": "Find a hotel or guest house and request a booking.",
+      "emptyBody": "Find a hotel or guest house and book a room.",
       "browse": "Browse listings",
       "upcoming": "Upcoming",
       "past": "Past and closed"
     },
     "hub": {
       "title": "Your stays",
-      "subtitle": "Rooms, availability and booking requests for your hotels and guest houses.",
+      "subtitle": "Rooms, availability and bookings for your hotels and guest houses.",
       "empty": "No stays listed yet",
       "emptyBody": "List a hotel, guest house or furnished apartment, then add your rooms.",
       "listStay": "List a stay",
@@ -2126,9 +2126,9 @@
       "load": "Couldn't load this stay."
     },
     "deposit": {
-      "afterAccept": "Deposit, once the host accepts",
+      "afterAccept": "Deposit, paid now",
       "atProperty": "Pay at the property",
-      "bookNote": "Nothing is charged now. When the host accepts, pay the deposit by MTN or Orange money to secure the room. The rest is paid at the property.",
+      "bookNote": "Pay the deposit now by MTN or Orange money to confirm the room. The rest is paid at the property.",
       "policy": "Free cancellation up to {{days}} days before check-in. After that the host keeps the deposit.",
       "policyNone": "If you cancel after paying, the host keeps the deposit.",
       "guestDue": "Pay {{amount}} by {{time}} to secure your room. The rest ({{rest}}) is paid at the property.",
@@ -2195,6 +2195,21 @@
       "total": "Total",
       "viewBooking": "View booking",
       "directions": "Get directions"
+    },
+    "instant": {
+      "bookAndPay": "Book and pay deposit",
+      "bookNow": "Book now",
+      "heldTitle": "Your room is held",
+      "heldBody": "Pay the {{amount}} deposit by {{time}} to confirm it. If it isn’t paid by then, the room is released.",
+      "payDeposit": "Pay {{amount}} deposit",
+      "bookedTitle": "You’re booked",
+      "bookedPaid": "Deposit paid. Pay {{rest}} at the property.",
+      "bookedPaidFull": "Deposit paid. Nothing more to pay at the property.",
+      "bookedNoDeposit": "Your room is confirmed. Pay the host at the property.",
+      "confirmTitle": "Message the host",
+      "confirmBody": "Message the host to confirm availability and your arrival time.",
+      "beforeBook": "After booking, message the host to confirm availability and your arrival time.",
+      "paymentPending": "Approve the payment on your phone, then tap Check payment."
     }
   },
   "market": {

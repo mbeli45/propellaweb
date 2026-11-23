@@ -113,8 +113,9 @@ export default function BookStay() {
     setSubmitting(true)
     setError(null)
     try {
-      await requestStayBooking({ roomTypeId: room.room_type_id, checkIn, checkOut, guests, note: note.trim() })
-      navigate(`${base}/stays/my?sent=1`)
+      // Instant booking: My stays opens the deposit sheet straight away when one is due.
+      const id = await requestStayBooking({ roomTypeId: room.room_type_id, checkIn, checkOut, guests, note: note.trim() })
+      navigate(`${base}/stays/my?booking=${id}&pay=1`)
     } catch (e) {
       setError(stayErrorMessage(e, t('stays.errors.generic')))
       load()
@@ -253,7 +254,7 @@ export default function BookStay() {
             )}
             {error && <p className="stay-error" role="alert">{error}</p>}
             <CardButton
-              label={user ? t('stays.requestToBook') : t('stays.signInToBook')}
+              label={!user ? t('stays.signInToBook') : quote && quote.deposit > 0 ? t('stays.instant.bookAndPay') : t('stays.instant.bookNow')}
               tone="primary"
               onClick={submit}
               disabled={!room}
@@ -270,6 +271,7 @@ export default function BookStay() {
             ) : (
               <Hint text={t('stays.payAtProperty')} />
             )}
+            <Hint text={t('stays.instant.beforeBook')} />
           </aside>
         )}
       </div>

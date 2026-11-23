@@ -39,6 +39,7 @@ export default function MyStays() {
   const [terms, setTerms] = useState<StayTerms>(NO_DEPOSIT_TERMS)
   const sent = params.get('sent') === '1'
   const focusId = params.get('booking')
+  const payNow = params.get('pay') === '1'
 
   const load = useCallback(async () => {
     if (!user?.id) return
@@ -61,6 +62,13 @@ export default function MyStays() {
     if (!focusId || !bookings) return
     document.getElementById(`stay-${focusId}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
   }, [focusId, bookings])
+  // Straight from booking: open the deposit sheet for the room being held.
+  useEffect(() => {
+    if (!payNow || !focusId || !bookings) return
+    const b = bookings.find((x) => x.id === focusId)
+    if (b && displayStatus(b) === 'awaiting_payment') setPaying(b)
+    setParams({ booking: focusId }, { replace: true })
+  }, [payNow, focusId, bookings, setParams])
 
   const { upcoming, past } = useMemo(() => {
     const today = todayISO()
@@ -124,7 +132,8 @@ export default function MyStays() {
     return list
   }
 
-  const open = (b: StayBooking) => navigate(`${base}/property/${b.property_id}`)
+  // The details page lives at /property/:id (the guest and user layouts have no nested route for it).
+  const open = (b: StayBooking) => navigate(`/property/${b.property_id}`)
 
   return (
     <ReservationsPage label={t('stays.my.title')}>
@@ -150,6 +159,11 @@ export default function MyStays() {
         <>
           {upcoming.length > 0 && (
             <ReservationSectionView icon={CalendarDays} title={t('stays.my.upcoming')} meta={String(upcoming.length)}>
+              {/* A free room on the calendar isn't a promise the host has seen it. */}
+              <p className="stay-rooms-book-note" style={{ marginBottom: 4 }}>
+                <MessageCircle size={14} aria-hidden="true" />
+                <span>{t('stays.instant.confirmBody')}</span>
+              </p>
               {upcoming.map((b) => (
                 <StayBookingCard key={b.id} booking={b} t={t} locale={locale} perspective="guest" actions={actionsFor(b)} onOpen={() => open(b)} highlight={b.id === focusId} />
               ))}

@@ -1939,7 +1939,7 @@
     "selectRoom": "Choisissez une chambre",
     "noteLabel": "Message à l'hôte (facultatif)",
     "notePlaceholder": "Heure d'arrivée, demandes particulières…",
-    "payAtProperty": "Vous payez l'hôte sur place. L'hôte a 24 heures pour confirmer votre demande.",
+    "payAtProperty": "Réservé tout de suite. Vous payez l’hôte sur place.",
     "requestSent": "Demande envoyée",
     "requestSentBody": "Nous vous préviendrons dès que l'hôte répond. Suivez-la dans Mes séjours.",
     "noRoomsYet": "Cet établissement n'a pas encore ajouté ses chambres. Écrivez à l'hôte pour connaître les disponibilités.",
@@ -1968,16 +1968,16 @@
     "viewStay": "Voir le séjour",
     "my": {
       "title": "Mes séjours",
-      "subtitle": "Vos demandes de réservation d'hôtels et de maisons d'hôtes.",
+      "subtitle": "Vos réservations d’hôtels et de maisons d’hôtes.",
       "empty": "Aucun séjour pour l'instant",
-      "emptyBody": "Trouvez un hôtel ou une maison d'hôtes et demandez une réservation.",
+      "emptyBody": "Trouvez un hôtel ou une maison d’hôtes et réservez une chambre.",
       "browse": "Parcourir les annonces",
       "upcoming": "À venir",
       "past": "Passés et clôturés"
     },
     "hub": {
       "title": "Vos séjours",
-      "subtitle": "Chambres, disponibilités et demandes de réservation de vos hôtels et maisons d'hôtes.",
+      "subtitle": "Chambres, disponibilités et réservations de vos hôtels et maisons d’hôtes.",
       "empty": "Aucun séjour publié",
       "emptyBody": "Publiez un hôtel, une maison d'hôtes ou un appartement meublé, puis ajoutez vos chambres.",
       "listStay": "Publier un séjour",
@@ -2119,9 +2119,9 @@
       "load": "Impossible de charger ce séjour."
     },
     "deposit": {
-      "afterAccept": "Acompte, après acceptation de l'hôte",
+      "afterAccept": "Acompte, payé maintenant",
       "atProperty": "À payer sur place",
-      "bookNote": "Rien n'est prélevé maintenant. Quand l'hôte accepte, payez l'acompte par MTN ou Orange Money pour garantir la chambre. Le reste se paie sur place.",
+      "bookNote": "Payez l’acompte maintenant par MTN ou Orange Money pour confirmer la chambre. Le reste se paie sur place.",
       "policy": "Annulation gratuite jusqu'à {{days}} jours avant l'arrivée. Ensuite, l'hôte garde l'acompte.",
       "policyNone": "Si vous annulez après avoir payé, l'hôte garde l'acompte.",
       "guestDue": "Payez {{amount}} avant le {{time}} pour garantir votre chambre. Le reste ({{rest}}) se paie sur place.",
@@ -2188,6 +2188,21 @@
       "total": "Total",
       "viewBooking": "Voir la réservation",
       "directions": "Itinéraire"
+    },
+    "instant": {
+      "bookAndPay": "Réserver et payer l’acompte",
+      "bookNow": "Réserver maintenant",
+      "heldTitle": "Votre chambre vous est réservée",
+      "heldBody": "Payez l’acompte de {{amount}} avant {{time}} pour la confirmer. Sinon, la chambre est libérée.",
+      "payDeposit": "Payer l’acompte de {{amount}}",
+      "bookedTitle": "C’est réservé",
+      "bookedPaid": "Acompte payé. Payez {{rest}} sur place.",
+      "bookedPaidFull": "Acompte payé. Rien de plus à payer sur place.",
+      "bookedNoDeposit": "Votre chambre est confirmée. Payez l’hôte sur place.",
+      "confirmTitle": "Écrire à l’hôte",
+      "confirmBody": "Écrivez à l’hôte pour confirmer la disponibilité et votre heure d’arrivée.",
+      "beforeBook": "Après la réservation, écrivez à l’hôte pour confirmer la disponibilité et votre heure d’arrivée.",
+      "paymentPending": "Validez le paiement sur votre téléphone, puis touchez Vérifier le paiement."
     }
   },
   "market": {

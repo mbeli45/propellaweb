@@ -158,6 +158,8 @@ export default function HostStays({ asHome = false }: { asHome?: boolean }) {
   const freeTonight = roomTotals.total - roomTotals.taken
   const occupancy = useMemo(() => occupancyByNight(bookings), [bookings])
   const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  // Booking is instant now: only requests made before the switch can still be waiting.
+  const hasRequests = groups.pending.length > 0
   const stats = [
     {
       key: 'free', icon: BedDouble, label: t('stays.hub.statFree'),
@@ -165,11 +167,12 @@ export default function HostStays({ asHome = false }: { asHome?: boolean }) {
       sub: roomTotals.total ? t('stays.hub.ofRooms', { total: roomTotals.total }) : t('stays.hub.noRoomsYet'),
       tone: roomTotals.total && freeTonight === 0 ? 'warn' : 'plain', onClick: () => jump('host-properties'),
     },
-    {
-      key: 'requests', icon: CalendarCheck, label: t('stays.hub.requests'), value: String(groups.pending.length),
-      sub: groups.pending.length ? t('stays.hub.replySoon') : t('stays.hub.allCaught'),
-      tone: groups.pending.length ? 'attention' : 'plain', onClick: () => jump('host-today'),
-    },
+    ...(hasRequests
+      ? [{
+          key: 'requests', icon: CalendarCheck, label: t('stays.hub.requests'), value: String(groups.pending.length),
+          sub: t('stays.hub.replySoon'), tone: 'attention', onClick: () => jump('host-today'),
+        } as const]
+      : []),
     {
       key: 'arrivals', icon: CalendarDays, label: t('stays.hub.arrivals'), value: String(groups.arrivals.length),
       sub: t('stays.hub.todayLabel'), tone: 'plain', onClick: () => jump('host-today'),
@@ -235,9 +238,11 @@ export default function HostStays({ asHome = false }: { asHome?: boolean }) {
             <div className="host-grid">
               {/* Today: what needs the host now. Beside the listings on wide screens, first on phones. */}
               <aside className="host-today" id="host-today" aria-label={t('stays.hub.todayLabel')}>
-                <ReservationSectionView icon={CalendarCheck} title={t('stays.hub.requests')} meta={String(groups.pending.length)}>
-                  {groups.pending.length ? cards(groups.pending, requestActions) : <p className="host-quiet">{t('stays.hub.allCaughtBody')}</p>}
-                </ReservationSectionView>
+                {hasRequests && (
+                  <ReservationSectionView icon={CalendarCheck} title={t('stays.hub.requests')} meta={String(groups.pending.length)}>
+                    {cards(groups.pending, requestActions)}
+                  </ReservationSectionView>
+                )}
                 <ReservationSectionView icon={CalendarDays} title={t('stays.hub.arrivals')} live={groups.arrivals.length ? String(groups.arrivals.length) : undefined}>
                   {groups.arrivals.length ? cards(groups.arrivals, messageAction) : <p className="host-quiet">{t('stays.hub.noArrivals')}</p>}
                 </ReservationSectionView>

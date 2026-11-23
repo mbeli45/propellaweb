@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BedDouble, CalendarDays, CheckCircle2, Info, Loader2, MessageCircle, Navigation, Users, X } from 'lucide-react'
+import { BedDouble, CalendarDays, CheckCircle2, Clock, Info, Loader2, MessageCircle, Navigation, RefreshCw, Smartphone, Users, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/I18nContext'
 import {
   NO_DEPOSIT_TERMS,
   RoomAvailability,
+  StayBooking,
   StayTerms,
   addDays,
+  awaitingDeposit,
+  checkStayPayment,
   fetchAvailability,
+  fetchStayBooking,
   fetchStayTerms,
   formatStayRange,
   requestStayBooking,
@@ -18,6 +22,7 @@ import {
   todayISO,
 } from '@/lib/stays'
 import { DayStrip, Stepper, formatFcfa, guestsLabel, nightsLabel, useStayBase } from './StayUI'
+import { DepositDialog } from './DepositDialog'
 
 /** Room types shown before "Show all". */
 const PREVIEW = 3
@@ -195,6 +200,7 @@ export function StayRooms({
                     checkOut={checkOut}
                     locale={locale}
                     directions={directions}
+                    onMessageHost={isOwner ? undefined : onMessageHost}
                     onClose={() => setOpen(null)}
                     onStale={() => setReload((n) => n + 1)}
                   />
@@ -213,13 +219,18 @@ export function StayRooms({
   )
 }
 
-/** Booking inside an open room card: the same request the booking page sends. */
+/**
+ * Booking inside an open room card. A free room is booked straight away:
+ * with a deposit the room is held while the guest pays, then confirmed.
+ * Either way the guest is reminded to message the host.
+ */
 function RoomBooking({
   room,
   search,
   checkOut,
   locale,
   directions,
+  onMessageHost,
   onClose,
   onStale,
 }: {
@@ -228,6 +239,7 @@ function RoomBooking({
   checkOut: string
   locale: string
   directions?: string
+  onMessageHost?: () => void
   onClose: () => void
   onStale: () => void
 }) {
@@ -239,8 +251,12 @@ function RoomBooking({
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  // The booking id once the request went through: the card turns into a receipt.
-  const [bookingId, setBookingId] = useState<string | null>(null)
+  const [info, setInfo] = useState<string | null>(null)
+  // Once booked the card turns into a receipt that follows the booking's state.
+  const [booking, setBooking] = useState<StayBooking | null>(null)
+  const [paying, setPaying] = useState(false)
+  const [sentPayment, setSentPayment] = useState(false)
+  const [checking, setChecking] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -263,8 +279,10 @@ function RoomBooking({
     setError(null)
     try {
       const id = await requestStayBooking({ roomTypeId: room.room_type_id, checkIn: search.checkIn, checkOut, guests: search.guests, note: note.trim() })
-      setBookingId(id)
+      const created = await fetchStayBooking(id)
+      setBooking(created)
       onStale()
+      if (awaitingDeposit(created)) setPaying(true)
     } catch (e) {
       setError(stayErrorMessage(e, t('stays.errors.generic')))
       onStale()
@@ -273,15 +291,45 @@ function RoomBooking({
     }
   }
 
+  const checkPayment = async () => {
+    if (!booking) return
+    setChecking(true)
+    setError(null)
+    try {
+      const result = await checkStayPayment(booking.id)
+      setInfo(result.status === 'successful' ? null : result.message)
+      setBooking(await fetchStayBooking(booking.id))
+    } catch (e) {
+      setError(stayErrorMessage(e, t('stays.errors.generic')))
+    } finally {
+      setChecking(false)
+    }
+  }
+
   // Focus the receipt so screen readers announce it.
   useEffect(() => {
-    if (bookingId) ref.current?.focus({ preventScroll: true })
-  }, [bookingId])
+    if (booking) ref.current?.focus({ preventScroll: true })
+  }, [booking?.id, booking?.payment_status, booking?.status])
 
-  if (bookingId) {
+  if (booking) {
+    const held = awaitingDeposit(booking)
+    // Requests made before instant booking (or while the database still runs the old flow).
+    const request = booking.status === 'pending'
+    const rest = Number(booking.total_amount) - Number(booking.deposit_amount)
+    const due = booking.payment_due_at
+      ? new Date(booking.payment_due_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+      : ''
+    const title = request ? t('stays.requestSent') : held ? t('stays.instant.heldTitle') : t('stays.instant.bookedTitle')
+    const body = request
+      ? t('stays.receipt.body')
+      : held
+        ? t('stays.instant.heldBody', { amount: formatFcfa(booking.deposit_amount), time: due })
+        : booking.payment_status === 'paid' || booking.payment_status === 'released'
+          ? rest > 0 ? t('stays.instant.bookedPaid', { rest: formatFcfa(rest) }) : t('stays.instant.bookedPaidFull')
+          : t('stays.instant.bookedNoDeposit')
     return (
       <div
-        className="stay-rooms-book stay-confirm"
+        className={`stay-rooms-book stay-confirm${held ? ' is-held' : ''}`}
         id={`stay-book-${room.room_type_id}`}
         ref={ref}
         tabIndex={-1}
@@ -289,33 +337,66 @@ function RoomBooking({
         aria-live="polite"
       >
         <div className="stay-confirm-head">
-          <CheckCircle2 size={28} aria-hidden="true" />
+          {held ? <Clock size={28} aria-hidden="true" /> : <CheckCircle2 size={28} aria-hidden="true" />}
           <div>
-            <strong>{t('stays.requestSent')}</strong>
-            <span>{t('stays.receipt.body')}</span>
+            <strong>{title}</strong>
+            <span>{body}</span>
           </div>
         </div>
 
         <div className="stay-confirm-ref">
           <span>{t('stays.receipt.bookingId')}</span>
-          <strong>{stayRef(bookingId)}</strong>
+          <strong>{stayRef(booking.id)}</strong>
         </div>
 
         <dl className="stay-rooms-book-sum">
           <div className="is-sub"><dt>{t('stays.detail.room')}</dt><dd>{room.name}</dd></div>
-          <div className="is-sub"><dt>{t('stays.detail.dates')}</dt><dd>{formatStayRange(search.checkIn, checkOut, locale)}</dd></div>
-          <div className="is-sub"><dt>{t('stays.receipt.stay')}</dt><dd>{nightsLabel(t, search.nights)} · {guestsLabel(t, search.guests)}</dd></div>
-          <div><dt>{t('stays.receipt.total')}</dt><dd>{formatFcfa(quote.total)}</dd></div>
-          {quote.deposit > 0 && (
-            <div className="is-sub"><dt>{t('stays.deposit.afterAccept')}</dt><dd>{formatFcfa(quote.deposit)}</dd></div>
+          <div className="is-sub"><dt>{t('stays.detail.dates')}</dt><dd>{formatStayRange(booking.check_in, booking.check_out, locale)}</dd></div>
+          <div className="is-sub"><dt>{t('stays.receipt.stay')}</dt><dd>{nightsLabel(t, search.nights)} · {guestsLabel(t, booking.guests)}</dd></div>
+          <div><dt>{t('stays.receipt.total')}</dt><dd>{formatFcfa(booking.total_amount)}</dd></div>
+          {Number(booking.deposit_amount) > 0 && (
+            <div className="is-sub"><dt>{t('stays.deposit.afterAccept')}</dt><dd>{formatFcfa(booking.deposit_amount)}</dd></div>
           )}
-          {note.trim() && (
-            <div className="is-sub stay-confirm-note"><dt>{t('stays.noteLabel')}</dt><dd>{note.trim()}</dd></div>
+          {booking.guest_note && (
+            <div className="is-sub stay-confirm-note"><dt>{t('stays.noteLabel')}</dt><dd>{booking.guest_note}</dd></div>
           )}
         </dl>
 
+        {error && <p className="stay-error" role="alert">{error}</p>}
+        {info && <p className="stay-rooms-book-note"><Info size={14} aria-hidden="true" /><span>{info}</span></p>}
+
+        {held && (
+          <div className="stay-confirm-actions">
+            <button type="button" className="stay-rooms-select" onClick={() => setPaying(true)}>
+              <Smartphone size={16} aria-hidden="true" /> {t('stays.instant.payDeposit', { amount: formatFcfa(booking.deposit_amount) })}
+            </button>
+            {sentPayment && (
+              <button type="button" className="stay-confirm-directions" onClick={checkPayment} disabled={checking} aria-busy={checking}>
+                {checking ? <Loader2 size={16} className="stay-rooms-spin" aria-hidden="true" /> : <RefreshCw size={16} aria-hidden="true" />}
+                {t('stays.deposit.check')}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Free on the calendar is not a promise the host has seen it: ask them to confirm. */}
+        {!request && onMessageHost && (
+          <div className="stay-confirm-remind">
+            <MessageCircle size={18} aria-hidden="true" />
+            <div>
+              <strong>{t('stays.instant.confirmTitle')}</strong>
+              <span>{t('stays.instant.confirmBody')}</span>
+            </div>
+            <button type="button" onClick={onMessageHost}>{t('stays.messageHost')}</button>
+          </div>
+        )}
+
         <div className="stay-confirm-actions">
-          <button type="button" className="stay-rooms-select" onClick={() => navigate(`${base}/stays/my?booking=${bookingId}`)}>
+          <button
+            type="button"
+            className={held ? 'stay-confirm-directions' : 'stay-rooms-select'}
+            onClick={() => navigate(`${base}/stays/my?booking=${booking.id}`)}
+          >
             {t('stays.receipt.viewBooking')}
           </button>
           {directions && (
@@ -329,6 +410,19 @@ function RoomBooking({
             </a>
           )}
         </div>
+
+        {paying && held && (
+          <DepositDialog
+            booking={booking}
+            defaultPhone={(user as { phone?: string | null } | null)?.phone}
+            onClose={() => setPaying(false)}
+            onSent={(message) => {
+              setPaying(false)
+              setSentPayment(true)
+              setInfo(message || t('stays.instant.paymentPending'))
+            }}
+          />
+        )}
       </div>
     )
   }
@@ -374,7 +468,7 @@ function RoomBooking({
 
       <button type="button" className="stay-rooms-select stay-rooms-book-go" onClick={submit} disabled={submitting} aria-busy={submitting}>
         {submitting && <Loader2 size={16} className="stay-rooms-spin" aria-hidden="true" />}
-        {user ? t('stays.requestToBook') : t('stays.signInToBook')}
+        {!user ? t('stays.signInToBook') : quote.deposit > 0 ? t('stays.instant.bookAndPay') : t('stays.instant.bookNow')}
       </button>
 
       <p className="stay-rooms-book-note">
@@ -384,6 +478,10 @@ function RoomBooking({
             ? `${t('stays.deposit.bookNote')} ${terms.free_cancel_days > 0 ? t('stays.deposit.policy', { days: terms.free_cancel_days }) : t('stays.deposit.policyNone')}`
             : t('stays.payAtProperty')}
         </span>
+      </p>
+      <p className="stay-rooms-book-note">
+        <MessageCircle size={14} aria-hidden="true" />
+        <span>{t('stays.instant.beforeBook')}</span>
       </p>
     </div>
   )

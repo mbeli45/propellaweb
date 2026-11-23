@@ -353,3 +353,14 @@
 .host-row-icon--danger { color: var(--rsv-error); }
 .host-row-icon--danger:hover { background: var(--rsv-error-tint); }
 .host-rows .host-add { min-height: 120px; }
+
+/* Instant booking: room held while the deposit is paid, and the reminder to message the host. */
+.stay-confirm.is-held .stay-confirm-head { color: var(--rsv-warning-ink, #b45309); }
+.stay-confirm-actions .stay-rooms-select, .stay-confirm-actions button.stay-confirm-directions { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: inherit; cursor: pointer; }
+.stay-confirm-remind { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px; border-radius: 12px; background: var(--rsv-primary-tint, #e6f0ff); color: var(--rsv-primary-ink, #003b8a); }
+.stay-confirm-remind > svg { flex-shrink: 0; }
+.stay-confirm-remind > div { flex: 1 1 180px; display: grid; gap: 2px; min-width: 0; }
+.stay-confirm-remind strong { font-size: 14px; color: var(--rsv-ink, #111827); }
+.stay-confirm-remind span { font-size: 13px; line-height: 1.45; color: var(--rsv-ink-2, #374151); }
+.stay-confirm-remind button { min-height: 40px; padding: 0 14px; border-radius: 10px; border: 0; background: var(--rsv-primary, #004aad); color: #fff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.stay-confirm-remind button:focus-visible { outline: 3px solid var(--color-primary-400, #3387ff); outline-offset: 2px; }
