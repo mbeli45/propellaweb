@@ -119,7 +119,7 @@ export const DetailHero = ({
 // Small key/value cell used inside the hero meta strip.
 export const MetaItem = ({ label, value }: { label: ReactNode; value: ReactNode }) => (
   <Box>
-    <Typography variant="caption" sx={{ display: 'block', color: Colors.neutral[500], fontWeight: 600, fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+    <Typography variant="caption" sx={{ display: 'block', color: Colors.neutral[500], fontWeight: 500, fontSize: '0.75rem' }}>
       {label}
     </Typography>
     <Typography variant="body2" sx={{ color: Colors.neutral[900], fontWeight: 500, fontSize: '0.8125rem' }}>
@@ -140,15 +140,18 @@ interface DetailSectionProps {
   children: ReactNode;
 }
 
-export const DetailSection = ({ title, description, aside, noDivider, children }: DetailSectionProps) => (
-  <Box sx={{ py: 4, '&:first-of-type': { pt: 0 } }}>
-    <Stack direction="row" alignItems="flex-start" justifyContent="space-between" sx={{ mb: 2 }} spacing={2}>
-      <Box>
-        <Typography variant="h6" fontWeight={700} sx={{ fontSize: '1rem', color: Colors.neutral[900] }}>
+export const DetailSection = ({ title, description, aside, noDivider: _noDivider, children }: DetailSectionProps) => (
+  <Box
+    component="section"
+    sx={{ mt: 2, p: { xs: 2.25, md: 3 }, bgcolor: Colors.white, border: `1px solid ${Colors.neutral[200]}`, borderRadius: '16px' }}
+  >
+    <Stack direction="row" alignItems="flex-start" justifyContent="space-between" sx={{ mb: 2.5 }} spacing={2}>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography component="h2" fontWeight={650} sx={{ fontSize: '1rem', color: Colors.neutral[900], lineHeight: 1.4 }}>
           {title}
         </Typography>
         {description && (
-          <Typography variant="body2" sx={{ color: Colors.neutral[600], mt: 0.25 }}>
+          <Typography variant="body2" sx={{ color: Colors.neutral[600], mt: 0.5, maxWidth: '72ch' }}>
             {description}
           </Typography>
         )}
@@ -156,7 +159,6 @@ export const DetailSection = ({ title, description, aside, noDivider, children }
       {aside && <Box sx={{ flexShrink: 0 }}>{aside}</Box>}
     </Stack>
     {children}
-    {!noDivider && <Divider sx={{ mt: 4 }} />}
   </Box>
 );
 
@@ -214,10 +216,8 @@ export const DetailField = ({ label, value, inline }: DetailFieldProps) => {
         sx={{
           display: 'block',
           color: Colors.neutral[500],
-          fontWeight: 600,
-          fontSize: '0.6875rem',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
+          fontWeight: 500,
+          fontSize: '0.75rem',
           mb: 0.5,
         }}
       >
@@ -263,10 +263,8 @@ export const DetailEntityCard = ({ icon, tone = 'primary', label, value, seconda
           variant="caption"
           sx={{
             color: Colors.neutral[500],
-            fontWeight: 600,
-            fontSize: '0.6875rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
+            fontWeight: 500,
+            fontSize: '0.75rem',
             display: 'block',
             mb: 0.25,
           }}

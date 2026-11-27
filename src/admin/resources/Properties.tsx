@@ -243,7 +243,7 @@ const PropertyDetail = () => {
       <TextInput source="title" fullWidth />
       <TextInput source="description" multiline rows={4} fullWidth />
       <ReferenceInput source="owner_id" reference="profiles" label="Owner">
-        <SelectInput optionText="full_name" />
+        <SelectInput optionText="full_name" label="Owner" />
       </ReferenceInput>
       <NumberInput source="price" />
       <TextInput source="location" fullWidth />

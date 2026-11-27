@@ -1,6 +1,6 @@
 export type QueueKey = 'reservations' | 'withdrawals' | 'reports' | 'verifications' | 'commissionDisputes';
 export interface AdminTab { path: string; label: string; queue?: QueueKey }
-export interface AdminLink { path: string; label: string; icon: string; queue?: QueueKey; tabs?: AdminTab[]; description?: string }
+export interface AdminLink { path: string; label: string; icon: string; queue?: QueueKey; tabs?: AdminTab[]; description?: string; /** The page renders its own title. */ ownHeader?: boolean }
 
 export const navigation: { label: string; links: AdminLink[] }[] = [
   { label: 'Workspace', links: [
@@ -8,10 +8,10 @@ export const navigation: { label: string; links: AdminLink[] }[] = [
     { path: '/deals', label: 'Requests & deals', icon: 'lucide:handshake' },
   ] },
   { label: 'Marketplace', links: [
-    { path: '/properties', label: 'Properties', icon: 'lucide:building-2' },
-    { path: '/reservations', label: 'Reservations', icon: 'lucide:calendar-check', queue: 'reservations' },
-    { path: '/stays', label: 'Stays', icon: 'lucide:bed-double', description: 'Commission and deposit terms for stays, and deposits to refund.' },
-    { path: '/profiles', label: 'People', icon: 'lucide:users', description: 'Manage accounts and review agent verification applications.', tabs: [
+    { path: '/properties', label: 'Properties', icon: 'lucide:building-2', description: 'Every listing on Propella, with its owner, price and whether it waits on an ID check.' },
+    { path: '/reservations', label: 'Reservations', icon: 'lucide:calendar-check', queue: 'reservations', description: 'Site-visit bookings, their payments and refund requests.' },
+    { path: '/stays', label: 'Stays', icon: 'lucide:bed-double', ownHeader: true, description: 'Commission and deposit terms for stays, and deposits to refund.' },
+    { path: '/profiles', label: 'People', icon: 'lucide:users', description: 'Accounts, ID checks for agents, landlords and hosts, and professional verification.', tabs: [
       { path: '/profiles', label: 'Accounts' },
       { path: '/agent_identity_verifications', label: 'ID reviews', queue: 'verifications' },
       { path: '/agent_verifications', label: 'Professional verification' },
@@ -34,7 +34,7 @@ export const navigation: { label: string; links: AdminLink[] }[] = [
       { path: '/signup-stats', label: 'Signup insights' },
       { path: '/property_views', label: 'Property views' },
     ] },
-    { path: '/notifications', label: 'Notifications', icon: 'lucide:bell' },
+    { path: '/notifications', label: 'Notifications', icon: 'lucide:bell', description: 'Messages Propella has sent to people in the app.' },
   ] },
 ];
 

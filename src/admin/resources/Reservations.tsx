@@ -1,5 +1,5 @@
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button as MuiButton } from '../components/ShadcnDialog';
-import { TextInput, NumberInput, SelectInput, BooleanInput, AutocompleteInput } from '../components/ShadcnInputs';
+import { TextInput, NumberInput, SelectInput, AutocompleteInput } from '../components/ShadcnInputs';
 import { AdminTable, AdminPagination } from '../components/AdminTable';
 import { useEffect, useState } from 'react';
 import {
@@ -240,7 +240,12 @@ const ReservationFilter = (props: any) => (
         sx={{ minWidth: 220 }}
       />
     </ReferenceInput>
-    <BooleanInput source="refund_requested" label="Refund requested" alwaysOn />
+    <SelectInput
+      source="refund_requested"
+      label="Refund requested"
+      choices={[{ id: true, name: 'Yes' }, { id: false, name: 'No' }]}
+      alwaysOn
+    />
     <SelectInput
       source="refund_status"
       choices={[

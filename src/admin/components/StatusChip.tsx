@@ -41,6 +41,13 @@ const STATUS_TONE: Record<string, keyof typeof TONE_MAP> = {
   reserved: 'warning',
   open: 'warning',
   ongoing: 'warning',
+  documents_review: 'warning',
+  under_review: 'warning',
+  changes_requested: 'warning',
+  refund_due: 'warning',
+  in_escrow: 'warning',
+  held: 'warning',
+  due: 'warning',
 
   // error-like
   failed: 'error',
@@ -58,10 +65,22 @@ const STATUS_TONE: Record<string, keyof typeof TONE_MAP> = {
   unknown: 'neutral',
 };
 
-const prettify = (value: string) =>
-  value
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+// Database values that read badly when simply de-underscored.
+const LABELS: Record<string, string> = {
+  documents_review: 'Awaiting review',
+  under_review: 'Under review',
+  changes_requested: 'Changes requested',
+  refund_due: 'Refund due',
+  in_escrow: 'In escrow',
+};
+
+// Sentence case: "payment_pending" → "Payment pending".
+const prettify = (value: string) => {
+  const key = value.toLowerCase().trim();
+  if (LABELS[key]) return LABELS[key];
+  const words = value.replace(/_/g, ' ').trim();
+  return words.charAt(0).toUpperCase() + words.slice(1).toLowerCase();
+};
 
 interface StatusChipProps extends Omit<ChipProps, 'source'> {
   /** Field name on the record to read the status from. Defaults to `status`. */
@@ -92,8 +111,12 @@ const StatusChip = ({ source = 'status', value, fallbackToNeutral = true, ...res
         bgcolor: colors.bg,
         color: colors.fg,
         fontWeight: 600,
-        height: 22,
+        height: 24,
         fontSize: '0.75rem',
+        borderRadius: '6px',
+        '& .MuiChip-label': { px: 1 },
+        // A dot keeps the tone readable for people who can't tell the colours apart.
+        '&::before': { content: '""', width: 6, height: 6, borderRadius: '50%', bgcolor: colors.fg, ml: 1, mr: -0.25, flexShrink: 0 },
         ...rest.sx,
       }}
     />

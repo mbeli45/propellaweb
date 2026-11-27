@@ -180,6 +180,10 @@ export const Layout = (props: LayoutProps) => {
       <div className="admin-topbar-actions"><button className="admin-app-link" onClick={()=>navigate('/user')}><Icon icon="lucide:arrow-up-right" width={17}/><span>Open Propella</span></button><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost">{identity?.fullName || 'My account'}<span>⌄</span></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Admin workspace</DropdownMenuLabel><DropdownMenuSeparator/><DropdownMenuItem onSelect={()=>void logout()}>Sign out</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div>
     </header>
     <main id="admin-main" tabIndex={-1} className="admin-main" style={{marginLeft:isMobile?0:width}}><div className="admin-page-content">
+      {/* Pages without tabs still get a title, unless they draw their own. */}
+      {current && !current.tabs && current.description && !current.ownHeader && <section className="admin-section-header admin-section-header-plain">
+        <h1>{current.label}</h1><p>{current.description}</p>
+      </section>}
       {current?.tabs && <section className="admin-section-header" aria-label={`${current.label} navigation`}>
         <h1>{current.label}</h1><p>{current.description}</p>
         <nav className="admin-section-tabs" aria-label={`${current.label} pages`}>

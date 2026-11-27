@@ -53,3 +53,69 @@ button.shadcn-ui:disabled { cursor:not-allowed; }
 .admin-table th button { height:auto; min-height:20px; }
 .admin-table-tools { padding:10px 16px; }
 @media(max-width:600px) { .propella-admin .admin-resource-list .shadcn-field { width:100%; } }
+
+/* ===== Admin refresh ============================================================
+   One card per list (filters, table, pagination together), a quieter sidebar,
+   calmer table rows, and two-column edit forms. Loaded last, so it wins. */
+
+/* Sidebar: the active page is marked by a bar and a lighter row, not a bright pill. */
+.admin-nav-group h2 { text-transform:none; letter-spacing:0; font-size:12px; font-weight:600; color:#8ea3c2; margin:0 12px 6px; }
+.admin-nav-group { margin-bottom:18px; }
+.admin-nav-link { min-height:40px; padding:8px 12px; margin:2px 0; color:#c9d6e8; }
+.admin-nav-link:hover { background:#ffffff10; color:#fff; }
+.admin-nav-link.is-active { background:#ffffff17; color:#fff; font-weight:600; box-shadow:none; }
+.admin-nav-link.is-active::before { content:''; position:absolute; left:-14px; top:9px; bottom:9px; width:3px; border-radius:0 3px 3px 0; background:#5aa2ff; }
+.admin-nav-link.is-active svg { color:#8cc0ff; }
+.admin-queue-count { min-width:20px; text-align:center; border-radius:999px; background:#f5b54a; color:#3b2500; font-weight:700; font-size:11px; padding:1px 6px; }
+.admin-queue-dot { background:#f5b54a; }
+.admin-nav-search { background:#ffffff0b; border-color:#ffffff1c; }
+.is-compact .admin-nav-link.is-active::before { left:-14px; }
+
+/* List pages: filters, table and pagination share one card. */
+.propella-admin .admin-resource-list .RaList-main { background:#fff; border:1px solid #e3e9f1; border-radius:14px; overflow:hidden; }
+.propella-admin .admin-resource-list .RaList-actions { margin:0 !important; padding:14px 16px !important; border:0 !important; border-bottom:1px solid #e9eef5 !important; border-radius:0 !important; background:#fbfcfe; align-items:flex-end; gap:12px; }
+.propella-admin .admin-resource-list .RaList-content { border:0; border-radius:0; box-shadow:none; }
+.propella-admin .admin-resource-list .RaList-actions>form { gap:12px; }
+.propella-admin .admin-resource-list .shadcn-field { width:200px; gap:5px; }
+.propella-admin .admin-resource-list .shadcn-field label { font-size:12px; font-weight:500; color:#5f6f86; }
+.propella-admin .admin-resource-list .shadcn-field>button,.propella-admin .admin-resource-list .shadcn-field>input { height:36px; }
+/* Toolbar actions (add filter, export, create) read as buttons, not loose links. */
+.propella-admin .admin-resource-list .RaList-actions .MuiButton-root { height:36px; padding:0 12px; border:1px solid #dbe3ee; border-radius:8px; background:#fff; color:#24405f; font-size:13px; font-weight:600; text-transform:none; box-shadow:none; white-space:nowrap; }
+.propella-admin .admin-resource-list .RaList-actions .MuiButton-root:hover { background:#f1f6fd; border-color:#c4d4ea; }
+.propella-admin .admin-resource-list .RaList-actions a.MuiButton-root[href$="/create"] { background:#0069ff; border-color:#0069ff; color:#fff; }
+.propella-admin .admin-resource-list .RaList-actions a.MuiButton-root[href$="/create"]:hover { background:#0057d6; }
+.propella-admin .admin-resource-list .RaList-actions .MuiButton-startIcon { margin-right:6px; }
+
+/* Table */
+.admin-table-tools { padding:8px 12px 8px 16px; background:#fff; border-bottom:1px solid #e9eef5; }
+.admin-table-tools>span { font-size:13px; font-weight:600; color:#13233d; }
+.admin-table .admin-table-tools button { display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 10px; border:0; background:transparent; color:#4a5f7c; font-weight:500; }
+.admin-table .admin-table-tools button:hover { background:#f1f5fb; color:#13233d; }
+.admin-table th { background:#f8fafc; color:#5f6f86; font-size:12px; font-weight:600; padding:10px 16px; border-bottom:1px solid #e6ecf3; }
+.admin-table th:not([aria-sort]) button span { color:#c3ccd9; }
+.admin-table th[aria-sort] button span { color:#0069ff; }
+.admin-table td { height:64px; padding:10px 16px; color:#1f324d; border-bottom:1px solid #eef2f7; }
+.admin-table.is-dense td { height:46px; padding-block:6px; }
+.admin-table tbody tr { transition:background .12s; }
+.admin-table tbody tr:hover { background:#f6f9ff; }
+.admin-table tbody tr:last-child td { border-bottom:0; }
+.admin-table .admin-row-open { display:grid; place-items:center; width:32px; height:32px; padding:0; border:0; border-radius:8px; background:transparent; color:#a3b0c2; }
+.admin-table tbody tr:hover .admin-row-open,.admin-table .admin-row-open:focus-visible { background:#e8f1ff; color:#0069ff; }
+.admin-table-empty { padding:56px 20px; color:#5f6f86; font-size:13px; }
+.admin-table-pagination { padding:10px 16px; border-top:1px solid #e9eef5; }
+.admin-table-pagination button { height:32px; }
+@media(prefers-reduced-motion:reduce) { .admin-table tbody tr { transition:none; } }
+
+/* Edit forms: two columns, long fields across, yes/no fields as real checkboxes. */
+.propella-admin :is(.RaEdit-main,.RaCreate-main) form>.MuiCardContent-root>.MuiStack-root { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 24px; align-items:start; }
+.propella-admin :is(.RaEdit-main,.RaCreate-main) form>.MuiCardContent-root>.MuiStack-root>* { min-width:0; margin:0 !important; }
+.propella-admin :is(.RaEdit-main,.RaCreate-main) form .shadcn-field:not(.shadcn-boolean) { width:100%; margin:0; }
+.propella-admin :is(.RaEdit-main,.RaCreate-main) form>.MuiCardContent-root>.MuiStack-root>.shadcn-field-wide,.propella-admin :is(.RaEdit-main,.RaCreate-main) form>.MuiCardContent-root>.MuiStack-root>.shadcn-field:has(textarea),
+.propella-admin :is(.RaEdit-main,.RaCreate-main) form>.MuiCardContent-root>.MuiStack-root>.MuiFormControl-fullWidth,.propella-admin :is(.RaEdit-main,.RaCreate-main) form>.MuiCardContent-root>.MuiStack-root>:not(.shadcn-field):not(.MuiFormControl-root) { grid-column:1/-1; }
+.propella-admin .shadcn-field.shadcn-boolean { flex-direction:row; align-items:center; gap:10px; width:auto; min-height:38px; margin:0; }
+.propella-admin .shadcn-field.shadcn-boolean>button { width:18px; height:18px; min-width:18px; padding:0; border:1.5px solid #9fb0c6; border-radius:5px; flex:none; display:grid; place-items:center; }
+.propella-admin .shadcn-field.shadcn-boolean>button[data-state=checked] { background:#0069ff; border-color:#0069ff; color:#fff; }
+.propella-admin .shadcn-field.shadcn-boolean label { font-size:13px; font-weight:500; color:#1f324d; cursor:pointer; }
+.propella-admin :is(.RaEdit-main,.RaCreate-main) .RaToolbar-root { padding:16px 0 0; margin-top:8px; min-height:0; background:transparent; border-top:1px solid #e9eef5; }
+.propella-admin :is(.RaEdit-main,.RaCreate-main) form>.MuiCardContent-root { padding:0; }
+@media(max-width:768px) { .propella-admin :is(.RaEdit-main,.RaCreate-main) form>.MuiCardContent-root>.MuiStack-root { grid-template-columns:minmax(0,1fr); } }

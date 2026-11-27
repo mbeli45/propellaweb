@@ -155,17 +155,42 @@ const ProfileCard = () => {
   );
 };
 
+// One cell for who the person is, so the table fits without scrolling sideways.
+const PersonCell = () => {
+  const r = useRecordContext<any>();
+  if (!r) return null;
+  return (
+    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+      <UserAvatar size={36} />
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="body2" sx={{ fontWeight: 600, color: '#13233d' }} noWrap>{r.full_name || 'No name yet'}</Typography>
+        <Typography variant="caption" sx={{ color: '#5f6f86', display: 'block' }} noWrap>{r.email || r.phone || '—'}</Typography>
+      </Box>
+    </Stack>
+  );
+};
+
+// Verified, agent check and admin access as small chips instead of three tick columns.
+const AccessCell = () => {
+  const r = useRecordContext<any>();
+  if (!r) return null;
+  const chips = [r.verified && 'verified', r.is_verified_agent && 'agent', r.is_admin && 'admin'].filter(Boolean) as string[];
+  if (!chips.length) return <Typography variant="body2" sx={{ color: '#8a99ad' }}>Not verified</Typography>;
+  const label: Record<string, string> = { verified: 'Verified', agent: 'Verified agent', admin: 'Admin' };
+  return (
+    <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+      {chips.map((c) => <StatusChip key={c} value={c === 'admin' ? 'info' : 'verified'} label={label[c]} sx={c === 'admin' ? { bgcolor: '#e8f1ff', color: '#0050c8' } : undefined} />)}
+    </Stack>
+  );
+};
+
 const ProfileDatagrid = () => (
   <AdminTable rowClick="edit" bulkActionButtons={false}>
-    <FunctionField label="" render={() => <UserAvatar />} />
-    <TextField source="full_name" />
-    <EmailField source="email" />
+    <FunctionField source="full_name" label="Person" render={() => <PersonCell />} />
     <TextField source="phone" />
-    <FunctionField label="Role" render={() => <RoleChip />} />
-    <BooleanField source="verified" />
-    <BooleanField source="is_verified_agent" label="Verified agent" />
-    <BooleanField source="is_admin" label="Admin" />
-    <DateField source="created_at" />
+    <FunctionField source="role" label="Role" render={() => <RoleChip />} />
+    <FunctionField label="Checks" render={() => <AccessCell />} />
+    <DateField source="created_at" label="Joined" />
     <DeleteUserButton />
   </AdminTable>
 );
