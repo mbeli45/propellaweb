@@ -1865,6 +1865,20 @@
     "continue": "Continuer sans"
   },
   "identity": {
+    "errors": {
+      "generic": "Nous n'avons pas pu envoyer votre pièce d'identité. Réessayez dans un instant.",
+      "network": "Pas de connexion. Vérifiez votre accès à Internet et réessayez.",
+      "signIn": "Votre session a expiré. Reconnectez-vous, puis réessayez.",
+      "role": "La vérification d'identité concerne les comptes agent, propriétaire et hôte.",
+      "fileType": "Choisissez un fichier PDF, JPG ou PNG de 10 Mo maximum.",
+      "photoType": "La photo de vous tenant votre pièce doit être une image JPG ou PNG.",
+      "uploadFailed": "Le fichier n'a pas été envoyé. Choisissez-le à nouveau.",
+      "bothSides": "Ajoutez le recto et le verso de votre pièce avant d'envoyer.",
+      "selfie": "Ajoutez une photo de vous tenant votre pièce avant d'envoyer.",
+      "rejectedCopy": "Ce document a été refusé. Envoyez une nouvelle photo ou un nouveau scan.",
+      "replaceRejected": "Remplacez le document refusé avant de renvoyer votre demande.",
+      "locked": "Votre pièce est en cours de vérification et ne peut pas être modifiée. Contactez le support en cas d'erreur."
+    },
     "dashboard": "Aller au tableau de bord",
     "businessTitle": "Vérification professionnelle (facultative)",
     "title": "Vérifiez votre identité",

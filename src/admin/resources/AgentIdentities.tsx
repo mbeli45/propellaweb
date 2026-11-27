@@ -20,11 +20,15 @@ const statusChoices = [
   { id: 'rejected', name: 'Rejected' },
 ];
 const AgentName = () => <ReferenceField source="agent_id" reference="profiles" link={false}><TextField source="full_name" /></ReferenceField>;
+/** ID verification covers agents, landlords and hosts, so the screen names the account type. */
+const roleLabel = (role?: string) => ({ agent: 'Agent', landlord: 'Landlord', host: 'Host' } as Record<string, string>)[role || ''] || role || '—';
+const AccountType = () => <ReferenceField source="agent_id" reference="profiles" link={false}><FunctionField render={(p: any) => roleLabel(p?.role)} /></ReferenceField>;
 
 function IdentityCard() {
   const r = useRecord<any>();
   return <Stack spacing={1.5}>
     <CardHeader title={<AgentName />} right={<StatusChip value={r.verification_status} />} />
+    <CardRow label="Account" value={<AccountType />} />
     <CardRow label="Submitted" value={r.submitted_at ? new Date(r.submitted_at).toLocaleString() : 'Not submitted'} />
     <CardRow label="ID documents" value={`${r.id_document_front_url ? 'Front uploaded' : 'Front missing'} · ${r.id_document_back_url ? 'Back uploaded' : 'Back missing'}`} />
   </Stack>;
@@ -36,11 +40,12 @@ export function AgentIdentityList() {
     filters={[
       <SelectInput key="status" source="verification_status" label="ID decision" choices={statusChoices} alwaysOn />,
       <ReferenceInput key="agent" source="agent_id" reference="profiles" alwaysOn>
-        <AutocompleteInput label="Agent" optionText={(r: any) => r?.full_name || r?.email || '(no name)'} filterToQuery={(q: string) => ({ 'full_name@ilike': q })} />
+        <AutocompleteInput label="Account holder" optionText={(r: any) => r?.full_name || r?.email || '(no name)'} filterToQuery={(q: string) => ({ 'full_name@ilike': q })} />
       </ReferenceInput>,
     ]}>
     <ResponsiveList card={<IdentityCard />} desktop={<AdminTable rowClick="edit" bulkActionButtons={false}>
-      <ReferenceField source="agent_id" reference="profiles" label="Agent" link={false}><TextField source="full_name" /></ReferenceField>
+      <ReferenceField source="agent_id" reference="profiles" label="Name" link={false}><TextField source="full_name" /></ReferenceField>
+      <FunctionField label="Account" render={() => <AccountType />} />
       <FunctionField label="ID decision" render={(r: any) => <StatusChip value={r.verification_status} />} />
       <DateField source="submitted_at" label="Submitted" showTime />
       <DateField source="verified_at" label="Reviewed" showTime />
@@ -96,20 +101,21 @@ function IdentityDetail() {
         p_expected_status: r.verification_status,
       });
       if (error) throw error;
-      notify(decision === 'approved' ? 'ID approved. Available listings are now visible.' : 'ID rejected. Listings remain hidden and the agent has been notified.', { type: 'success' });
+      notify(decision === 'approved' ? 'ID approved. Available listings are now visible.' : 'ID rejected. Listings remain hidden and the account holder has been notified.', { type: 'success' });
       refresh();
     } catch (e) { notify((e as Error).message, { type: 'error' }); refresh(); }
     finally { setBusy(false); }
   };
   return <DetailPage>
-    <DetailHero eyebrow="Agent identity" title={<AgentName />} badges={<StatusChip value={r.verification_status} />}
-      meta={<><MetaItem label="Submitted" value={r.submitted_at ? new Date(r.submitted_at).toLocaleString() : 'Not submitted'} />
+    <DetailHero eyebrow="Identity verification" title={<AgentName />} badges={<StatusChip value={r.verification_status} />}
+      meta={<><MetaItem label="Account" value={<AccountType />} />
+        <MetaItem label="Submitted" value={r.submitted_at ? new Date(r.submitted_at).toLocaleString() : 'Not submitted'} />
         <MetaItem label="Reviewed" value={r.verified_at ? new Date(r.verified_at).toLocaleString() : 'Not reviewed'} /></>} />
-    <DetailSection title="ID documents" description="Check both sides for legibility and compare the face and ID with the photo of the agent holding their ID. Business documents and payment are not required for this decision.">
+    <DetailSection title="ID documents" description="Check both sides for legibility and compare the face and ID with the photo of the person holding their ID. Business documents and payment are not required for this decision.">
       <DetailGrid cols={2}><IdentityDocument label="ID front" path={r.id_document_front_url} /><IdentityDocument label="ID back" path={r.id_document_back_url} /><IdentityDocument label="Photo holding ID" path={r.selfie_with_id_url} /></DetailGrid>
     </DetailSection>
     {r.rejection_reason && <DetailSection title="Reason for rejection"><Typography>{r.rejection_reason}</Typography></DetailSection>}
-    <DetailSection title="Identity decision" description="Approval publishes available listings automatically. Rejection hides this agent's listings unless their account is exempt as an existing agent.">
+    <DetailSection title="Identity decision" description="Approval publishes available listings automatically. Rejection hides this account's listings and stays unless the account is exempt as an existing lister.">
       {canReview ? <Stack spacing={2}>
         <label><input type="checkbox" checked={checked} onChange={e => setChecked(e.target.checked)} /> I have reviewed the ID documents and the holding-ID photo (if required).</label>
         <label htmlFor="identity-review-note">Review note (required for rejection)</label>
@@ -118,7 +124,7 @@ function IdentityDetail() {
           {r.verification_status === 'documents_review' && <Button disabled={busy || !checked || !r.id_document_front_url || !r.id_document_back_url || (r.selfie_required && !r.selfie_with_id_url)} onClick={() => void review('approved')}>Approve ID and publish listings</Button>}
           <Button variant="destructive" disabled={busy || !checked || note.trim().length < 3} onClick={() => void review('rejected')}>{r.verification_status === 'approved' ? 'Withdraw approval' : 'Reject ID'}</Button>
         </Box>
-      </Stack> : <Typography>{r.verification_status === 'rejected' ? 'Waiting for corrected documents and a new submission.' : 'The agent has not submitted all required identity photos yet.'}</Typography>}
+      </Stack> : <Typography>{r.verification_status === 'rejected' ? 'Waiting for corrected documents and a new submission.' : 'The account holder has not submitted all required identity photos yet.'}</Typography>}
     </DetailSection>
     <DetailSection title="Review history">
       <ReferenceManyField reference="agent_identity_review_events" target="identity_id" sort={{ field: 'created_at', order: 'DESC' }}>

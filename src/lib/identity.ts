@@ -51,11 +51,33 @@ export async function uploadIdentityDocument(userId: string, side: 'front' | 'ba
   return path
 }
 
-/** Where a newly signed-up agent or landlord lands: the ID step if it is still to do, else the dashboard. */
+/** Where a newly signed-up agent, landlord or host lands: the ID step if it is still to do, else the dashboard. */
 export async function agentLandingRoute(): Promise<string> {
   try {
     return identityStage(await identityCommand('status')) === 'needed' ? '/agent/identity?onboarding=1' : '/agent'
   } catch {
     return '/agent'
   }
+}
+
+/** Known server and storage messages, matched by their wording, and the message the user sees instead. */
+const IDENTITY_ERRORS: [RegExp, string][] = [
+  [/failed to fetch|network ?(request failed|error)|fetch failed|load failed|timed? ?out|offline/i, 'network'],
+  [/sign in to continue|jwt|not authenticated|invalid claim|refresh token/i, 'signIn'],
+  [/account required/i, 'role'],
+  [/choose a pdf/i, 'fileType'],
+  [/choose a jpg|jpg or png photo/i, 'photoType'],
+  [/new copy of the rejected/i, 'rejectedCopy'],
+  [/replace the rejected/i, 'replaceRejected'],
+  [/locked during review/i, 'locked'],
+  [/both sides/i, 'bothSides'],
+  [/holding your id/i, 'selfie'],
+  [/upload the document again|row-level security|payload too large|maximum allowed size|bucket/i, 'uploadFailed'],
+]
+
+/** The translation key for an ID upload or submission failure, never the raw database message. */
+export function identityErrorKey(e: unknown): string {
+  const message = String((e as { message?: unknown } | null)?.message ?? e ?? '')
+  const hit = IDENTITY_ERRORS.find(([pattern]) => pattern.test(message))
+  return `identity.errors.${hit ? hit[1] : 'generic'}`
 }

@@ -1872,6 +1872,20 @@
     "continue": "Continue without it"
   },
   "identity": {
+    "errors": {
+      "generic": "We couldn't send your ID right now. Please try again in a moment.",
+      "network": "No connection. Check your internet and try again.",
+      "signIn": "Your session has ended. Sign in again, then retry.",
+      "role": "ID verification is for agent, landlord and host accounts.",
+      "fileType": "Choose a PDF, JPG or PNG file no larger than 10 MB.",
+      "photoType": "The photo of you holding your ID must be a JPG or PNG image.",
+      "uploadFailed": "That file didn't upload. Please choose it again.",
+      "bothSides": "Add the front and back of your ID before submitting.",
+      "selfie": "Add a photo of yourself holding your ID before submitting.",
+      "rejectedCopy": "This document was rejected. Upload a new photo or scan of it.",
+      "replaceRejected": "Replace the rejected document before submitting again.",
+      "locked": "Your ID is being reviewed, so it can't be changed now. Contact support if something is wrong."
+    },
     "dashboard": "Go to dashboard",
     "businessTitle": "Business verification (optional)",
     "title": "Verify your identity",

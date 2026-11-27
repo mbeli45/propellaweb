@@ -205,6 +205,11 @@ export default function HostStays({ asHome = false }: { asHome?: boolean }) {
           <Banner icon={ShieldCheck} title={t('identity.progressReview')} body={t('identity.underReview')}
             primary={{ label: t('identity.statusAction'), onClick: () => navigate('/agent/identity') }} />
         )}
+        {asHome && !identity.loading && identity.stage === 'unavailable' && (
+          <Banner icon={ShieldCheck} title={t('identity.unavailableTitle')} body={t('identity.unavailableBody')}
+            primary={{ label: t('identity.retry'), onClick: () => void identity.refresh() }}
+            secondary={{ label: t('identity.verifyCta'), onClick: () => navigate('/agent/identity') }} />
+        )}
         {error && <p className="rsv-error" role="alert">{error}</p>}
 
         {properties === null ? (

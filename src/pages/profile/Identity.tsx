@@ -7,7 +7,7 @@ import { IdentityStep } from '@/components/identity/IdentityStep'
 import { PageHeader, ReservationsPage } from '@/components/reservations/ReservationUI'
 
 /**
- * ID step for new agents and landlords. Opened right after sign-up (?onboarding=1)
+ * ID step for new agents, landlords and hosts. Opened right after sign-up (?onboarding=1)
  * and from the dashboard banner.
  */
 export default function ProfileIdentity() {

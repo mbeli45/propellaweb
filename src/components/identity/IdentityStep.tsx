@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { ShieldCheck } from 'lucide-react'
 import { useLanguage } from '@/contexts/I18nContext'
 import { useAuth } from '@/contexts/AuthContext'
-import { identityCommand, identityStage, uploadIdentityDocument, type IdentityState } from '@/lib/identity'
+import { identityCommand, identityErrorKey, identityStage, uploadIdentityDocument, type IdentityState } from '@/lib/identity'
 import { DocumentUploadRow } from '@/components/deals/AgencyVerification'
 import { CardButton, EmptyState, Hint } from '@/components/reservations/ReservationUI'
 import './IdentityStep.css'
@@ -53,9 +53,13 @@ export function IdentityStep({
 
   const userId = user?.id || ''
   const store = (side: 'front' | 'back' | 'selfie') => async (file: File) => {
-    const path = await uploadIdentityDocument(userId, side, file, file.type, file.size)
-    onChange(await identityCommand('save', side, path))
-    return path
+    try {
+      const path = await uploadIdentityDocument(userId, side, file, file.type, file.size)
+      onChange(await identityCommand('save', side, path))
+      return path
+    } catch (e) {
+      throw new Error(t(identityErrorKey(e)))
+    }
   }
   const submit = async () => {
     setSubmitting(true)
@@ -64,7 +68,7 @@ export function IdentityStep({
       onChange(await identityCommand('submit'))
       onDone()
     } catch (e) {
-      setError((e as Error).message)
+      setError(t(identityErrorKey(e)))
     } finally {
       setSubmitting(false)
     }

@@ -189,7 +189,8 @@ export default function AgentListings() {
           primary={{ label: t('identity.statusAction'), onClick: () => navigate('/agent/identity') }} />
       ) : !identity.loading && identity.stage === 'unavailable' ? (
         <Banner icon={ShieldCheck} title={t('identity.unavailableTitle')} body={t('identity.unavailableBody')}
-          primary={{ label: t('identity.retry'), onClick: () => void identity.refresh() }} />
+          primary={{ label: t('identity.retry'), onClick: () => void identity.refresh() }}
+          secondary={{ label: t('identity.verifyCta'), onClick: () => navigate('/agent/identity') }} />
       ) : null}
 
       <StatStrip
