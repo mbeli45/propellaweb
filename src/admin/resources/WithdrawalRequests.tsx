@@ -1,10 +1,10 @@
+import { MoneyField } from '../components/Money';
 import { TextInput, NumberInput, SelectInput, AutocompleteInput } from '../components/ShadcnInputs';
 import { AdminTable, AdminPagination } from '../components/AdminTable';
 import { FinanceHeading } from '../components/FinanceHeading';
 import {
   List,
   TextField,
-  NumberField,
   DateField,
   Edit,
   SimpleForm,
@@ -107,7 +107,7 @@ const WithdrawalDatagrid = () => (
     <ReferenceField source="user_id" reference="profiles" label="User" link={false}>
       <TextField source="full_name" />
     </ReferenceField>
-    <NumberField source="amount" options={{ style: 'currency', currency: 'XAF' }} />
+    <MoneyField source="amount" />
     <TextField source="phone" />
     <FunctionField label="Status" render={() => <StatusChip source="status" />} />
     <TextField source="fapshi_reference" label="MeSomb / Fapshi ref" />

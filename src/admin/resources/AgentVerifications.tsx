@@ -1,10 +1,10 @@
+import { MoneyField } from '../components/Money';
 import type { MouseEvent } from 'react';
 import { TextInput, NumberInput, SelectInput, BooleanInput, AutocompleteInput } from '../components/ShadcnInputs';
 import { AdminTable, AdminPagination } from '../components/AdminTable';
 import {
   List,
   TextField,
-  NumberField,
   DateField,
   BooleanField,
   Edit,
@@ -122,7 +122,7 @@ const VerificationDatagrid = () => (
     <TextField source="business_name" />
     <FunctionField label="Status" render={() => <StatusChip source="verification_status" />} />
     <BooleanField source="verification_fee_paid" label="Fee paid" />
-    <NumberField source="verification_fee_amount" options={{ style: 'currency', currency: 'XAF' }} />
+    <MoneyField source="verification_fee_amount" />
     <DateField source="created_at" />
     <DateField source="verified_at" />
     <DeleteButtonWithConfirm />

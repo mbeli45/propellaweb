@@ -39,7 +39,7 @@ interface RefundRow {
   guest: { full_name: string | null; phone: string | null; email: string | null } | null;
 }
 
-const fcfa = (n: number) => `${Math.round(n).toLocaleString('fr-FR').replace(/ | /g, ' ')} FCFA`;
+const fcfa = (n: number) => `${Math.round(n).toLocaleString('en-US')} XAF`;
 
 /** "12:00:00", "1 day 02:00:00" or "12 hours" -> hours. */
 const intervalHours = (value: string) => {
@@ -239,7 +239,7 @@ export default function StaySettings() {
 
                 {valid && (
                   <Alert severity="info" icon={false}>
-                    <strong>Example:</strong> 2 nights at 25 000 FCFA = {fcfa(example.total)}. The guest pays a deposit of{' '}
+                    <strong>Example:</strong> 2 nights at 25,000 XAF = {fcfa(example.total)}. The guest pays a deposit of{' '}
                     {fcfa(example.deposit)} online and {fcfa(example.atProperty)} at the property. On check-in day the host's wallet gets{' '}
                     {fcfa(example.deposit - example.commission)} and Propella keeps {fcfa(example.commission)} (less the MeSomb fee).
                   </Alert>

@@ -10,7 +10,6 @@ import {
   ReferenceField,
   ReferenceInput,
   Filter,
-  EditButton,
   useRecordContext,
 } from 'react-admin';
 import { EditToolbar } from '../components/EditToolbar';
@@ -73,7 +72,6 @@ export const CommissionDisputeList = () => (
       />
       <DateField source="created_at" showTime />
       <DateField source="resolved_at" showTime />
-      <EditButton />
     </AdminTable>
   </List>
 );

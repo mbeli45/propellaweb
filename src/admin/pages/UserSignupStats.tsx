@@ -103,7 +103,7 @@ const BarChart = ({ buckets, loading }: { buckets: DayBucket[]; loading: boolean
         direction="row"
         alignItems="flex-end"
         spacing={buckets.length > 60 ? 0.25 : 0.5}
-        sx={{ height: 140, minWidth: buckets.length > 60 ? buckets.length * 6 : 'unset' }}
+        sx={{ height: showLabel ? 172 : 140, minWidth: buckets.length > 60 ? buckets.length * 6 : 'unset' }}
       >
         {buckets.map((b) => {
           const heightPct = Math.max((b.count / max) * 100, b.count > 0 ? 4 : 0);
@@ -114,7 +114,8 @@ const BarChart = ({ buckets, loading }: { buckets: DayBucket[]; loading: boolean
               placement="top"
               arrow
             >
-              <Stack alignItems="center" sx={{ flex: 1, minWidth: 0, cursor: 'default' }}>
+              <Stack alignItems="center" sx={{ flex: 1, minWidth: 0, height: '100%', cursor: 'default' }}>
+                <Box sx={{ flex: 1, width: '100%', display: 'flex', alignItems: 'flex-end' }}>
                 <Box
                   sx={{
                     width: '100%',
@@ -125,6 +126,7 @@ const BarChart = ({ buckets, loading }: { buckets: DayBucket[]; loading: boolean
                     '&:hover': { bgcolor: b.count > 0 ? Colors.primary[700] : Colors.neutral[300] },
                   }}
                 />
+                </Box>
                 {showLabel && (
                   <Typography
                     variant="caption"
@@ -275,12 +277,12 @@ const UserSignupStats = () => {
     }
 
     const result: DayBucket[] = [];
-    const cur = new Date(`${from}T00:00:00`);
-    const end = new Date(`${to}T00:00:00`);
+    const cur = new Date(`${from}T00:00:00Z`);
+    const end = new Date(`${to}T00:00:00Z`);
     while (cur <= end) {
       const key = cur.toISOString().slice(0, 10);
       result.push({ date: key, count: countByDay[key] ?? 0 });
-      cur.setDate(cur.getDate() + 1);
+      cur.setUTCDate(cur.getUTCDate() + 1);
     }
     return result;
   }, [rows, from, to]);

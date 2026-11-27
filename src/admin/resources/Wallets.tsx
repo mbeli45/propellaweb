@@ -1,10 +1,10 @@
+import { MoneyField } from '../components/Money';
 import { AutocompleteInput } from '../components/ShadcnInputs';
 import { AdminTable, AdminPagination } from '../components/AdminTable';
 import { FinanceHeading } from '../components/FinanceHeading';
 import {
   List,
   TextField,
-  NumberField,
   DateField,
   ReferenceField,
   ReferenceInput,
@@ -98,9 +98,9 @@ const WalletDatagrid = () => (
         </Typography>
       )}
     />
-    <NumberField source="locked_balance" options={{ style: 'currency', currency: 'XAF' }} />
-    <NumberField source="total_earned" options={{ style: 'currency', currency: 'XAF' }} />
-    <NumberField source="total_withdrawn" options={{ style: 'currency', currency: 'XAF' }} />
+    <MoneyField source="locked_balance" />
+    <MoneyField source="total_earned" />
+    <MoneyField source="total_withdrawn" />
     <DateField source="updated_at" showTime />
   </AdminTable>
 );

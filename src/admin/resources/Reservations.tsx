@@ -1,3 +1,4 @@
+import { MoneyField } from '../components/Money';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button as MuiButton } from '../components/ShadcnDialog';
 import { TextInput, NumberInput, SelectInput, AutocompleteInput } from '../components/ShadcnInputs';
 import { AdminTable, AdminPagination } from '../components/AdminTable';
@@ -5,7 +6,6 @@ import { useEffect, useState } from 'react';
 import {
   List,
   TextField,
-  NumberField,
   DateField,
   Edit,
   SimpleForm,
@@ -166,7 +166,8 @@ const ProcessRefundButton = () => {
     <>
       <RaButton
         onClick={handleOpen}
-        label={failed ? 'Retry refund' : 'Process refund'}
+        label={failed ? 'Retry' : 'Refund'}
+        title={failed ? 'Retry the refund' : 'Process the refund'}
         color={failed ? 'warning' : 'primary'}
         startIcon={<Icon icon="lucide:undo-2" width={16} />}
       />
@@ -335,13 +336,19 @@ const ReservationDatagrid = () => (
     <ReferenceField source="user_id" reference="profiles" label="Client" link={false}>
       <TextField source="full_name" />
     </ReferenceField>
-    <NumberField source="amount" options={{ style: 'currency', currency: 'XAF' }} />
+    <MoneyField source="amount" />
     <FunctionField label="Status" render={() => <StatusChip source="status" />} />
-    <FunctionField label="Payment" render={() => <StatusChip source="payment_status" />} />
-    <FunctionField label="Refund" render={() => <StatusChip source="refund_status" />} />
+    <FunctionField
+      label="Payment / refund"
+      render={() => (
+        <Stack spacing={0.5} alignItems="flex-start">
+          <StatusChip source="payment_status" />
+          <StatusChip source="refund_status" />
+        </Stack>
+      )}
+    />
     <DateField source="created_at" showTime />
     <FunctionField
-      label=""
       render={() => (
         <Box
           component="span"

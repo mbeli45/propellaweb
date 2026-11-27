@@ -5,12 +5,10 @@ import {
   TextField,
   NumberField,
   DateField,
-  BooleanField,
   Edit,
   Create,
   SimpleForm,
   Filter,
-  EditButton,
   useRecordContext,
   ReferenceField,
   ReferenceInput,
@@ -128,21 +126,39 @@ const PropertyCard = () => {
 
 const PropertyDatagrid = () => (
   <AdminTable rowClick="edit" bulkActionButtons={false}>
-    <TextField source="title" />
+    <FunctionField
+      source="title"
+      label="Listing"
+      render={(r: any) => (
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, color: '#13233d' }} noWrap>{r.title || 'Untitled'}</Typography>
+          <Typography variant="caption" sx={{ color: '#5f6f86', display: 'block' }} noWrap>{r.location || 'No location'}</Typography>
+        </Box>
+      )}
+    />
     <FunctionField
       label="Price"
       sortBy="price"
-      render={(r: any) => <Typography variant="body2" fontWeight={700}>{formatXaf(r.price)}</Typography>}
+      render={(r: any) => <Typography variant="body2" fontWeight={700} noWrap>{formatXaf(r.price)}</Typography>}
     />
     <FunctionField label="Status" render={() => <StatusChip source="status" />} />
     <ReferenceField source="owner_id" reference="profiles" label="Owner" link={false}>
       <TextField source="full_name" />
     </ReferenceField>
-    <TextField source="location" />
-    <BooleanField source="owner_review_pending" label="Awaiting ID approval" />
-    <BooleanField source="is_featured" label="Featured" />
+    <FunctionField
+      label="Flags"
+      render={(r: any) =>
+        r.owner_review_pending || r.is_featured ? (
+          <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+            {r.owner_review_pending && <StatusChip value="pending" label="Awaiting ID" />}
+            {r.is_featured && <StatusChip value="info" label="Featured" sx={{ bgcolor: '#e8f1ff', color: '#0050c8' }} />}
+          </Stack>
+        ) : (
+          <Typography variant="body2" sx={{ color: '#8a99ad' }}>—</Typography>
+        )
+      }
+    />
     <DateField source="created_at" />
-    <EditButton />
     <DeleteButtonWithConfirm />
   </AdminTable>
 );

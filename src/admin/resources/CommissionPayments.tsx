@@ -1,3 +1,4 @@
+import { MoneyField } from '../components/Money';
 import { TextInput, NumberInput, SelectInput, AutocompleteInput } from '../components/ShadcnInputs';
 import { AdminTable, AdminPagination } from '../components/AdminTable';
 import { Stack } from '@mui/material';
@@ -7,7 +8,6 @@ import { FinanceHeading } from '../components/FinanceHeading';
 import {
   List,
   TextField,
-  NumberField,
   DateField,
   Edit,
   SimpleForm,
@@ -15,7 +15,6 @@ import {
   ReferenceField,
   ReferenceInput,
   Filter,
-  EditButton,
   FunctionField,
   useRecordContext,
 } from 'react-admin';
@@ -59,9 +58,9 @@ const CommissionPaymentFilter = (props: any) => (
 
 const CommissionCard = () => <Stack spacing={1.5}>
   <CardHeader title={<ReferenceField source="agent_id" reference="profiles" link={false}><TextField source="full_name"/></ReferenceField>} subtitle={<ReferenceField source="property_id" reference="properties" link={false}><TextField source="title"/></ReferenceField>} right={<StatusChip source="status"/>}/>
-  <CardRow label="Commission" value={<NumberField source="amount" options={{style:'currency',currency:'XAF'}}/>}/>
-  <CardRow label="Agency earns" value={<NumberField source="agent_amount" options={{style:'currency',currency:'XAF'}}/>}/>
-  <CardRow label="Propella fee" value={<NumberField source="platform_fee" options={{style:'currency',currency:'XAF'}}/>}/>
+  <CardRow label="Commission" value={<MoneyField source="amount"/>}/>
+  <CardRow label="Agency earns" value={<MoneyField source="agent_amount"/>}/>
+  <CardRow label="Propella fee" value={<MoneyField source="platform_fee"/>}/>
   <CardRow label="Release" value={<StatusChip source="escrow_status"/>}/>
   <CardRow label="Created" value={<DateField source="created_at" showTime/>}/>
 </Stack>;
@@ -79,12 +78,11 @@ export const CommissionPaymentList = () => (
     <ResponsiveList desktop={<AdminTable rowClick="edit" bulkActionButtons={false}>
       <ReferenceField source="agent_id" reference="profiles" label="Agent" link={false}><TextField source="full_name" /></ReferenceField>
       <ReferenceField source="property_id" reference="properties" label="Property" link={false}><TextField source="title" /></ReferenceField>
-      <NumberField source="amount" label="Commission" options={{ style: 'currency', currency: 'XAF' }} />
-      <NumberField source="agent_amount" label="Agency earns" options={{ style: 'currency', currency: 'XAF' }} />
-      <NumberField source="platform_fee" label="Propella fee" options={{ style: 'currency', currency: 'XAF' }} />
+      <MoneyField source="amount" label="Commission" />
+      <MoneyField source="agent_amount" label="Agency earns" />
+      <MoneyField source="platform_fee" label="Propella fee" />
       <FunctionField label="Payment / release" render={()=><Stack spacing={0.5} alignItems="flex-start"><StatusChip source="status"/><StatusChip source="escrow_status"/></Stack>}/>
       <DateField source="created_at" label="Created" showTime />
-      <EditButton label="Review" />
     </AdminTable>} card={<CommissionCard/>}/>
   </List>
 );

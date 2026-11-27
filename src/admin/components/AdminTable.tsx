@@ -22,11 +22,11 @@ export const AdminTable = ({ children, rowClick, bulkActionButtons = true }: { c
     const source = field.props.sortBy || field.props.source;
     const label = field.props.label === false ? '' : field.props.label ?? (source ? humanize(source) : 'Actions');
     const key=String(source || label).toLowerCase();
-    const size=/person|full_name/.test(key)?270:/title|description|body|comment/.test(key)?300:/location|email|reference/.test(key)?230:/owner|user_id|agent_id|name/.test(key)?190:/featured|verified|admin/.test(key)?100:150;
+    const size=/person|full_name/.test(key)?270:/created_at|_at$|^date|status/.test(key)?125:/amount|fee|earn|balance|withdrawn/.test(key)?135:/title|description|body|comment/.test(key)?300:/location|email|reference/.test(key)?230:/owner|user_id|agent_id|name/.test(key)?190:/featured|verified|admin/.test(key)?100:150;
     return { id: source || `field-${index}`, size, meta:{label}, accessorFn: record=>source ? record[source] : undefined,
       header: ()=>label, enableSorting: !!source && field.props.sortable !== false,
       cell: ({row})=><RecordContextProvider value={row.original}><div className="admin-cell-content" title={typeof row.original[field.props.source]==='string'?row.original[field.props.source]:undefined}>{field}</div></RecordContextProvider> };
-  }).concat(actionFields.length ? [{id:'actions',size:130,meta:{label:'Actions'},header:()=> 'Actions',enableSorting:false,cell:({row}:any)=><RecordContextProvider value={row.original}><div className="admin-cell-actions">{actionFields}</div></RecordContextProvider>}] as ColumnDef<any>[] : []), [children]);
+  }).concat(actionFields.length ? [{id:'actions',size:actionFields.length>1?170:110,meta:{label:'Actions'},header:()=> 'Actions',enableSorting:false,cell:({row}:any)=><RecordContextProvider value={row.original}><div className="admin-cell-actions">{actionFields}</div></RecordContextProvider>}] as ColumnDef<any>[] : []), [children]);
   const table = useReactTable({ data, columns, getCoreRowModel:getCoreRowModel(), manualSorting:true, manualPagination:true,
     enableSortingRemoval:false, state:{columnVisibility:visibility,sorting:sort?[{id:sort.field,desc:sort.order==='DESC'}]:[]},
     onColumnVisibilityChange:setVisibility,
